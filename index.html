@@ -124,7 +124,7 @@ let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehic
 let stationScreenPos = []; // for hit testing
 
 const engine = new CanvasEngine('canvasWrap','canvas', {
-  scale: 1, minScale: .15, maxScale: 4, worldW: 3000, worldH: 3000, gridSize: 100,
+  scale: 1, minScale: .15, maxScale: 4, worldW: 6000, worldH: 6000, gridSize: 100,
   onDraw: draw,
   onClick: handleClick
 });
@@ -240,7 +240,7 @@ function fitAll() {
   const pts = [];
   allStations.forEach(s => pts.push([s.x,s.y]));
   if (pts.length) engine.fitToContent(pts);
-  else engine.centerOn(1500,1500,1);
+  else engine.centerOn(3000,3000,1);
 }
 
 // ── DATA LOADING ─────────────────────────────────────
