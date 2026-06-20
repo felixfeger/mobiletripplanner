@@ -534,7 +534,7 @@ function draw(ctx) {
       ctx.fillStyle = color; ctx.fill();
       ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
       ctx.save(); ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
-      ctx.fillStyle='white'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='white'; ctx.font="bold 11px 'Helvetica Neue',Helvetica,Arial,sans-serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(i+1, 0, 0);
       ctx.restore();
     });
@@ -552,7 +552,7 @@ function draw(ctx) {
 
     if (engine.scale > .4) {
       ctx.save(); ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
-      ctx.fillStyle='#111827'; ctx.font='600 11px -apple-system,sans-serif';
+      ctx.fillStyle='#111827'; ctx.font="600 11px 'Helvetica Neue',Helvetica,Arial,sans-serif";
       ctx.textAlign='left'; ctx.textBaseline='middle';
       ctx.fillText(s.name, r*engine.scale+6, 0);
       ctx.restore();
@@ -566,7 +566,7 @@ function draw(ctx) {
     ctx.fillStyle = v.color||'#666'; ctx.fill();
     ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
     ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/engine.scale,1/engine.scale);
-    ctx.fillStyle = v.text_color||'white'; ctx.font='bold 10px sans-serif';
+    ctx.fillStyle = v.text_color||'white'; ctx.font="bold 10px 'Helvetica Neue',Helvetica,Arial,sans-serif";
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.line_id,0,0);
     ctx.restore();
     hitTargets.push({x:v.x,y:v.y,data:v,isVehicle:true});
