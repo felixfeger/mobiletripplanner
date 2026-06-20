@@ -176,6 +176,7 @@ class CanvasEngine {
     this.scale = opts.scale || 1;
     this.minScale = opts.minScale || 0.2;
     this.maxScale = opts.maxScale || 4;
+    this.fitMaxScale = opts.fitMaxScale ?? 1.2; // cap for fitToContent (separate from manual zoom maxScale)
     this.offsetX = opts.offsetX || 0;
     this.offsetY = opts.offsetY || 0;
     this.worldW = opts.worldW || 3000;
