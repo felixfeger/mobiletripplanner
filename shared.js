@@ -193,8 +193,22 @@ class CanvasEngine {
     this._dragTarget = null;
 
     this._bindEvents();
-    this.resize();
+    this._setupSize();
     window.addEventListener('resize', () => this.resize());
+  }
+
+  // Sizes the canvas but does NOT render — render() must be called
+  // explicitly by the caller once their `engine` variable is assigned,
+  // otherwise drawFn callbacks that reference `engine` will throw
+  // (temporal dead zone: `const engine = new CanvasEngine(...)` hasn't
+  // finished assigning yet while still inside the constructor call).
+  _setupSize() {
+    const rect = this.wrap.getBoundingClientRect();
+    this.canvas.width = rect.width * devicePixelRatio;
+    this.canvas.height = rect.height * devicePixelRatio;
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+    this.viewW = rect.width; this.viewH = rect.height;
   }
 
   resize() {
