@@ -233,10 +233,23 @@ class CanvasEngine {
     return { x: wx*this.scale + this.offsetX, y: wy*this.scale + this.offsetY };
   }
 
+  // Prevents panning the world fully out of view. Allows a margin (half the
+  // viewport) of overscroll past each edge so the world doesn't feel like it
+  // hits a hard wall, while still stopping infinite drift into empty space.
+  _clampOffset() {
+    const margin = Math.max(this.viewW, this.viewH) * 0.5;
+    const worldPxW = this.worldW * this.scale, worldPxH = this.worldH * this.scale;
+    const minOffsetX = this.viewW - worldPxW - margin, maxOffsetX = margin;
+    const minOffsetY = this.viewH - worldPxH - margin, maxOffsetY = margin;
+    this.offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, this.offsetX));
+    this.offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, this.offsetY));
+  }
+
   centerOn(wx, wy, scale) {
     if (scale) this.scale = Math.max(this.minScale, Math.min(this.maxScale, scale));
     this.offsetX = this.viewW/2 - wx*this.scale;
     this.offsetY = this.viewH/2 - wy*this.scale;
+    this._clampOffset();
     this.render();
   }
 
@@ -244,8 +257,11 @@ class CanvasEngine {
     if (!points.length) { this.centerOn(this.worldW/2, this.worldH/2, 1); return; }
     let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
     points.forEach(([x,y]) => { minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y); });
-    const w = Math.max(50, maxX-minX), h = Math.max(50, maxY-minY);
-    const scale = Math.min((this.viewW-padding*2)/w, (this.viewH-padding*2)/h, this.maxScale);
+    // Floor the content box at a reasonable size so a single station (or a
+    // tight cluster) doesn't make fitToContent zoom all the way in to maxScale.
+    const minBoxSize = 600;
+    const w = Math.max(minBoxSize, maxX-minX), h = Math.max(minBoxSize, maxY-minY);
+    const scale = Math.min((this.viewW-padding*2)/w, (this.viewH-padding*2)/h, this.fitMaxScale ?? 1.2);
     this.centerOn((minX+maxX)/2, (minY+maxY)/2, Math.max(this.minScale,scale));
   }
 
@@ -256,6 +272,7 @@ class CanvasEngine {
     const after = this.screenToWorldView(cx,cy);
     this.offsetX += (after.x-before.x)*this.scale;
     this.offsetY += (after.y-before.y)*this.scale;
+    this._clampOffset();
     this.render();
   }
 
@@ -282,6 +299,7 @@ class CanvasEngine {
       if (Math.abs(dx)>3||Math.abs(dy)>3) this._moved = true;
       this.offsetX = this._offsetStart.x + dx;
       this.offsetY = this._offsetStart.y + dy;
+      this._clampOffset();
       this.render();
     });
     window.addEventListener('mouseup', e => {
@@ -320,6 +338,7 @@ class CanvasEngine {
         if (Math.abs(dx)>3||Math.abs(dy)>3) this._moved = true;
         this.offsetX = this._offsetStart.x + dx;
         this.offsetY = this._offsetStart.y + dy;
+        this._clampOffset();
         this.render();
       } else if (e.touches.length === 2) {
         const dist = this._touchDist(e.touches);
@@ -359,9 +378,18 @@ class CanvasEngine {
     ctx.scale(this.scale, this.scale);
 
     this._drawGrid(ctx);
+    this._drawWorldBounds(ctx);
     this.drawFn(ctx, this);
 
     ctx.restore();
+  }
+
+  _drawWorldBounds(ctx) {
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 2/this.scale;
+    ctx.setLineDash([12/this.scale, 8/this.scale]);
+    ctx.strokeRect(0, 0, this.worldW, this.worldH);
+    ctx.setLineDash([]);
   }
 
   _drawGrid(ctx) {
