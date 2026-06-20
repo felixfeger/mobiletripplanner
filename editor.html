@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -5,18 +6,75 @@
 <title>Editor — City Metro Transit</title>
 <link rel="stylesheet" href="style.css">
 <style>
-body,html{{height:100%;overflow:hidden;}}
-.hint-bar{{
+body,html{height:100%;overflow:hidden;}
+.hint-bar{
   position:fixed;top:calc(var(--nav-h));left:0;right:0;z-index:1700;
   background:rgba(17,24,39,.92);color:white;padding:.5rem 1rem;
   font-size:.8rem;font-weight:600;text-align:center;
   display:none;
-}}
-.hint-bar.show{{display:block;}}
+}
+.hint-bar.show{display:block;}
 </style>
 </head>
 <body>
-{nav_login}
+<nav class="navbar">
+  <button class="nav-logo-btn" onclick="toggleLogin()" aria-label="Account">
+    <img src="data:image/png;base64,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" alt="City Metro">
+  </button>
+  <span class="nav-title">City <span>Metro</span></span>
+  <nav class="nav-links">
+    <a href="index.html">Map</a>
+    <a href="planner.html">Plan Trip</a>
+    <a href="editor.html">Editor</a>
+  </nav>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-drawer" id="navDrawer">
+  <a href="index.html">Map</a>
+  <a href="planner.html">Plan Trip</a>
+  <a href="editor.html">Editor</a>
+</div>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-head">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAMAAAD8CC+4AAAAOVBMVEVHcEwBAQEZFhYCAgIDAwMCAQICAgIHBgYBAQEFBQUSEQ8LCgkJCAgGBQVKSkaRjH/d28wAAAABAQGGEQ6TAAAAEXRSTlMAAVn1r8uQEuMkBz1xAgEBAZWea8sAACAASURBVHja7J2JtqsoEEUdQBQhr+X/P7ZBHCgBNcbkitZZq9d9fQei2Z6iKIZkGQqFQqFQKBQKhUKhUCgUCoVCoVAoFAqFQqFQKBQKhUKhUCgUCoVCoVAoFAqFQqFQKBQKhUKhUCgUCoVCoVAoFAqFQqFQKBQKhUKhUCgUCoVCoVAoFAqFQqFQKBQKhUKhUCgUCoVCoc5W7gvflCfR/gQ7PjUJ8z4I77ynB/WHxPcgzPv2ttrE9zxV4B8K3/unEUfulycuR62AGn4TuadMXLoa2PyTnDHWNK1VYb80TcMY53Ju231IEHsSxF3YPZKcM825EFVFCKV1XZeu6rKuKaWEVJUoCv0IsIF/vps8IvlT4g5w/btS29rAJlRzVqrrpb8ooP6bwz9L8wRo/kLTZ9JBj9yviRxEc23uQmjYdalG1I486MN3nB+UGn6l0XPDcw94hPNr5K7B5cDbMOzC8pgvH4TxZ3WtXa/J7wOPhH6H3HF4roFXdLT3inzoYezmySlrIop94JHST5A7Fuc98NnfSm1Cjwf9hTT4qge/ld0hqW8jdy3eClKrLpSl7ZZal3G84b6R2yGtLyKfiUumLV72iP3ofB70HjwRLdvijsS+jHwkvo3sDOamlZJWM3fE/jPkE/F8IK52AnuTcNTvlvua3ZHcV5DnGW9tVH9THxIfuZv+PUfsv0SeyUaQA8RN4bWvu06yddkDz05Niua1ZnckeA7z0eSsreq3WGvOQ3XdzrAwbsT6CRgzA1P0tXlqC7a7pcP8qt0R4lnIs/wNk/fl1L6UPs+jBSRzU8uTfC7W73O7SeebPEPs32I+IOdNVe9J3QxuS9tilX7L0VfnzLDfiZ5WjUTsX0Wu4/qOOormPc6THVkma/+QN612/RZ5fTW1ifKI/WvIyeaQvKZV0WreMnt7QVXQ9I2p9ZVbg3dSMNu5I/WTmA/IWUHK9UG2HkAXDcuyU5fIcmnBrw8CEftXkceY16ZEmr8JPPrKy4DfT+eUq0kd1dhfEewI9n3mDvIukk3Z2c8zFjdFf52tG14HmsHtSP0j5nNfHkdugrpJ2s5c0xT7Q96sc0fsP0Fea+Kvr+xJCTUhV7h3Q99uM3mkfpx5njVVGZ0mMaVQ43H5pdUskbZ4K0L9u73IkrQyjB0RbzIfOnNRx6bGSipau5jlqwsagm1KnWTUEeyqrJrIZSHlbeYZL2hsPrQ2Y6RY/3nu+xtuOm8Cdh8utBYMzX4I+evf3JkvmHf9VEf2u2UMu+0+Xiq1XTtSf9PmbmQfVjqOObJoXr8x+Vb3zv3pvm6O8aFLRNjhN3TI2akKrmfqR8PZX1S6gy8kA7O89mojMR5xR5mbnD20wKkvd2Z/Ve4Mv1wTmNwf8vhXjtR3Ml8kcAA5j1a4/+JqR+yCBt2OZt/1Lk42D2Rw2jn8AvWuYE7XiGDfrkj774XUN5lnsqDBlaujy/9++LsryA9XP5gdqa8yZ2Gbx6vaf3/dE/YylMeTNhDikfmMPJdtyOYdFexqRS7/KiRviW91k8YHxuyIfLY5HJtPkyqRuuaFrn8s19AAdTNmR+ox5g0J2LyfwcivWcn2sbsxfr4RGgjxyDw3oR1kcFORXfCrIl/cxVitIYGdVHXBX0jdY55xUU6l66ni2s9YXXu6yrssNg3fnKhVVl4Wjymczn3hsT9Dzs6z689Q+nn8uBvD7atI83Dqfnfe0sAaiYoFbH7t27Hf4ENCB8qKtF2um3x2d86L2mdOTQKXxixVoERnEzpAvRTLjv3J3TmryqDNE5qXXF4lH8wORiN+x/5k5mqXzVO5rdHsxD8MYdmxP5Z5Q/xlzWnZPIKd2zQeVB7siP1p1D3mLfVDu5+0J3Zvwzf6e4OTxE+k7jP3F56QdmOXUTI9u52EgdTr4r+HUffGakW9HdrTvEE3xC+og5Hbs6CbW/fWHtiya8oljOWV+yHeDt0eQ305PBeln7VnWeIVai/EE496ZSZbH0J9m7ke0qQ/KeEV472O3Q7YH0F9ydwryXjdefp3aofsJnOB6dxTqC+Y+yWZMvXuPEqd+x07eQb1LeY6q73Pp10u78NWoNwTyfvi3N2pA6Mb5t16Cnef+3WpOzPtgPoTmPMQ85utK1ncyyK0LSP8A5l3t0jbNzp2kLj20y/3pg6TOH+sdkfmPnX3thc5fHZD6rAQ5zNn9/zA8uUtDTfezdT5fb0OE/diydwMz+85BbG8KTvV0Dle56/hzu/m9eW8Glz9aIqS+V2nneBt5ZkzwTTU4eVAPctu+rhPc6ku9opnN14jurwzx+sj9TsG+MU6GQqZl/dm7lNvF16vizt26y70ccop5vObD1bN/0sn1Fnq7f2ow0IcUfCggdszD5QZl/06vR11rygDoD+A+R7qNyvILgfocHsinErNssdQX2xtdUtzt7pfncQVNdyTSp7B3Kf+mstT9v2oeH4f6jCJm86MskMWAmoyWfYg6rkoh2RuXDb3uk2AB8zZ4qBX2jyGuT9y43aT7jS77qbw9wnuOol7MvMY9XlPa3MT6m6H/hLwdF/9aOd3X0OwSp0tFsneJJkDwb2FRwiVxdOYL6lLRuE+t3skc+EkzjIX+eOYe15vIPXyDvXYaIe+nEd+5C7tqUjjnEaUfjIHRugCHgNJ2COZe9T74bqTzCXfrcc7dFh2fNTJK4vxep/Cq/t069ER+pDEPfSMpfUUPvFuHZTcK3gOpJCPZe5Rb+voaD1P2ugFHKETnj0vcY8nc3BzI0k4wK+M1p7boQepm279JuM2d5E7HK2BdSKPPxV36Nbd9yfZAB8N7l0nXvmTg/vy/fG79WQz+Hhwv/3+rQNmF6WXwSdI3U3dYeZeN48P7r7XF916mhk8KMuA4A6e4md/fI1LfVGEr2SCAd5d/Qo/YM3tr/Aji2bsYNymUszgXaMLhaO1Hd26BAFeJViDd7O4GpRlMLjHqIMAr1QlE8vl3AlVAjN3DO5rAd7Nd1ObZI0O0TFzX7E6zOBVYtXYaBanBAb39QAfqcamZXSQxXWE5Wj0OHXuBnilc7mErB7L4mzNHY0eH61zAoZtTlxMCLqs4FpPiczXqbd1quvgI0uksP66HeBfMJerXqlY3emjgNFLzOK2rQ4H63UyVneL7mAIglncjgwe5nJOh5iK0YnCiZZ3re6up1DJVGgiRu8Il2j0HVZvS+dj1xOxeszoP10i9b2X+dK15yARmq3uvm2JGD06XMt/45oVndOuZ9MzrN7UqVndmVMl6udF9/wNndPuWR8S6e7uTc7qsfUy4vVto++gfAzQ5rNzBvakrR4eo3+9LpMf03ca/tjqAiTwzdWtHtuvCOoy+Z8Rf9PrX2p22+rUgd6X5ZL45PhF1f2LRn/bhHvpfKnZN62urm91d3oNrO3Mv2T0Y7F3m86HzZ5gdedYTZEKdPELo69RkL4Cvny73Xiz8C8/HKsLNVN3zym4MHS5WANyeIy+miZtgIEvlANC05+/g3xoINvR7OdWr5OxeszoB9dOrGbHq2T0zzljTdsWhSiKom0axuWIyG1j96vOzTaNaVXodts21uzn1CunV+8XHF02lXNWxsEVfkeMHjVwaGzs/Ib+KWuKilBal/b01bIsa0or0TK5AJTvQz40y/tm67FZZZolTrPbQeSNCrxrdWe1XCqFmfKQ0SFIpzcNjpFmM0pWVHT8uAx49rCipGhktvDlLuT6QWoFqd1z+a0J9X8lrUCzx0v0wbKceb1KXh86GK/ZpbwHoA9f9N/ySU7ECLqRtxUtO3vgKtg6MH2Ya1Ww2Zc7Ujf7JDWCllNL7t6NsQerWg6xf1qWm6Yo1bVHbeHx2sE9LXnGRGVEoIosjpwVBG6EhyfRDkGZCpa9IJ515PpJms8rj7VfkoJlJ1KfNomoa6dy4TSOstexxROFsm+xchNZRWQUuaBRJPPfmyPHDXaQ4K8jjz9JoPGSWuznTLvMu0T6jmlK5a4a3Tl480V2cFNWoUJepSwLstlEDg+9KfjAZz1ht8jVLugaO2nla272I+rZdGysunIqF07j+u7o0CqpBfSxU158Iqu1uWyJWuERisbgumLMm2of8mliqWLZJ9Rdqws3wl00lZverH8gjavkwcXuMgy9XHzc9sRmtSsP/IQW8rWeF+roUXdvStH2JOp8KtCMqdyFoWdgkP7BcshweDd5oWfzSGSHn1/smV2AE4k95v+tRY8VsxfDxsPPUznX6teM784+VeXurT+YxnlOHxMx4ZAa/FiqVeIx6l3FItT73vx9m4+7NIeH6fNUzoFuBr7XhQ5OVFCH0zjf6WP6Pp0Sb6sxTcCPyleQDzjnCjxLKz3GpsynCx7O4WOp3CXjuzvXok5I40LQTUo2bdseCnQt3UF8D/X54TT/8Jv121+jnsvPC/BSBGddLhrdFVzsfnCyIAC9H2RbThY5L+pdxKOQyDS0dsq9r3ho3/UozR+T/JnVWzeVu2J8d5dtK3jCzInQzfLQJhvL8BpOuZ95mFB/2NU8wrBZQiS07250Hld/lsA7qVx3xfjuzgSrYHTPzoFu52965qxS7zAPArLbKhdZwn7kkVbnQ7Q+svq0lgJksNeM7gqsnjgZ+hA9tBhR3cfQh9n+eSIvC3fn77ZLDnfrkbUUU4uXg95vsJ7ehNKN7tlZ0KssZkiljlCnY7duw0dbv8081O6UeH0a35W7QPKS0PthxvQe9IemHF7zEYNOjjMPd8DCWfmWF0eYq8Dosj4c4EPxvbP5+7U6dXfP5fRwVvknuzOKSMmF/s/emS49qgJhGNS4803k/i92gms3okaWpIlader8mCnG+Pj2RtMW1szNwXY5RwlCWDI3ZZe5u4EHEdKwwSgoQlep5Xib49aQfXNXYtblS0Ki5tXDG/Oxn2tgnnZehD53DDna94K0fYdOSEID5xv68DDXzB2gLwlBa8V8q0bjIZZD8XuakIQuqnJ5ChJWZpg/6F2iz8l28eighlSbdW635BjHukKfRxT0+6sUob8SNgmU3rp9nmATet481o974aB6VDPVZvUo0zcB9VKv213mfevratXdnZeX1B0bY5f6ewcaSIgpPfdn3behP8puk3mpWlOLWtVp66JKVAfrG4CUUTIzn5bN2qZSbZlq1SbJH+lbUm+cpV7nsCjXEIQOEzaJumCZT+jr/sS55zFviuluhkVq1cd6zOf1OE3Mx2WztqoZbGevi2R+m/aknlub42V/FTj1l+0kCB0nbI4fn0nebmGY2CTFk63PlxXJ45hPbmA+NU03dd89i5cVTV4eSn3s7XLZykD9MxmtRH2JNaWvLw69DX1Gzjg+qTj9u0V7yEduME/zRjBhXFb15R2t2rqedmE1Yae+rsE6Tzt8E/rw4Mf2Y6E3Ow546uZxqEpzx8Z0hgEvy+DLtLdIVrtKncGjLikpp77l0j8EPc0rI/Ll366yk9TV3y3bYmvZ8R5NeYRf+46bplpy0AXYVkUunQWEPsi83mSOqZ/S+aMR/GBZ0exrfaTkAt3k1CkpPQHPVTp/lyB594xBVu0gX6g/TkBH1mN3npD2ReRVgOjaLMdQU2xZMGrQYU+D+5m7d6ArOJMNPhj3JJpUnggNy7Z+a1mW775LQ+jFPDt1OtDVOzlXTeRjcenhoCs4Sc1NcNYjYET+ptQH0874AfMpI3wc1PpcoSdw6lBLDToqvOeu1l28BX2CczCi5A08Ro9xMPhkMvBHTt1p43I5A6xOqv8Rg76UZqQHl/6G0mc4O/O8MJ533XnBNrI0vOxQnts9CJO7QjeV3wlBb0HClrqPNH1D6Ws4mw9vkPqbUULNDlcFuVOz9y71lFyg88Utzec3CQVy+dI/IT2MwTqEvhbkbpj5bpiQtuLv3VVHqR9l6k49CvqeOiXorD+WLvXWzXDQ+9ND744wGv60Ko+Zl4k4MepQ/flu9NFHck7Q57RDzuUZOtBVwIFKM46bAwfQdeZv3CETR+dQFfN//ETf9vDt8/IgknNT+lSe6aH3kRwd6ODrHfBAse2S+9G76jtkp06+j5bykPnfyV79Plfd215ljnMpxur2NCGrZpSgw3xyah8IpnSN+fsJxoE/P6fz6afvvUuZYI7DSMS4b7BM4qADHQ459HDwal/pOIZ7O8HYj99fMdwft1l2513qpcncpD5GyMskDirQgb/0dMRyD3p2mjmb0p+DThdxtpnz6F1SOZsj9ARsuciEEvRl6shcOAqm9LI6fxqWHzv1B6rinwCz59SVPXaEPhmSOXwnAx1WC72cwEn2WpYtzksdO/UMbtadWjbfz9kcN7Lm7GDogyYEfQne4TQgFkTpVg0a+PkZe2ItmI9ZQZBEfWlOgdsCDjGCd+gJSNiW4D2c0q0mie9Hcjk/z5yNXnf7VUpclf4K3z3FCN6ht/hrwM7zyevtBwlmhZ7dH6h3obPzzI+8Ru+EHaEj7+ESI3i/cjRIjLn36u4q3aZXjPc5xv6OmLB7l/a8Ruu6p4G9R0oIOtpgnM7zuNzdvtJtegmGnO1oG9Tm64yi2B5M+4q8nCM5YEikbMiYdzwnMvPxkZ49pQubbYejONseOuhON63qE3pHJ1HXDFzLwivd7gGK1jd0hudABYG+erhk0nQDdBZO6ZYPcLc6k1vd9lQe37xZ7gwd5hxkEnXNAqWJB+gHSqcFneW+zRL2Hpm39bxeENE8nttpxTaI0pMw0L3fLN4yyDzt4Hi+jGm6y4JP7+adhYP+bHfzS1foq3yYCvRVh7+r5wnwHL+jdM/QSyLQXzeRawbIGfozCfIc99qg7aCzD0DX7Sg96J2fs/Ptt6B79hoPD9ATgtAZLm/mT05V6c/GP3T1xcDtm029QAclubShCF3mLE6lZ7bQWWilo4SYCnSBMkkvtZmvKd1zJSn1DF0pncgFtyw9zUsIo/TmUOm+y4c+oMN6p0yoQEeFwsQH9EBKPwzkfNeMpWfo6mTTz0L/htI5CzA2wwf0gqTSwYReTzOQvqH0ENC9KB1oShKCXq5L7ySVnhwondFU+oOkT/cO/fMVORkEug+lP+sHajWmq3R2K33aiXBWOmjSUJ2WBKGXXqD/jtILD0rP0EmS26f/ttIZ185N0VZ6dNG7g9KfwZTORqV3cSjd7Xce9b2HMe925WMeTunzt3FQwZMedGk/MA/+VPFx6GkWYk659ACdRaJ05mjTvqD0sV2flE9fQe9+Grr4QueMNfTnx6DfSg8QvQeovXvJ0ymWYbUdAbJKD1N7fz5DQ390BCtyq102x/W+o3Rme+OhoYOTglShtz6gh/Lpuy3QVJUOB/rQ2U+vvUNnn4dOWOklOqtMEXoesdIZSaVrZRAq0DPf0FlE0NkHodPphmUs8zMZ81a6CbqotL53ItRzv+cqb6UjpcPOPkLTYfPO67nKW+moIpfQhD7vfksvp62+kqcTVDpfn2Wz/0CI5wvc1jie2j00jAh6aKXDSTl0zqcDAzSOp3Zf81Y6M00PpDMnFIQaajR54uG2xK30Rek5zZkzsHzgNBnzu0pnFJWON9lyOnPk0Dabj/sSEUEPrHR8wKWlAx3VYb1YoFvps0uv/G5c+4KuTb3yEGDeSl+g6zMJSFBfjacubqX7hJ5IrTZDBTqcKeYjUb+VvkCH5z7KghB0fWTkrXR/0OEQ0nFeGw3oaDy1hwizvpVuaICevmpBI5DDEaaPnO1W+vzdzXI1uosIdPRJHA852610Y/A+znahAX2ds8V3apWa0rkhePd0+D9AzubjM7DPW+l8td0ix4yNDHS45+ujpedWOl99lk1OH8KiAh19Usg9fP93K53rlXf1AUbBKUFfhe80Z8PKaJTOV5V38BVbGtA5/DLbMPLdacm/JB7oz6DQl6akPngnBR1/fsC9QnwrXS/CDu2HpKBz7RO7F4IeROl8Hj0CoKtPvJNS+hLJjd92d7u1qyudz/U4AH3+njQV6Ki/IxcXgh5S6WL+ML2U3RzHkTHvOJJz3gG8uNL52qVL9ZlDYtBBJDc5dX4r3Rl6hk8UUIMOIzl3p34rfV2aeRBy6Yytqwi569jINszMmciUjsPjnAlq0NFkFOci8bWVPoVx4DH0M4boWHeTU5/czwWUzsNBBy69I+bSV05dgrcyBHRBSukhZsOuXXqfEnFy0AV06l3OhYvUn0Ggx6J0vmTpaBtL0FM6jjQdK4aXVvo6S1f1uIRUHDc79Q5l6i53eCtdXUWGd7EoCX0jU3d6L+NRuv/onS976RKeTOcUoSOn7naPl1b6nLAlUsLTBIIgdPytEUdrFAA6D+XTQyld5AC68pcUoYMTbUPSZn+Tz3ige6/ILdb9AaCryJhUHDf35cOBFJlweTMjgs5CQU9SYN2nHJgOdNPMBGXfrW9zR+mSmE/fVbp0gP4HTy6mCaMJXUvanG7zutE7X8pxsjNYd3LQYfd7l4tb6dIausBN+uph0nLphs58V/t+WaVzELujk4vkhG44eNU5xe+/o/Ta1rrD4yOdk4A+ad9BDYlfV+m1HXOBn0BW07PuG/bdvp7weaVLGkrn64Z3qtbdeLAW1N/P3+tFlb4IvaFv3Q1NXX3TlK19v6rSF+gwjCMZu5vte+eSqkepdOlN6XieS0rTuoMDdx0K5Wzt+8d32TwoXUpXpXOwwdbRrswg6GggtL0vilHp0lnp5jCuU41SJKEbv/DeWYdyH1d6SsCnb4VxDVGhg1P0eignyED/QvSeWUFH1bi+H4U4dJSqW2dtL+hSSt9Kb3ZmzrQhlH7KvHNzNa5LyArdGMqpGMTuLU1CQO8TSukbeq/0rZu1ga5V44gm6dipo3Y+kG2cuWWRqBMTvqGr096byzoo/fUubaybnoDOzfla3z5BHbpWQLTM2gbo0rPSq3R7WQelv15zaVhY9idNXfM1wmEcDuXwJEEb6k2Zqmt4lCm4ytI+4qqLLNWv8rXi63pk9p8rFvV62flm69NC51johMM4HMpJrUBznnpdNa8rma8mafqrqir7Q6tMFFWDr0qt+LqK2uWXj8smDbpXtXRxmrnWPZEmpIVuGIM1nXWxy9WFwY4Ltzs0rShq4fq7lY2HdzsuKcTpZ6dVOoaJUlFAx1nb0jZ15r6p/sZANwuEjvJKSV3oSyiCztKDSCQqkt94cvEJHRbgpVwiWDupXxO6LnSHloRP3/vLqwPq1lLX/zq/gNDh5xK67lGRFzqWupyULpcegFvrp4Teb1jFAl0NoBmo9/+7vbqlRy9jEPpa6kN1BRQYbuo7zLUcPQ6h42O2i32HFfib+rZx50WMQkdTFKDUi1vqp4UuIxE6OnMJpN7XGG7qR8yrR4xCN0h93G2qbgN/DB3to8cjdEMAf6dtbwu9lDJGoWvTMxa3jtK2m7qBuahzqU8WigU6LsstUr/TtuMoDjRixFB1N0EvHvDNvdO2feZ//eOajaNln9n3f0n/6prqyDd0nfkLeivhlRU8IqEvv4XVGeoby+s7lttkzpoSMu9DoBihqzOsAPpdl9sx7moOLLxyEZnQtWLsjB3GJjd0TejYuMeUrm2kbfPV8lvqZuYVMu5pG5txX6dt2FPd1FfMhxQdRnHxCR3Ecpqryoq/28CvyzJTij6mbGUTV7q2juWg3epk+++W+pFxjzGKwz+qvg38YYZeY3MI4904fxUrUCzX3RH8yqELrIs0iTGK09K2BvmrLr9r8JD5qiwj85rHynyJ5USOoN8lGo25ltbCanW8P03/VZd364g517K1mI07oo4Tki4rLk0dMRccO/S4jfumgb+6W+e6Q+82jHvkvw+XaF5uvb2u1Lnu0JfmURnfLvqe1FGAikdqXIw6Zj71uS+bE4KL6J/KfP9tOlTkRuqXbY7leskdMY+05r5FfSw6TdRlVv9dkTpmPp5tWApX1U8wnz7exebe2KkJrIUt0fyazIdhoNCh859gvhh4za2n6MwLvyJzrX7RLQ79N34qm936jB12gV0D+z7z3qH/zrOY3DouPckHCuF/n7rGfE5ju+G/l0P/qQcx/hKtoUI73/br1DHzv0KTgHLoP/UYJqlrvQIyuxB1vqq4wxhOpu3PPYTpx6Ai/Mum4Sr8L1PXmbcSQ89r9muPYP41WjDX5bBn7oep/2/vzNYbhWEwahlI2JwOvP/DjhcC3iFpkgb4z1Uv+nUGHyTLMuDAeXFfvpoJXd79xxuA+/W07t76IO/wM1h3nQvRF8Mc6INdxB3vspn6Im/pSB+KM1j3nU+NuOHgzufGnL06NS+z9p51Orpz4vXyEdXp44oHvfSk9eHo1r0wd5zrJ4k4O/Ttrn/qKle6ifXDpvg153KBzg47s1nWvdMvxgNbJy+33wLnvWAHrmGXK+O+9YtvnY7oXF6h4PXgSj/gAj1lvXCsj7KG/zmidT/M5frcO9jn6M6tq7v1hR/r1+NZp7xzferFlR29Gblcngis647soaz7ztn14h8AWR7fuW3das3drTe+dTqOcuPcOw9uPIXzuPX54yRHsh46b8rgVMGGneNRgoj15ZtjXWCdDqH85M5j1q2vofKfI1gPlQvWVWnnp3lSzFj3jj4d66BNs78hodC5szyf6vZlPj/FQ6GWdb+GH4rLNUzxtHPnLFyq2c7P9CSwt3LLFPE7/Jaak9q9pdrorM/P8sy/dbGCu0/Dq3KO32in2imW2lnnlXCjakCy073dY12tY33eYY8EO+1SuWCR6VxdIJ31lS7zY1d51mXyi6X4nZxYlE/tOs7nfbVTvrxpYj2wPqj3IGhX2uPK1erc78LJdalgJ30339pyUyPjB3sdT/FffoZ4mNr91bl+Tua0zlesy7WbTvG70J4K83CDxeQwOq902/r1UvhFvKziRTzY6euV66np5lTt03OvVhvupN9Tsy687YOl271R893aKRnmfe2tzb3l+Vm/nGhfOvcfklVvOCaDnb5buQrzMXDuLtVO+41U++KXiX0ZKzWz07dqp5RyP8wn5xUnOPe0/8mqFwAABKVJREFUi2VinwdLzextKsfT9yk3mV0tQsPULqdzBuXhxD5355zHSzqWyvF/N3aUCfPGK9pNasd0nrC+9Gmcw4X7ZEH3R8OXU976a/PpLZYWYZ6c2P0tdrO4zeT4z49hTrnoynBtrr+0AueRYWTe2s1tV5fdz3dop4xykvdsPQQgta8Hu92K17WcjpV6quP/1HvOuKnZx4jzym62w3ncutOem5+VHSs5tWe1058YX5TzKlSukpRTtcN5IsUL7n1hbQ6ZNe30aeOW8nAy1/sraMg8XM+5O65btNMHja8oHxDmD1kPgv3+XZ71JP/isV01nlRuVh0E54/M7PU4xsRXfXNj4jPhTqvKSc3lUeV6dxjOH7N+k0veMYqs5MWqdvqAcfm/aPpI+TbvFkH59oG+B3uY401LU2rv2inLv8n7BuOCtV1sXW4KOLk2h/OnZvYmluON+FLWdG8L9y3G1VSuDt2JF3AdMYLz54JdJHP8WMjJ/S3hvsG4DHKZ1+NTeaSAg/IHtbeJHK+PnLbCPeedXmz8poM8YVwvMOD82Vibgv3aJ7XLcL9027xvGHzaZJxdu0s6yHW/GMp/M6fep/a+HjPee+Wdfut9q3GZ1seM8u42H8QC57/RLjIVnU7zKt7FhoB/PNAX4SRzjorxlHH9jlonGAk4f02OZz857YPO81zWdYyy4h9zLuwQbxuujGeU39eRUP6yHM/+NZf03K7F12Xf2eLFdvH5nN7KpF7W/ht3bi9mbh3A+Uu1syZT0pkPaReVFK8yPRM581uF0yRcJfVITxjK32l9XrZfVRmV1D7NrFI8b7R5O0PTJmzf4toY4RHj9k6/Ui7CR7Wh71Xa9ZZWXrsWL2s7meuvrfkjG8wvv6G7A8r3paqLMTejTE32vpmVn/eE8Ddpn9s1Xa6ms55BlebLS8+VezH9qbj52bWyrXWXK77tBePUJ7j/HTh/j3a1t1WsaR+mQ+6MeyNf2v8X/SeEDO2m49r2Rt1mv29qDRGUv127EKoROq57tw7NKKT8qlT6e855d4fzvr9cykm2c2zWepA31lQO5e+zvmT5beHuyp+VFhNBHb6Vpf+7u4/j7Fm7MF3w7dLXsW+LbFoveUM7+0LK/r2z2Tu/1EXC9lPytxk3LSCC8r/J8rKq4068u/perLxQxgXz9lSg/HPal0FWeb7+bW5fda77+0njUP5h72rP0wv48bXSC9XYv7L0Diy8fFL7PL+39zb50+ZzwtU0zgjKv8677s4r8fVT1Xw8patGflY4lP+VdmfkZarv/Ubqw8Z1I493pn0P43vwbrbIdA99faKP6VYbdS1bEQ7l3yHeFaHUc9VmVV3WIr03Y9q0S5O+NeXh7x60BB/1HvyK3jzjWn9ZVpW8BQzyx6rUDXkuXUvZlL6XYHyH4qdflEW+pDHIn9pWPTDBKJ89YHz35h+YKyB8p5O8FrUYo2d1Q/ge3YcOaTMY0gPeALAN+5B9aP8YCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgM/wH+mTo6dUg+08AAAAASUVORK5CYII=" alt="CM">
+      <div class="login-head-text"><h2>City Metro</h2><p>Transit account</p></div>
+    </div>
+    <div class="login-body">
+      <div id="loginForm">
+        <div class="login-tabs">
+          <button class="login-tab active" id="tabLogin">Sign in</button>
+          <button class="login-tab" id="tabSignup">Sign up</button>
+        </div>
+        <div id="loginError" class="login-error"></div>
+        <div class="form-field hidden" id="nameField">
+          <label>Name</label>
+          <input type="text" id="authName" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-field">
+          <label>Password</label>
+          <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+        </div>
+        <button class="btn-black" id="authBtn">Sign in</button>
+      </div>
+      <div id="userView" class="hidden">
+        <div class="login-user-name" id="userName"></div>
+        <div class="login-user-email" id="userEmail"></div>
+        <div style="font-size:.75rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Saved Journeys</div>
+        <div id="savedList"></div>
+        <button class="btn-black" style="margin-top:1rem" onclick="document.getElementById('loginOverlay').classList.remove('open');window.location.href='planner.html'">+ Plan new trip</button>
+        <button class="btn-outline-red" id="logoutBtn">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="hint-bar" id="hintBar"></div>
 
@@ -35,6 +93,8 @@ body,html{{height:100%;overflow:hidden;}}
   <button class="ed-btn" onclick="openPanel('lines')" title="Manage lines">☰</button>
   <button class="ed-btn" onclick="openPanel('stations')" title="Manage stations">🗂</button>
   <button class="ed-btn" onclick="openPanel('vehicles')" title="Live vehicles">🔴</button>
+  <div style="height:8px"></div>
+  <button class="ed-btn" onclick="resetAdminToken()" title="Change admin token">🔑</button>
 </div>
 
 <!-- ZOOM CONTROLS -->
@@ -165,18 +225,31 @@ body,html{{height:100%;overflow:hidden;}}
 
 <script src="shared.js"></script>
 <script>
-const ADMIN = 'your-admin-token-here'; // set to match Worker env var ADMIN_TOKEN
+// ════════════════════════════════════════════════════════════════
+// ⚠️ SET THIS to the exact same value as the ADMIN_TOKEN secret you
+// create in your Worker (Cloudflare dashboard → Worker → Settings →
+// Variables and Secrets → ADMIN_TOKEN). Pick any long random string,
+// e.g. a UUID — it just needs to match on both sides.
+// ════════════════════════════════════════════════════════════════
+const ADMIN = localStorage.getItem('cm_admin_token') || '';
+if (!ADMIN) {
+  const entered = prompt('Enter your admin token (must match the ADMIN_TOKEN secret set in your Cloudflare Worker):');
+  if (entered) {
+    localStorage.setItem('cm_admin_token', entered);
+    location.reload();
+  }
+}
 setActiveNav('editor');
 initLoginForms();
 
 // ── STATE ─────────────────────────────────────────────
 let tool = 'select';
-let allLines = {{}}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
+let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
 let selectedLine = null, selectedStation = null, selectedVehicle = null;
 let hitTargets = [];
 
 // Line-drawing state: click stations in order to build a route
-let drawingStations = []; // [{{id,x,y,name}}]
+let drawingStations = []; // [{id,x,y,name}]
 let drawingSegmentPoints = []; // raw polyline points being collected between two stations
 let isDrawingLine = false;
 let drawingBetweenClick = false; // true while adding intermediate curve points between two stations
@@ -185,47 +258,52 @@ let drawingBetweenClick = false; // true while adding intermediate curve points 
 let streetPoints = [];
 let isDrawingStreet = false;
 
-const engine = new CanvasEngine('canvasWrap','canvas', {{
+const engine = new CanvasEngine('canvasWrap','canvas', {
   scale: 1, minScale:.15, maxScale:4, worldW:3000, worldH:3000, gridSize:100,
   onDraw: draw,
   onClick: handleClick
-}});
+});
 
-function status(msg, dur=3000) {{
+function resetAdminToken() {
+  localStorage.removeItem('cm_admin_token');
+  location.reload();
+}
+
+function status(msg, dur=3000) {
   const el = document.getElementById('edStatus');
   el.textContent = msg; el.classList.add('show');
   clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), dur);
-}}
+}
 
-function hint(msg) {{
+function hint(msg) {
   const el = document.getElementById('hintBar');
-  if (!msg) {{ el.classList.remove('show'); return; }}
+  if (!msg) { el.classList.remove('show'); return; }
   el.textContent = msg; el.classList.add('show');
-}}
+}
 
 // ── TOOL SWITCHING ────────────────────────────────────
-function setTool(t) {{
+function setTool(t) {
   tool = t;
   if (t !== 'line') cancelDrawLine();
   if (t !== 'street') cancelDrawStreet();
   document.querySelectorAll('.ed-toolbar .ed-btn').forEach(b=>b.classList.remove('active'));
-  const map = {{select:'btnSelect',street:'btnStreet',line:'btnLine',station:'btnStation',vehicle:'btnVehicle'}};
+  const map = {select:'btnSelect',street:'btnStreet',line:'btnLine',station:'btnStation',vehicle:'btnVehicle'};
   document.getElementById(map[t])?.classList.add('active');
 
-  const hints = {{
+  const hints = {
     select: '',
     street: 'Click to add street points. Click ✓ Finish Street button when done.',
-    line: selectedLine ? `Drawing route for ${{selectedLine}}. Click stations in order, or click empty space to add a curve point, then click the next station.` : 'Select a line in the panel first.',
+    line: selectedLine ? `Drawing route for ${selectedLine}. Click stations in order, or click empty space to add a curve point, then click the next station.` : 'Select a line in the panel first.',
     station: 'Click the map to place a new station/stop.',
     vehicle: 'Click the map to place a live vehicle.'
-  }};
+  };
   hint(hints[t]);
   engine.wrap.classList.toggle('drawing', t!=='select');
-}}
+}
 
 // ── MAP CLICK ROUTING ─────────────────────────────────
-function handleClick(wx, wy) {{
-  if (tool === 'station') {{
+function handleClick(wx, wy) {
+  if (tool === 'station') {
     document.getElementById('stX').value = Math.round(wx);
     document.getElementById('stY').value = Math.round(wy);
     selectedStation = null;
@@ -234,165 +312,165 @@ function handleClick(wx, wy) {{
     openPanel('stations');
     status('Position set — fill in name and save.');
     return;
-  }}
+  }
 
-  if (tool === 'vehicle') {{
+  if (tool === 'vehicle') {
     document.getElementById('vX').value = Math.round(wx);
     document.getElementById('vY').value = Math.round(wy);
     selectedVehicle = null;
     openPanel('vehicles');
     status('Position set — fill in details and save.');
     return;
-  }}
+  }
 
-  if (tool === 'street') {{
+  if (tool === 'street') {
     streetPoints.push([Math.round(wx), Math.round(wy)]);
     isDrawingStreet = true;
-    status(`Street point ${{streetPoints.length}} added`);
+    status(`Street point ${streetPoints.length} added`);
     engine.render();
     return;
-  }}
+  }
 
-  if (tool === 'line') {{
+  if (tool === 'line') {
     handleLineDrawClick(wx, wy);
     return;
-  }}
+  }
 
   // select tool: hit test stations / vehicles
   const tolerance = 16/engine.scale;
   let best=null,bestDist=Infinity;
-  for (const item of hitTargets) {{
+  for (const item of hitTargets) {
     const d = Math.hypot(item.x-wx,item.y-wy);
-    if (d<tolerance && d<bestDist) {{ bestDist=d; best=item; }}
-  }}
-  if (best) {{
-    if (best.isVehicle) {{ selectVehicleForEdit(best.data); openPanel('vehicles'); }}
-    else {{ selectStationForEdit(best.data); openPanel('stations'); }}
-  }}
-}}
+    if (d<tolerance && d<bestDist) { bestDist=d; best=item; }
+  }
+  if (best) {
+    if (best.isVehicle) { selectVehicleForEdit(best.data); openPanel('vehicles'); }
+    else { selectStationForEdit(best.data); openPanel('stations'); }
+  }
+}
 
 // ── LINE DRAWING (click stations in order; supports curve points between) ──
-function startDrawLine() {{
-  if (!selectedLine) {{ toast('Select or create a line first'); return; }}
+function startDrawLine() {
+  if (!selectedLine) { toast('Select or create a line first'); return; }
   setTool('line');
   drawingStations = [];
   drawingSegmentPoints = [];
   isDrawingLine = true;
   document.getElementById('drawLineStatus').textContent = 'Click your first station…';
-}}
+}
 
-function handleLineDrawClick(wx, wy) {{
-  if (!isDrawingLine) {{ toast('Click "Draw route" first'); return; }}
+function handleLineDrawClick(wx, wy) {
+  if (!isDrawingLine) { toast('Click "Draw route" first'); return; }
 
   // Check if click is near an existing station (snap)
   const tolerance = 20/engine.scale;
   const station = allStations.find(s => Math.hypot(s.x-wx,s.y-wy) < tolerance);
 
-  if (station) {{
+  if (station) {
     // Add this station to the route; flush any pending curve points as the segment to it
-    if (drawingStations.length > 0) {{
+    if (drawingStations.length > 0) {
       drawingSegmentPoints.push([station.x, station.y]);
-    }}
+    }
     drawingStations.push(station);
     drawingSegmentPoints = [[station.x, station.y]]; // reset, start new segment from here
     document.getElementById('drawLineStatus').textContent =
-      `${{drawingStations.length}} station(s): ${{drawingStations.map(s=>s.name).join(' → ')}}. Click next station (or curve point).`;
-    status(`Added station: ${{station.name}}`);
-  }} else {{
+      `${drawingStations.length} station(s): ${drawingStations.map(s=>s.name).join(' → ')}. Click next station (or curve point).`;
+    status(`Added station: ${station.name}`);
+  } else {
     // Curve point (only valid once we have at least one station)
-    if (drawingStations.length === 0) {{ toast('Click a station first'); return; }}
+    if (drawingStations.length === 0) { toast('Click a station first'); return; }
     drawingSegmentPoints.push([Math.round(wx), Math.round(wy)]);
     status('Curve point added');
-  }}
+  }
   engine.render();
-}}
+}
 
-function undoLinePoint() {{
-  if (drawingSegmentPoints.length > 1) {{
+function undoLinePoint() {
+  if (drawingSegmentPoints.length > 1) {
     drawingSegmentPoints.pop();
-  }} else if (drawingStations.length > 1) {{
+  } else if (drawingStations.length > 1) {
     drawingStations.pop();
     drawingSegmentPoints = [[drawingStations[drawingStations.length-1].x, drawingStations[drawingStations.length-1].y]];
-  }}
+  }
   engine.render();
-}}
+}
 
-async function finishDrawLine() {{
-  if (drawingStations.length < 2) {{ toast('Need at least 2 stations'); return; }}
+async function finishDrawLine() {
+  if (drawingStations.length < 2) { toast('Need at least 2 stations'); return; }
   const direction = document.getElementById('lineDirection').value;
 
   // Build segments: one per consecutive station pair
   const segments = [];
-  for (let i=0; i<drawingStations.length-1; i++) {{
+  for (let i=0; i<drawingStations.length-1; i++) {
     // For simplicity here, each segment is a straight polyline; curve points collected
     // during drawing were appended progressively — reconstruct per-pair from stored points
-    segments.push({{
+    segments.push({
       from_station_id: drawingStations[i].id,
       to_station_id: drawingStations[i+1].id,
       points: [[drawingStations[i].x,drawingStations[i].y],[drawingStations[i+1].x,drawingStations[i+1].y]]
-    }});
-  }}
+    });
+  }
 
-  try {{
-    await fetch(API+'/api/admin/line-segments', {{
-      method:'POST', headers:{{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN}},
-      body: JSON.stringify({{ line_id: selectedLine, direction, segments }})
-    }});
+  try {
+    await fetch(API+'/api/admin/line-segments', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},
+      body: JSON.stringify({ line_id: selectedLine, direction, segments })
+    });
     toast('Route saved ✓');
     cancelDrawLine();
     loadAllData();
-  }} catch(e) {{ toast(e.message); }}
-}}
+  } catch(e) { toast(e.message); }
+}
 
-function cancelDrawLine() {{
+function cancelDrawLine() {
   isDrawingLine = false;
   drawingStations = [];
   drawingSegmentPoints = [];
   document.getElementById('drawLineStatus').textContent = '';
   engine.render();
-}}
+}
 
 // ── STREET DRAWING ────────────────────────────────────
-async function finishDrawStreet() {{
-  if (streetPoints.length < 2) {{ toast('Need at least 2 points'); return; }}
-  try {{
-    await fetch(API+'/api/admin/streets', {{
-      method:'POST', headers:{{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN}},
-      body: JSON.stringify({{ name:'', points: streetPoints, width:6, color:'#D1D5DB' }})
-    }});
+async function finishDrawStreet() {
+  if (streetPoints.length < 2) { toast('Need at least 2 points'); return; }
+  try {
+    await fetch(API+'/api/admin/streets', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},
+      body: JSON.stringify({ name:'', points: streetPoints, width:6, color:'#D1D5DB' })
+    });
     toast('Street saved ✓');
     cancelDrawStreet();
     loadAllData();
-  }} catch(e) {{ toast(e.message); }}
-}}
+  } catch(e) { toast(e.message); }
+}
 
-function cancelDrawStreet() {{
+function cancelDrawStreet() {
   isDrawingStreet = false;
   streetPoints = [];
   engine.render();
-}}
+}
 
 // Double-click / Enter to finish either drawing mode
-document.addEventListener('keydown', e => {{
-  if (e.key === 'Enter') {{
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
     if (isDrawingLine) finishDrawLine();
     if (isDrawingStreet) finishDrawStreet();
-  }}
-  if (e.key === 'Escape') {{
+  }
+  if (e.key === 'Escape') {
     cancelDrawLine(); cancelDrawStreet(); setTool('select');
-  }}
-}});
-engine.wrap.addEventListener('dblclick', () => {{
+  }
+});
+engine.wrap.addEventListener('dblclick', () => {
   if (isDrawingLine) finishDrawLine();
   if (isDrawingStreet) finishDrawStreet();
-}});
+});
 
 // ── DRAW (canvas render) ──────────────────────────────
-function draw(ctx) {{
+function draw(ctx) {
   document.getElementById('zoomPct').textContent = Math.round(engine.scale*100)+'%';
 
   // Streets
-  allStreets.forEach(st => {{
+  allStreets.forEach(st => {
     const pts = JSON.parse(st.points_json);
     if (pts.length<2) return;
     ctx.strokeStyle = st.color||'#D1D5DB'; ctx.lineWidth = st.width||6;
@@ -400,19 +478,19 @@ function draw(ctx) {{
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke();
-  }});
+  });
 
   // In-progress street
-  if (isDrawingStreet && streetPoints.length) {{
+  if (isDrawingStreet && streetPoints.length) {
     ctx.strokeStyle = '#9CA3AF'; ctx.lineWidth=5; ctx.setLineDash([8,6]);
     ctx.beginPath(); ctx.moveTo(streetPoints[0][0],streetPoints[0][1]);
     streetPoints.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.setLineDash([]);
-    streetPoints.forEach(p => {{ ctx.beginPath(); ctx.arc(p[0],p[1],5,0,7); ctx.fillStyle='#6B7280'; ctx.fill(); }});
-  }}
+    streetPoints.forEach(p => { ctx.beginPath(); ctx.arc(p[0],p[1],5,0,7); ctx.fillStyle='#6B7280'; ctx.fill(); });
+  }
 
   // Line segments
-  allSegments.forEach(seg => {{
+  allSegments.forEach(seg => {
     const line = allLines[seg.line_id];
     if (!line) return;
     const pts = JSON.parse(seg.points_json);
@@ -423,20 +501,20 @@ function draw(ctx) {{
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.globalAlpha=1;
-  }});
+  });
 
   // In-progress line drawing
-  if (isDrawingLine && drawingStations.length) {{
+  if (isDrawingLine && drawingStations.length) {
     const color = allLines[selectedLine]?.color || '#2563EB';
     // draw segment-in-progress
-    if (drawingSegmentPoints.length > 1) {{
+    if (drawingSegmentPoints.length > 1) {
       ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.setLineDash([10,6]); ctx.globalAlpha=.8;
       ctx.beginPath(); ctx.moveTo(drawingSegmentPoints[0][0],drawingSegmentPoints[0][1]);
       drawingSegmentPoints.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
       ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
-    }}
+    }
     // highlight selected stations in order
-    drawingStations.forEach((s,i) => {{
+    drawingStations.forEach((s,i) => {
       ctx.beginPath(); ctx.arc(s.x,s.y,12,0,Math.PI*2);
       ctx.fillStyle = color; ctx.fill();
       ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
@@ -444,12 +522,12 @@ function draw(ctx) {{
       ctx.fillStyle='white'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(i+1, 0, 0);
       ctx.restore();
-    }});
-  }}
+    });
+  }
 
   // Stations
   hitTargets = [];
-  allStations.forEach(s => {{
+  allStations.forEach(s => {
     const isSel = selectedStation && s.id === selectedStation.id;
     const r = s.type === 'hub' ? 11 : 7;
     ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
@@ -457,18 +535,18 @@ function draw(ctx) {{
     ctx.fill();
     ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
 
-    if (engine.scale > .4) {{
+    if (engine.scale > .4) {
       ctx.save(); ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
       ctx.fillStyle='#111827'; ctx.font='600 11px -apple-system,sans-serif';
       ctx.textAlign='left'; ctx.textBaseline='middle';
       ctx.fillText(s.name, r*engine.scale+6, 0);
       ctx.restore();
-    }}
-    hitTargets.push({{x:s.x,y:s.y,data:s}});
-  }});
+    }
+    hitTargets.push({x:s.x,y:s.y,data:s});
+  });
 
   // Vehicles
-  allVehicles.forEach(v => {{
+  allVehicles.forEach(v => {
     ctx.beginPath(); ctx.arc(v.x,v.y,15,0,Math.PI*2);
     ctx.fillStyle = v.color||'#666'; ctx.fill();
     ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
@@ -476,47 +554,47 @@ function draw(ctx) {{
     ctx.fillStyle = v.text_color||'white'; ctx.font='bold 10px sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.line_id,0,0);
     ctx.restore();
-    hitTargets.push({{x:v.x,y:v.y,data:v,isVehicle:true}});
-  }});
-}}
+    hitTargets.push({x:v.x,y:v.y,data:v,isVehicle:true});
+  });
+}
 
-function fitAll() {{
+function fitAll() {
   const pts = allStations.map(s=>[s.x,s.y]);
   if (pts.length) engine.fitToContent(pts);
   else engine.centerOn(1500,1500,1);
-}}
+}
 
 // ── PANEL MANAGEMENT ──────────────────────────────────
 let currentPanel = null;
-function openPanel(name) {{
+function openPanel(name) {
   currentPanel = name;
   document.getElementById('edPanel').classList.add('open');
   ['Lines','Stations','Vehicles'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
   if (name==='lines') refreshLineList();
   if (name==='stations') refreshStationList();
   if (name==='vehicles') refreshVehicleList();
-}}
-function closePanel() {{ document.getElementById('edPanel').classList.remove('open'); }}
+}
+function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
 // ── LINES CRUD ────────────────────────────────────────
-async function saveLine() {{
+async function saveLine() {
   const id = document.getElementById('lineId').value.trim();
   const name = document.getElementById('lineName').value.trim();
-  if (!id||!name) {{ toast('ID and name required'); return; }}
-  const body = {{
+  if (!id||!name) { toast('ID and name required'); return; }
+  const body = {
     id, name, type: document.getElementById('lineType').value,
     color: document.getElementById('lineColor').value,
     text_color: document.getElementById('lineTextColor').value,
     is_loop: document.getElementById('lineLoop').checked,
     frequency: document.getElementById('lineFreq').value
-  }};
-  try {{
-    await fetch(API+'/api/admin/lines',{{method:'POST',headers:{{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN}},body:JSON.stringify(body)}});
+  };
+  try {
+    await fetch(API+'/api/admin/lines',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
     toast('Line saved ✓'); selectedLine=id; loadAllData();
-  }} catch(e) {{ toast(e.message); }}
-}}
+  } catch(e) { toast(e.message); }
+}
 
-function selectLine(id) {{
+function selectLine(id) {
   selectedLine = id;
   const l = allLines[id]; if (!l) return;
   document.getElementById('lineId').value=l.id;
@@ -528,44 +606,44 @@ function selectLine(id) {{
   document.getElementById('lineFreq').value=l.frequency||'';
   refreshLineList();
   engine.render();
-}}
+}
 
-function refreshLineList() {{
+function refreshLineList() {
   document.getElementById('lineList').innerHTML = Object.values(allLines).map(l => `
-    <div class="line-item ${{selectedLine===l.id?'sel':''}}" onclick="selectLine('${{l.id}}')">
-      <div style="width:28px;height:28px;border-radius:6px;background:${{l.color}};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:${{l.text_color}};flex-shrink:0">${{l.id}}</div>
-      <div><div style="font-weight:700;font-size:.85rem">${{l.name}}</div><div style="font-size:.7rem;color:var(--gray)">${{l.type}}</div></div>
+    <div class="line-item ${selectedLine===l.id?'sel':''}" onclick="selectLine('${l.id}')">
+      <div style="width:28px;height:28px;border-radius:6px;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:${l.text_color};flex-shrink:0">${l.id}</div>
+      <div><div style="font-weight:700;font-size:.85rem">${l.name}</div><div style="font-size:.7rem;color:var(--gray)">${l.type}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray)">No lines yet.</div>';
-}}
+}
 
-async function deleteSelectedLine() {{
-  if (!selectedLine||!confirm(`Delete line ${{selectedLine}}? This removes its route and station assignments.`)) return;
-  await fetch(API+`/api/admin/lines/${{selectedLine}}`,{{method:'DELETE',headers:{{'Authorization':'Bearer '+ADMIN}}}});
+async function deleteSelectedLine() {
+  if (!selectedLine||!confirm(`Delete line ${selectedLine}? This removes its route and station assignments.`)) return;
+  await fetch(API+`/api/admin/lines/${selectedLine}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
   selectedLine=null; toast('Line deleted'); loadAllData();
-}}
+}
 
 // ── STATIONS CRUD ─────────────────────────────────────
-async function saveStation() {{
+async function saveStation() {
   const name = document.getElementById('stName').value.trim();
   const x = parseFloat(document.getElementById('stX').value);
   const y = parseFloat(document.getElementById('stY').value);
-  if (!name||isNaN(x)||isNaN(y)) {{ toast('Name and position required'); return; }}
-  const body = {{ name, x, y, type: document.getElementById('stType').value, street: document.getElementById('stStreet').value }};
+  if (!name||isNaN(x)||isNaN(y)) { toast('Name and position required'); return; }
+  const body = { name, x, y, type: document.getElementById('stType').value, street: document.getElementById('stStreet').value };
   const method = selectedStation ? 'PUT' : 'POST';
-  const url = selectedStation ? `/api/admin/stations/${{selectedStation.id}}` : '/api/admin/stations';
-  try {{
-    await fetch(API+url,{{method,headers:{{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN}},body:JSON.stringify(body)}});
+  const url = selectedStation ? `/api/admin/stations/${selectedStation.id}` : '/api/admin/stations';
+  try {
+    await fetch(API+url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
     toast('Stop saved ✓'); selectedStation=null; loadAllData();
-  }} catch(e) {{ toast(e.message); }}
-}}
+  } catch(e) { toast(e.message); }
+}
 
-async function deleteStation() {{
+async function deleteStation() {
   if (!selectedStation||!confirm('Delete this stop? This also removes its route connections.')) return;
-  await fetch(API+`/api/admin/stations/${{selectedStation.id}}`,{{method:'DELETE',headers:{{'Authorization':'Bearer '+ADMIN}}}});
+  await fetch(API+`/api/admin/stations/${selectedStation.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
   selectedStation=null; toast('Stop deleted'); loadAllData();
-}}
+}
 
-function selectStationForEdit(s) {{
+function selectStationForEdit(s) {
   selectedStation = s;
   document.getElementById('stName').value=s.name;
   document.getElementById('stStreet').value=s.street||'';
@@ -573,51 +651,56 @@ function selectStationForEdit(s) {{
   document.getElementById('stX').value=s.x;
   document.getElementById('stY').value=s.y;
   engine.render();
-}}
+}
 
-function refreshStationList() {{
+function selectStationById(id) {
+  const s = allStations.find(x => x.id === id);
+  if (s) selectStationForEdit(s);
+}
+
+function refreshStationList() {
   document.getElementById('stationList').innerHTML = allStations.map(s => `
-    <div class="line-item" onclick='selectStationForEdit(${{JSON.stringify(s)}})'>
-      <span style="font-size:1rem">${{s.type==='hub'?'🔀':s.type==='station'?'🚆':'📍'}}</span>
-      <div><div style="font-weight:700;font-size:.82rem">${{s.name}}</div><div style="font-size:.7rem;color:var(--gray)">${{Math.round(s.x)}}, ${{Math.round(s.y)}}</div></div>
+    <div class="line-item" onclick="selectStationById(${s.id})">
+      <span style="font-size:1rem">${s.type==='hub'?'🔀':s.type==='station'?'🚆':'📍'}</span>
+      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(s.name)}</div><div style="font-size:.7rem;color:var(--gray)">${Math.round(s.x)}, ${Math.round(s.y)}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No stops yet.</div>';
-}}
+}
 
 // ── VEHICLES CRUD ─────────────────────────────────────
-function populateVehicleSelects() {{
+function populateVehicleSelects() {
   document.getElementById('vLine').innerHTML = '<option value="">Select line…</option>' +
-    Object.values(allLines).map(l=>`<option value="${{l.id}}">${{l.id}} — ${{l.name}}</option>`).join('');
+    Object.values(allLines).map(l=>`<option value="${l.id}">${l.id} — ${l.name}</option>`).join('');
   document.getElementById('vNextStation').innerHTML = '<option value="">Next station…</option>' +
-    allStations.map(s=>`<option value="${{s.id}}">${{s.name}}</option>`).join('');
-}}
+    allStations.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
 
-async function saveVehicle() {{
+async function saveVehicle() {
   const line_id = document.getElementById('vLine').value;
   const x = parseFloat(document.getElementById('vX').value);
   const y = parseFloat(document.getElementById('vY').value);
-  if (!line_id||isNaN(x)||isNaN(y)) {{ toast('Line and position required'); return; }}
-  const body = {{
+  if (!line_id||isNaN(x)||isNaN(y)) { toast('Line and position required'); return; }
+  const body = {
     line_id, x, y,
     vehicle_label: document.getElementById('vLabel').value,
     speed_kmh: parseFloat(document.getElementById('vSpeed').value)||0,
     next_station_id: document.getElementById('vNextStation').value || null,
     status: document.getElementById('vStatus').value
-  }};
+  };
   const method = selectedVehicle ? 'PUT' : 'POST';
-  const url = selectedVehicle ? `/api/admin/live/${{selectedVehicle.id}}` : '/api/admin/live';
-  try {{
-    await fetch(API+url,{{method,headers:{{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN}},body:JSON.stringify(body)}});
+  const url = selectedVehicle ? `/api/admin/live/${selectedVehicle.id}` : '/api/admin/live';
+  try {
+    await fetch(API+url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
     toast('Vehicle saved ✓'); selectedVehicle=null; loadAllData();
-  }} catch(e) {{ toast(e.message); }}
-}}
+  } catch(e) { toast(e.message); }
+}
 
-async function deleteVehicle() {{
+async function deleteVehicle() {
   if (!selectedVehicle||!confirm('Remove this vehicle?')) return;
-  await fetch(API+`/api/admin/live/${{selectedVehicle.id}}`,{{method:'DELETE',headers:{{'Authorization':'Bearer '+ADMIN}}}});
+  await fetch(API+`/api/admin/live/${selectedVehicle.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
   selectedVehicle=null; toast('Vehicle removed'); loadAllData();
-}}
+}
 
-function selectVehicleForEdit(v) {{
+function selectVehicleForEdit(v) {
   selectedVehicle=v;
   document.getElementById('vLine').value=v.line_id;
   document.getElementById('vLabel').value=v.vehicle_label||'';
@@ -627,37 +710,42 @@ function selectVehicleForEdit(v) {{
   document.getElementById('vX').value=v.x;
   document.getElementById('vY').value=v.y;
   engine.render();
-}}
+}
 
-function refreshVehicleList() {{
+function selectVehicleById(id) {
+  const v = allVehicles.find(x => x.id === id);
+  if (v) selectVehicleForEdit(v);
+}
+
+function refreshVehicleList() {
   document.getElementById('vehicleList').innerHTML = allVehicles.map(v => `
-    <div class="line-item" onclick='selectVehicleForEdit(${{JSON.stringify(v)}})'>
-      <div style="width:26px;height:26px;border-radius:50%;background:${{v.color||'#666'}};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${{v.line_id}}</div>
-      <div><div style="font-weight:700;font-size:.82rem">${{v.vehicle_label||'Vehicle '+v.id}}</div><div style="font-size:.7rem;color:var(--gray)">${{v.speed_kmh||0}} km/h · ${{v.status}}</div></div>
+    <div class="line-item" onclick="selectVehicleById(${v.id})">
+      <div style="width:26px;height:26px;border-radius:50%;background:${v.color||'#666'};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${v.line_id}</div>
+      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} km/h · ${v.status}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No vehicles placed.</div>';
-}}
+}
 
 // ── LOAD ALL DATA ─────────────────────────────────────
-async function loadAllData() {{
-  try {{
+async function loadAllData() {
+  try {
     const [lines, stations, streets, vehicles] = await Promise.all([
       apiFetch('/api/lines'), apiFetch('/api/stations'), apiFetch('/api/streets'), apiFetch('/api/live')
     ]);
-    allLines = {{}}; lines.forEach(l=>allLines[l.id]=l);
+    allLines = {}; lines.forEach(l=>allLines[l.id]=l);
     allStations = stations; allStreets = streets; allVehicles = vehicles;
 
     allSegments = [];
-    for (const line of lines) {{
-      try {{ const d = await apiFetch(`/api/lines/${{encodeURIComponent(line.id)}}`); allSegments.push(...d.segments); }} catch {{}}
-    }}
+    for (const line of lines) {
+      try { const d = await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
+    }
 
     populateVehicleSelects();
     engine.render();
     if (currentPanel==='lines') refreshLineList();
     if (currentPanel==='stations') refreshStationList();
     if (currentPanel==='vehicles') refreshVehicleList();
-  }} catch(e) {{ toast('Failed to load: '+e.message); }}
-}}
+  } catch(e) { toast('Failed to load: '+e.message); }
+}
 
 loadAllData();
 fitAll();
@@ -671,9 +759,9 @@ const origDraw = draw;
   <button onclick="if(isDrawingLine)finishDrawLine();if(isDrawingStreet)finishDrawStreet();" style="background:var(--green);color:white;border:none;padding:.7rem 1.4rem;border-radius:999px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow-md)">✓ Finish</button>
 </div>
 <script>
-setInterval(() => {{
+setInterval(() => {
   document.getElementById('finishBar').style.display = (isDrawingLine||isDrawingStreet) ? 'flex' : 'none';
-}}, 200);
+}, 200);
 </script>
 </body>
 </html>
