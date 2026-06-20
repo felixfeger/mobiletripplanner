@@ -748,8 +748,12 @@ async function loadAllData() {
   } catch(e) { toast('Failed to load: '+e.message); }
 }
 
-loadAllData();
-fitAll();
+async function init() {
+  await loadAllData();
+  fitAll();
+  status(`Loaded: ${allStations.length} stations, ${allSegments.length} segments, ${allVehicles.length} vehicles, ${Object.keys(allLines).length} lines`, 6000);
+}
+init();
 
 // Helper finish buttons floating near toolbar when drawing
 const origDraw = draw;
