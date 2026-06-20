@@ -144,6 +144,7 @@ const mini = new CanvasEngine('miniWrap','miniCanvas', {
   scale: .4, minScale:.1, maxScale:3, worldW:3000, worldH:3000, gridSize:100,
   onDraw: drawMini
 });
+mini.render(); // safe now that `mini` is fully assigned
 
 function drawMini(ctx) {
   allSegments.forEach(seg => {
