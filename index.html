@@ -124,7 +124,7 @@ let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehic
 let stationScreenPos = []; // for hit testing
 
 const engine = new CanvasEngine('canvasWrap','canvas', {
-  scale: 1, minScale: .15, maxScale: 4, worldW: 6000, worldH: 6000, gridSize: 100,
+  scale: 1, minScale: .15, maxScale: 4, fitMaxScale: 2.2, worldW: 6000, worldH: 6000, gridSize: 100,
   onDraw: draw,
   onClick: handleClick
 });
@@ -180,14 +180,14 @@ function draw(ctx) {
 
     if (isHub) {
       ctx.fillStyle = 'white';
-      ctx.font = `bold ${9/engine.scale > 9 ? 9 : 9}px -apple-system,sans-serif`;
+      ctx.font = `bold ${9/engine.scale > 9 ? 9 : 9}px 'Helvetica Neue',Helvetica,Arial,sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     }
 
     // Label (only show when zoomed in enough)
     if (engine.scale > 0.5) {
       ctx.fillStyle = '#111827';
-      ctx.font = `600 ${12}px -apple-system,sans-serif`;
+      ctx.font = `600 ${12}px 'Helvetica Neue',Helvetica,Arial,sans-serif`;
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.save();
       ctx.scale(1/engine.scale, 1/engine.scale);
@@ -214,7 +214,7 @@ function draw(ctx) {
     ctx.translate(v.x, v.y);
     ctx.scale(1/engine.scale, 1/engine.scale);
     ctx.fillStyle = v.text_color || 'white';
-    ctx.font = 'bold 11px -apple-system,sans-serif';
+    ctx.font = "bold 11px 'Helvetica Neue',Helvetica,Arial,sans-serif";
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(v.line_id, 0, 0);
     ctx.restore();
@@ -239,6 +239,15 @@ function handleClick(wx, wy) {
 function fitAll() {
   const pts = [];
   allStations.forEach(s => pts.push([s.x,s.y]));
+  // Include drawn route geometry too, not just station centers — a curved
+  // segment can bow out past its endpoint stations, and streets can extend
+  // beyond stations entirely, so the fit needs to account for all of it.
+  allSegments.forEach(seg => {
+    try { JSON.parse(seg.points_json).forEach(p => pts.push(p)); } catch {}
+  });
+  allStreets.forEach(st => {
+    try { JSON.parse(st.points_json).forEach(p => pts.push(p)); } catch {}
+  });
   if (pts.length) engine.fitToContent(pts);
   else engine.centerOn(3000,3000,1);
 }
