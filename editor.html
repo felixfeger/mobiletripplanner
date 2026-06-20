@@ -263,6 +263,7 @@ const engine = new CanvasEngine('canvasWrap','canvas', {
   onDraw: draw,
   onClick: handleClick
 });
+engine.render(); // safe now that `engine` is fully assigned
 
 function resetAdminToken() {
   localStorage.removeItem('cm_admin_token');
