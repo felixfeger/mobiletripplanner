@@ -234,8 +234,8 @@ body,html{height:100%;overflow:hidden;}
 const ADMIN = localStorage.getItem('cm_admin_token') || '';
 if (!ADMIN) {
   const entered = prompt('Enter your admin token (must match the ADMIN_TOKEN secret set in your Cloudflare Worker):');
-  if (entered) {
-    localStorage.setItem('cm_admin_token', entered);
+  if (entered && entered.trim()) {
+    localStorage.setItem('cm_admin_token', entered.trim());
     location.reload();
   }
 }
@@ -268,6 +268,20 @@ engine.render(); // safe now that `engine` is fully assigned
 function resetAdminToken() {
   localStorage.removeItem('cm_admin_token');
   location.reload();
+}
+
+// Wraps admin-authenticated fetch calls and throws on any non-2xx response,
+// so callers can no longer show a misleading "saved ✓" toast on failure.
+async function adminFetch(path, opts = {}) {
+  const headers = { 'Authorization': 'Bearer ' + ADMIN, ...opts.headers };
+  const r = await fetch(API + path, { ...opts, headers });
+  let data = null;
+  try { data = await r.json(); } catch {}
+  if (!r.ok) {
+    const msg = data?.error || `${r.status} ${r.statusText}`;
+    throw new Error(msg);
+  }
+  return data;
 }
 
 function status(msg, dur=3000) {
@@ -413,8 +427,8 @@ async function finishDrawLine() {
   }
 
   try {
-    await fetch(API+'/api/admin/line-segments', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},
+    await adminFetch('/api/admin/line-segments', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ line_id: selectedLine, direction, segments })
     });
     toast('Route saved ✓');
@@ -435,8 +449,8 @@ function cancelDrawLine() {
 async function finishDrawStreet() {
   if (streetPoints.length < 2) { toast('Need at least 2 points'); return; }
   try {
-    await fetch(API+'/api/admin/streets', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},
+    await adminFetch('/api/admin/streets', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ name:'', points: streetPoints, width:6, color:'#D1D5DB' })
     });
     toast('Street saved ✓');
@@ -590,7 +604,7 @@ async function saveLine() {
     frequency: document.getElementById('lineFreq').value
   };
   try {
-    await fetch(API+'/api/admin/lines',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
+    await adminFetch('/api/admin/lines',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     toast('Line saved ✓'); selectedLine=id; loadAllData();
   } catch(e) { toast(e.message); }
 }
@@ -619,8 +633,10 @@ function refreshLineList() {
 
 async function deleteSelectedLine() {
   if (!selectedLine||!confirm(`Delete line ${selectedLine}? This removes its route and station assignments.`)) return;
-  await fetch(API+`/api/admin/lines/${selectedLine}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
-  selectedLine=null; toast('Line deleted'); loadAllData();
+  try {
+    await adminFetch(`/api/admin/lines/${selectedLine}`,{method:'DELETE'});
+    selectedLine=null; toast('Line deleted'); loadAllData();
+  } catch(e) { toast(e.message); }
 }
 
 // ── STATIONS CRUD ─────────────────────────────────────
@@ -633,15 +649,17 @@ async function saveStation() {
   const method = selectedStation ? 'PUT' : 'POST';
   const url = selectedStation ? `/api/admin/stations/${selectedStation.id}` : '/api/admin/stations';
   try {
-    await fetch(API+url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
+    await adminFetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     toast('Stop saved ✓'); selectedStation=null; loadAllData();
   } catch(e) { toast(e.message); }
 }
 
 async function deleteStation() {
   if (!selectedStation||!confirm('Delete this stop? This also removes its route connections.')) return;
-  await fetch(API+`/api/admin/stations/${selectedStation.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
-  selectedStation=null; toast('Stop deleted'); loadAllData();
+  try {
+    await adminFetch(`/api/admin/stations/${selectedStation.id}`,{method:'DELETE'});
+    selectedStation=null; toast('Stop deleted'); loadAllData();
+  } catch(e) { toast(e.message); }
 }
 
 function selectStationForEdit(s) {
@@ -690,15 +708,17 @@ async function saveVehicle() {
   const method = selectedVehicle ? 'PUT' : 'POST';
   const url = selectedVehicle ? `/api/admin/live/${selectedVehicle.id}` : '/api/admin/live';
   try {
-    await fetch(API+url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+ADMIN},body:JSON.stringify(body)});
+    await adminFetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     toast('Vehicle saved ✓'); selectedVehicle=null; loadAllData();
   } catch(e) { toast(e.message); }
 }
 
 async function deleteVehicle() {
   if (!selectedVehicle||!confirm('Remove this vehicle?')) return;
-  await fetch(API+`/api/admin/live/${selectedVehicle.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+ADMIN}});
-  selectedVehicle=null; toast('Vehicle removed'); loadAllData();
+  try {
+    await adminFetch(`/api/admin/live/${selectedVehicle.id}`,{method:'DELETE'});
+    selectedVehicle=null; toast('Vehicle removed'); loadAllData();
+  } catch(e) { toast(e.message); }
 }
 
 function selectVehicleForEdit(v) {
