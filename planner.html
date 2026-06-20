@@ -179,7 +179,13 @@ async function loadData() {
       try { const d = await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
     }
     mini.render();
-    if (allStations.length) mini.fitToContent(allStations.map(s=>[s.x,s.y]));
+    {
+      const pts = allStations.map(s=>[s.x,s.y]);
+      allSegments.forEach(seg => {
+        try { JSON.parse(seg.points_json).forEach(p => pts.push(p)); } catch {}
+      });
+      if (pts.length) mini.fitToContent(pts);
+    }
 
     handleUrlParams();
   } catch {}
