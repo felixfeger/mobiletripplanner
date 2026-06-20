@@ -23,6 +23,13 @@ async function apiFetch(path, opts = {}) {
   return data;
 }
 
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function toast(msg, duration = 2500) {
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id='toast'; el.className='toast'; document.body.appendChild(el); }
@@ -60,21 +67,29 @@ function renderLoginState() {
   }
 }
 
+let _savedJourneysCache = [];
+
 async function loadSavedJourneys() {
   const list = document.getElementById('savedList');
   if (!list) return;
   list.innerHTML = '<div class="spinner" style="margin:.5rem auto"></div>';
   try {
     const journeys = await apiFetch('/api/journeys');
+    _savedJourneysCache = journeys;
     if (!journeys.length) { list.innerHTML = '<p style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No saved journeys yet.</p>'; return; }
     list.innerHTML = journeys.map(j => `
-      <div class="saved-item" onclick='loadJourney(${JSON.stringify({id:j.id, from_station_id:j.from_station_id, to_station_id:j.to_station_id, from_name:j.from_name, to_name:j.to_name, name:j.name})})'>
+      <div class="saved-item" onclick="loadJourneyById(${j.id})">
         <div class="saved-icon">🚌</div>
-        <div><div class="saved-name">${j.name}</div><div class="saved-sub">${j.from_name} → ${j.to_name}</div></div>
+        <div><div class="saved-name">${escapeHtml(j.name)}</div><div class="saved-sub">${escapeHtml(j.from_name)} → ${escapeHtml(j.to_name)}</div></div>
         <button onclick="event.stopPropagation();deleteJourney(${j.id})" style="margin-left:auto;background:none;border:none;color:var(--gray);font-size:1rem;padding:.25rem">×</button>
       </div>
     `).join('');
   } catch { list.innerHTML = '<p style="font-size:.8rem;color:var(--gray)">Failed to load.</p>'; }
+}
+
+function loadJourneyById(id) {
+  const j = _savedJourneysCache.find(x => x.id === id);
+  if (j) loadJourney(j);
 }
 
 async function deleteJourney(id) {
