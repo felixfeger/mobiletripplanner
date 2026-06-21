@@ -200,7 +200,7 @@ body,html{height:100%;overflow:hidden;}
       <input class="ed-input" id="vLabel" placeholder="Vehicle label (e.g. Bus 42)" style="margin-bottom:.4rem">
       <select class="ed-input" id="vNextStation" style="margin-bottom:.4rem"><option value="">Next station…</option></select>
       <div class="ed-row">
-        <input class="ed-input" id="vSpeed" type="number" placeholder="Speed km/h" value="30">
+        <input class="ed-input" id="vSpeed" type="number" placeholder="Speed mph" value="20">
         <select class="ed-input" id="vStatus">
           <option value="in_service">In service</option>
           <option value="delayed">Delayed</option>
@@ -387,7 +387,11 @@ function handleLineDrawClick(wx, wy) {
   if (!isDrawingLine) { toast('Click "Draw route" first'); return; }
 
   // Check if click is near an existing station (snap)
-  const tolerance = 20/engine.scale;
+  // Snap tolerance is capped in screen-space (not pure world-space) so it
+  // stays roughly the same visual size regardless of zoom level, and is
+  // kept tight to the actual station marker radius so clicks intended as
+  // curve points near a station don't accidentally snap onto it.
+  const tolerance = Math.min(14, 14/engine.scale);
   const station = allStations.find(s => Math.hypot(s.x-wx,s.y-wy) < tolerance);
   console.log('[lineDraw] click at', Math.round(wx), Math.round(wy), 'snapped station:', station?.name || 'none (curve point)');
 
@@ -790,7 +794,7 @@ function refreshVehicleList() {
   document.getElementById('vehicleList').innerHTML = allVehicles.map(v => `
     <div class="line-item" onclick="selectVehicleById(${v.id})">
       <div style="width:26px;height:26px;border-radius:50%;background:${v.color||'#666'};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${v.line_id}</div>
-      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} km/h · ${v.status}</div></div>
+      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} mph · ${v.status}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No vehicles placed.</div>';
 }
 
