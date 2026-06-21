@@ -165,6 +165,22 @@ function fmtSeconds(s) {
   return m < 1 ? '<1 min' : `${m} min`;
 }
 
+// Canonical map scale: 50px = 1 mile. Vehicle speed is stored/entered in mph.
+const PX_PER_MILE = 50;
+
+// Minutes for a vehicle to cover a pixel distance at a given mph.
+function etaMinutesFromSpeed(distPx, speedMph) {
+  if (!speedMph || speedMph < 1 || !distPx) return null;
+  const miles = distPx / PX_PER_MILE;
+  const hours = miles / speedMph;
+  return Math.max(1, Math.round(hours * 60));
+}
+
+// Walking time in minutes for a pixel distance, at an assumed 3mph walking pace.
+function walkMinutesFromPx(distPx) {
+  return etaMinutesFromSpeed(distPx, 3) || 1;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // CANVAS ENGINE — pan/zoom/draw on a blank canvas (no map tiles)
 // ═══════════════════════════════════════════════════════════════
