@@ -292,10 +292,9 @@ function renderNearby() {
     const line = allLines[v.line_id];
     if (!line) return;
     let etaMin = null;
-    if (v.next_x != null && v.speed_kmh > 1) {
+    if (v.next_x != null) {
       const dist = Math.hypot(v.next_x-v.x, v.next_y-v.y);
-      const pxPerMin = (v.speed_kmh * 1000/60) / 50; // assume 50px = 1km scale
-      etaMin = Math.max(1, Math.round(dist / Math.max(pxPerMin,1)));
+      etaMin = etaMinutesFromSpeed(dist, v.speed_kmh);
     }
     arrivals.push({ line, eta: etaMin, headsign: v.next_station_name || line.name, isLive:true, vehicle:v });
   });
@@ -362,17 +361,16 @@ function showVehiclePopup(v) {
   document.getElementById('vpopupSub').textContent = v.line_name || '';
 
   let etaMin = '—';
-  if (v.next_x != null && v.speed_kmh > 1) {
+  if (v.next_x != null) {
     const dist = Math.hypot(v.next_x-v.x, v.next_y-v.y);
-    const pxPerMin = (v.speed_kmh * 1000/60) / 50;
-    etaMin = Math.max(1, Math.round(dist / Math.max(pxPerMin,1)));
+    etaMin = etaMinutesFromSpeed(dist, v.speed_kmh) ?? '—';
   }
 
   document.getElementById('vpopupLbl1').textContent='Next stop';
   document.getElementById('vpopupVal1').textContent='1';
   document.getElementById('vpopupLbl2').textContent='Minutes';
   document.getElementById('vpopupVal2').textContent=etaMin;
-  document.getElementById('vpopupLbl3').textContent='km/h';
+  document.getElementById('vpopupLbl3').textContent='mph';
   document.getElementById('vpopupVal3').textContent=Math.round(v.speed_kmh||0);
   document.getElementById('vpopupLbl4').textContent='Status';
   document.getElementById('vpopupVal4').textContent=v.status==='in_service'?'✓':v.status;
