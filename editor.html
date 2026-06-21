@@ -389,6 +389,7 @@ function handleLineDrawClick(wx, wy) {
   // Check if click is near an existing station (snap)
   const tolerance = 20/engine.scale;
   const station = allStations.find(s => Math.hypot(s.x-wx,s.y-wy) < tolerance);
+  console.log('[lineDraw] click at', Math.round(wx), Math.round(wy), 'snapped station:', station?.name || 'none (curve point)');
 
   if (station) {
     if (drawingStations.length > 0) {
@@ -397,6 +398,7 @@ function handleLineDrawClick(wx, wy) {
       const prevStation = drawingStations[drawingStations.length-1];
       if (station.id === prevStation.id) { toast('Already at this station'); return; }
       const points = [[prevStation.x, prevStation.y], ...currentCurvePoints, [station.x, station.y]];
+      console.log('[lineDraw] committing segment', prevStation.name, '->', station.name, 'with', currentCurvePoints.length, 'curve point(s). Full points:', JSON.stringify(points));
       drawingSegments.push({
         from_station_id: prevStation.id,
         to_station_id: station.id,
@@ -412,7 +414,8 @@ function handleLineDrawClick(wx, wy) {
     // Curve point (only valid once we have at least one station to draw from)
     if (drawingStations.length === 0) { toast('Click a station first'); return; }
     currentCurvePoints.push([Math.round(wx), Math.round(wy)]);
-    status('Curve point added');
+    console.log('[lineDraw] curve point added, currentCurvePoints now:', JSON.stringify(currentCurvePoints));
+    status(`Curve point added (${currentCurvePoints.length} total for this segment)`);
   }
   engine.render();
 }
@@ -448,6 +451,7 @@ async function finishDrawLine() {
   // drawingSegments already holds the real polylines (including curve
   // points) for every committed station-to-station hop.
   const segments = drawingSegments;
+  console.log('[lineDraw] FINISHING — sending segments to server:', JSON.stringify(segments, null, 2));
 
   try {
     await adminFetch('/api/admin/line-segments', {
