@@ -127,21 +127,24 @@ body,html{height:100%;overflow:hidden;}
         <input type="color" class="ed-clr" id="lineTextColor" value="#FFFFFF" title="Text color">
       </div>
       <input class="ed-input" id="lineFreq" placeholder="Frequency (e.g. Every 10 min)" style="margin-top:.4rem">
-      <div class="chk-row"><input type="checkbox" id="lineLoop"><label for="lineLoop">Loop line</label></div>
+      <div class="chk-row"><input type="checkbox" id="lineLoop"><label for="lineLoop">Loop line (path forms a closed circuit back to start)</label></div>
       <button class="ed-action" onclick="saveLine()">Save line</button>
     </div>
 
     <div class="ed-sec">
       <div class="ed-lbl">Route direction being edited</div>
       <select class="ed-input" id="lineDirection">
-        <option value="outbound">Outbound</option>
-        <option value="inbound">Inbound</option>
-        <option value="both">Both (loop)</option>
-        <option value="northbound">Northbound</option>
-        <option value="southbound">Southbound</option>
-        <option value="eastbound">Eastbound</option>
-        <option value="westbound">Westbound</option>
+        <option value="both">Both directions (same path, two-way)</option>
+        <option value="outbound">Outbound only</option>
+        <option value="inbound">Inbound only</option>
+        <option value="northbound">Northbound only</option>
+        <option value="southbound">Southbound only</option>
+        <option value="eastbound">Eastbound only</option>
+        <option value="westbound">Westbound only</option>
       </select>
+      <div style="font-size:.72rem;color:var(--gray);margin-top:.35rem;line-height:1.4">
+        "Both directions" draws one path that vehicles travel either way along — use this for a normal two-way line. Use the single directions (outbound/inbound/etc.) only if you need to draw separate paths for each direction, like a one-way couplet. "Loop line" above is separate — check it only if the route's physical path is a closed circuit that returns to its starting station.
+      </div>
       <button class="ed-action outline" onclick="startDrawLine()" style="margin-top:.5rem">✏️ Draw route (click stations in order)</button>
       <button class="ed-action outline" onclick="undoLinePoint()">↩ Undo last point</button>
       <button class="ed-action outline" onclick="cancelDrawLine()">Cancel drawing</button>
@@ -248,11 +251,16 @@ let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehic
 let selectedLine = null, selectedStation = null, selectedVehicle = null;
 let hitTargets = [];
 
-// Line-drawing state: click stations in order to build a route
-let drawingStations = []; // [{id,x,y,name}]
-let drawingSegmentPoints = []; // raw polyline points being collected between two stations
+// Line-drawing state: click stations in order to build a route.
+// drawingStations: ordered list of stations clicked so far.
+// drawingSegments: one entry per consecutive station pair, holding the
+//   full polyline (station -> curve points... -> next station) for that hop.
+// currentCurvePoints: curve points collected since the last station click,
+//   not yet committed to a segment (committed when the next station is clicked).
+let drawingStations = [];
+let drawingSegments = [];
+let currentCurvePoints = [];
 let isDrawingLine = false;
-let drawingBetweenClick = false; // true while adding intermediate curve points between two stations
 
 // Street drawing state
 let streetPoints = [];
@@ -369,7 +377,8 @@ function startDrawLine() {
   if (!selectedLine) { toast('Select or create a line first'); return; }
   setTool('line');
   drawingStations = [];
-  drawingSegmentPoints = [];
+  drawingSegments = [];
+  currentCurvePoints = [];
   isDrawingLine = true;
   document.getElementById('drawLineStatus').textContent = 'Click your first station…';
 }
@@ -382,49 +391,63 @@ function handleLineDrawClick(wx, wy) {
   const station = allStations.find(s => Math.hypot(s.x-wx,s.y-wy) < tolerance);
 
   if (station) {
-    // Add this station to the route; flush any pending curve points as the segment to it
     if (drawingStations.length > 0) {
-      drawingSegmentPoints.push([station.x, station.y]);
+      // Commit the segment from the previous station, through any curve
+      // points collected since, to this new station.
+      const prevStation = drawingStations[drawingStations.length-1];
+      if (station.id === prevStation.id) { toast('Already at this station'); return; }
+      const points = [[prevStation.x, prevStation.y], ...currentCurvePoints, [station.x, station.y]];
+      drawingSegments.push({
+        from_station_id: prevStation.id,
+        to_station_id: station.id,
+        points
+      });
+      currentCurvePoints = [];
     }
     drawingStations.push(station);
-    drawingSegmentPoints = [[station.x, station.y]]; // reset, start new segment from here
     document.getElementById('drawLineStatus').textContent =
       `${drawingStations.length} station(s): ${drawingStations.map(s=>s.name).join(' → ')}. Click next station (or curve point).`;
     status(`Added station: ${station.name}`);
   } else {
-    // Curve point (only valid once we have at least one station)
+    // Curve point (only valid once we have at least one station to draw from)
     if (drawingStations.length === 0) { toast('Click a station first'); return; }
-    drawingSegmentPoints.push([Math.round(wx), Math.round(wy)]);
+    currentCurvePoints.push([Math.round(wx), Math.round(wy)]);
     status('Curve point added');
   }
   engine.render();
 }
 
 function undoLinePoint() {
-  if (drawingSegmentPoints.length > 1) {
-    drawingSegmentPoints.pop();
+  if (currentCurvePoints.length > 0) {
+    // Undo the most recent curve point first
+    currentCurvePoints.pop();
+  } else if (drawingSegments.length > 0) {
+    // No pending curve points: undo the last committed segment instead,
+    // restoring its curve points so they can still be edited/undone further.
+    const lastSeg = drawingSegments.pop();
+    drawingStations.pop();
+    // points = [fromStation, ...curvePoints, toStation] — strip the two endpoints
+    currentCurvePoints = lastSeg.points.slice(1, -1);
   } else if (drawingStations.length > 1) {
     drawingStations.pop();
-    drawingSegmentPoints = [[drawingStations[drawingStations.length-1].x, drawingStations[drawingStations.length-1].y]];
   }
+  document.getElementById('drawLineStatus').textContent = drawingStations.length
+    ? `${drawingStations.length} station(s): ${drawingStations.map(s=>s.name).join(' → ')}. Click next station (or curve point).`
+    : 'Click your first station…';
   engine.render();
 }
 
 async function finishDrawLine() {
   if (drawingStations.length < 2) { toast('Need at least 2 stations'); return; }
+  if (currentCurvePoints.length > 0) {
+    toast('Click a final station to complete the last segment first');
+    return;
+  }
   const direction = document.getElementById('lineDirection').value;
 
-  // Build segments: one per consecutive station pair
-  const segments = [];
-  for (let i=0; i<drawingStations.length-1; i++) {
-    // For simplicity here, each segment is a straight polyline; curve points collected
-    // during drawing were appended progressively — reconstruct per-pair from stored points
-    segments.push({
-      from_station_id: drawingStations[i].id,
-      to_station_id: drawingStations[i+1].id,
-      points: [[drawingStations[i].x,drawingStations[i].y],[drawingStations[i+1].x,drawingStations[i+1].y]]
-    });
-  }
+  // drawingSegments already holds the real polylines (including curve
+  // points) for every committed station-to-station hop.
+  const segments = drawingSegments;
 
   try {
     await adminFetch('/api/admin/line-segments', {
@@ -440,7 +463,8 @@ async function finishDrawLine() {
 function cancelDrawLine() {
   isDrawingLine = false;
   drawingStations = [];
-  drawingSegmentPoints = [];
+  drawingSegments = [];
+  currentCurvePoints = [];
   document.getElementById('drawLineStatus').textContent = '';
   engine.render();
 }
@@ -521,13 +545,33 @@ function draw(ctx) {
   // In-progress line drawing
   if (isDrawingLine && drawingStations.length) {
     const color = allLines[selectedLine]?.color || '#2563EB';
-    // draw segment-in-progress
-    if (drawingSegmentPoints.length > 1) {
+
+    // Draw already-committed segments (these have real curve geometry)
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.globalAlpha=.9;
+    drawingSegments.forEach(seg => {
+      ctx.beginPath(); ctx.moveTo(seg.points[0][0], seg.points[0][1]);
+      seg.points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.stroke();
+    });
+    ctx.globalAlpha=1;
+
+    // Draw the in-progress segment: last station -> curve points so far
+    if (currentCurvePoints.length > 0) {
+      const lastStation = drawingStations[drawingStations.length-1];
+      const previewPts = [[lastStation.x,lastStation.y], ...currentCurvePoints];
       ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.setLineDash([10,6]); ctx.globalAlpha=.8;
-      ctx.beginPath(); ctx.moveTo(drawingSegmentPoints[0][0],drawingSegmentPoints[0][1]);
-      drawingSegmentPoints.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.beginPath(); ctx.moveTo(previewPts[0][0],previewPts[0][1]);
+      previewPts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
       ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+
+      // Mark individual curve points so they're visible/selectable while drawing
+      currentCurvePoints.forEach(p => {
+        ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
+      });
     }
+
     // highlight selected stations in order
     drawingStations.forEach((s,i) => {
       ctx.beginPath(); ctx.arc(s.x,s.y,12,0,Math.PI*2);
