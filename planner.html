@@ -11,8 +11,41 @@ body { overflow:hidden; }
 .results-panel { flex:1;overflow-y:auto;background:var(--white); }
 .mini-canvas-wrap { height:200px;flex-shrink:0;position:relative;overflow:hidden;background:var(--canvas-bg);touch-action:none; }
 #miniCanvas { position:absolute;top:0;left:0;transform-origin:0 0; }
-.detail-panel { position:fixed;inset:0;margin-top:var(--nav-h);background:var(--white);z-index:1600;overflow-y:auto;transform:translateX(100%);transition:.3s; }
+.detail-panel { position:fixed;inset:0;margin-top:var(--nav-h);background:var(--white);z-index:1600;overflow-y:auto;transform:translateX(100%);transition:.3s;display:flex;flex-direction:column; }
 .detail-panel.open { transform:translateX(0); }
+.detail-map-wrap { height:220px;flex-shrink:0;position:relative;overflow:hidden;background:var(--canvas-bg);touch-action:none; }
+#detailCanvas { position:absolute;top:0;left:0;transform-origin:0 0; }
+.step-nav { flex:1;overflow-y:auto;min-height:0; }
+.step-controls {
+  flex-shrink:0;display:flex;align-items:center;gap:.6rem;
+  padding:.85rem 1rem;border-top:1px solid #E5E7EB;background:white;
+}
+.step-btn {
+  padding:.7rem 1.1rem;border-radius:var(--r-xs);font-size:.9rem;font-weight:700;
+  border:none;cursor:pointer;
+}
+.step-btn.primary { background:var(--blue);color:white;flex:1; }
+.step-btn.primary:disabled { background:#CBD5E1;cursor:not-allowed; }
+.step-btn.outline { background:none;border:2px solid var(--gray-light);color:var(--gray-dark); }
+.step-btn.outline:disabled { opacity:.4;cursor:not-allowed; }
+.step-btn.end { background:var(--green); }
+.step-progress { font-size:.78rem;color:var(--gray);font-weight:700;white-space:nowrap; }
+.step-card { padding:1.5rem 1.25rem; }
+.step-icon-row { display:flex;align-items:center;gap:.85rem;margin-bottom:1rem; }
+.step-icon {
+  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:900;flex-shrink:0;
+}
+.step-headline { font-size:1.25rem;font-weight:800;line-height:1.25; }
+.step-subline { font-size:.9rem;color:var(--gray);margin-top:.2rem; }
+.step-detail-row {
+  display:flex;align-items:center;gap:.7rem;padding:.7rem 0;border-top:1px solid #F3F4F6;
+}
+.step-detail-row:first-of-type { border-top:none; }
+.step-detail-label { font-size:.78rem;color:var(--gray);font-weight:600;width:90px;flex-shrink:0; }
+.step-detail-val { font-size:.9rem;font-weight:700; }
+.step-walk-icon { font-size:1.5rem; }
+.journey-arrivals-strip { border-bottom:1px solid #E5E7EB; }
 </style>
 </head>
 <body>
@@ -119,10 +152,27 @@ body { overflow:hidden; }
     <div class="jhead-times" id="jheadTimes"></div>
     <div><span class="jhead-dur" id="jheadDur"></span></div>
   </div>
-  <div style="padding:.75rem 1rem;background:#F8FAFC;border-bottom:1px solid #E5E7EB;">
-    <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Route</div>
+
+  <!-- Live arrivals for the lines used in this journey -->
+  <div id="journeyArrivals"></div>
+
+  <!-- Route map -->
+  <div class="detail-map-wrap" id="detailMapWrap">
+    <canvas id="detailCanvas"></canvas>
   </div>
-  <div class="timeline" id="timeline"></div>
+  <div class="canvas-ctrls" style="position:absolute;right:.65rem;bottom:calc(220px - 1rem);" id="detailMapCtrls">
+    <button class="zoom-btn" onclick="detailEngine.zoomBy(1.25)">+</button>
+    <button class="zoom-btn" onclick="detailEngine.zoomBy(0.8)">−</button>
+  </div>
+
+  <!-- Step-by-step navigator -->
+  <div class="step-nav" id="stepNav"></div>
+  <div class="step-controls">
+    <button class="step-btn outline" id="stepPrevBtn" onclick="stepPrev()">← Back</button>
+    <div class="step-progress" id="stepProgress"></div>
+    <button class="step-btn primary" id="stepNextBtn" onclick="stepNext()">Next →</button>
+  </div>
+
   <div style="padding:1rem">
     <button onclick="saveCurrentJourney()" style="width:100%;padding:.8rem;border-radius:var(--r-xs);border:2px solid var(--black);background:none;font-size:.9rem;font-weight:700;">💾 Save this journey</button>
   </div>
@@ -135,7 +185,7 @@ body { overflow:hidden; }
 setActiveNav('planner');
 initLoginForms();
 
-let allStations = [], allLines = {}, allSegments = [];
+let allStations = [], allLines = {}, allSegments = [], allVehicles = [];
 let fromStation = null, toStation = null;
 let pickerTarget = 'to';
 let currentLegs = null;
@@ -171,9 +221,10 @@ function drawMini(ctx) {
 // ── LOAD DATA ─────────────────────────────────────────
 async function loadData() {
   try {
-    const [lines, stations] = await Promise.all([apiFetch('/api/lines'), apiFetch('/api/stations')]);
+    const [lines, stations, vehicles] = await Promise.all([apiFetch('/api/lines'), apiFetch('/api/stations'), apiFetch('/api/live')]);
     allLines = {}; lines.forEach(l=>allLines[l.id]=l);
     allStations = stations;
+    allVehicles = vehicles;
     allSegments = [];
     for (const line of lines) {
       try { const d = await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
@@ -320,9 +371,224 @@ function renderRouteOption(data) {
   `;
 }
 
-// ── DETAIL PANEL ──────────────────────────────────────
+// ── DETAIL PANEL STATE ────────────────────────────────
+let journeySteps = [];      // flat list of step objects, one screen each
+let journeyStepIndex = 0;
+let detailEngine = null;
+
+// ── DETAIL MAP ────────────────────────────────────────
+function initDetailEngine() {
+  if (detailEngine) return;
+  detailEngine = new CanvasEngine('detailMapWrap','detailCanvas', {
+    scale:.5, minScale:.1, maxScale:3, worldW:6000, worldH:6000, gridSize:100,
+    onDraw: drawDetailMap
+  });
+  detailEngine.render();
+}
+
+function drawDetailMap(ctx) {
+  if (!currentLegs) return;
+  // Draw all line segments faintly for context
+  allSegments.forEach(seg => {
+    const line = allLines[seg.line_id];
+    if (!line) return;
+    const pts = JSON.parse(seg.points_json);
+    if (pts.length<2) return;
+    ctx.strokeStyle = line.color; ctx.lineWidth = line.type==='rail'?4:3;
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.25;
+    ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+    pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.stroke(); ctx.globalAlpha=1;
+  });
+
+  // Highlight this journey's actual path on top, full opacity
+  currentLegs.forEach(leg => {
+    const segs = legSegmentPolylines(leg);
+    segs.forEach(pts => {
+      ctx.strokeStyle = leg.line.color; ctx.lineWidth = leg.line.type==='rail'?6:5;
+      ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+      pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.stroke();
+    });
+  });
+
+  // Stations along the journey
+  currentLegs.forEach(leg => {
+    leg.stations.forEach((s,i) => {
+      const isEndpoint = (leg===currentLegs[0]&&i===0) || (leg===currentLegs[currentLegs.length-1]&&i===leg.stations.length-1);
+      const r = isEndpoint?10:6;
+      ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
+      ctx.fillStyle = isEndpoint ? '#111827' : leg.line.color;
+      ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+    });
+  });
+
+  // Live vehicles on the lines used in this journey
+  const journeyLineIds = new Set(currentLegs.map(l=>l.line.id));
+  allVehicles.forEach(v => {
+    if (!journeyLineIds.has(v.line_id)) return;
+    ctx.beginPath(); ctx.arc(v.x,v.y,14,0,Math.PI*2);
+    ctx.fillStyle = v.color||'#666'; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/detailEngine.scale,1/detailEngine.scale);
+    ctx.fillStyle=v.text_color||'white'; ctx.font="bold 9px 'Helvetica Neue',Helvetica,Arial,sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.line_id,0,0);
+    ctx.restore();
+  });
+
+  // Highlight current step's relevant station(s)
+  const step = journeySteps[journeyStepIndex];
+  if (step && step.highlightStation) {
+    const s = step.highlightStation;
+    ctx.beginPath(); ctx.arc(s.x,s.y,15,0,Math.PI*2);
+    ctx.strokeStyle='#DC2626'; ctx.lineWidth=3; ctx.stroke();
+  }
+}
+
+// Reconstruct the actual drawn polyline(s) for a leg from allSegments,
+// matching consecutive station pairs in the leg.
+function legSegmentPolylines(leg) {
+  const result = [];
+  for (let i=0; i<leg.stations.length-1; i++) {
+    const a = leg.stations[i].id, b = leg.stations[i+1].id;
+    const seg = allSegments.find(s =>
+      s.line_id === leg.line.id &&
+      ((s.from_station_id===a && s.to_station_id===b) || (s.from_station_id===b && s.to_station_id===a))
+    );
+    if (seg) {
+      let pts = JSON.parse(seg.points_json);
+      if (seg.from_station_id === b) pts = [...pts].reverse();
+      result.push(pts);
+    } else {
+      result.push([[leg.stations[i].x,leg.stations[i].y],[leg.stations[i+1].x,leg.stations[i+1].y]]);
+    }
+  }
+  return result;
+}
+
+// ── LIVE ARRIVALS STRIP for lines used in this journey ────────
+function renderJourneyArrivals() {
+  const el = document.getElementById('journeyArrivals');
+  if (!currentLegs) { el.innerHTML=''; return; }
+  const journeyLineIds = [...new Set(currentLegs.map(l=>l.line.id))];
+
+  const items = [];
+  journeyLineIds.forEach(lineId => {
+    const line = allLines[lineId];
+    if (!line) return;
+    const vehicles = allVehicles.filter(v => v.line_id === lineId);
+    if (!vehicles.length) {
+      items.push({ line, eta:null, sub: line.frequency || 'See schedule' });
+      return;
+    }
+    vehicles.forEach(v => {
+      let eta = null;
+      if (v.next_x != null) {
+        const dist = Math.hypot(v.next_x-v.x, v.next_y-v.y);
+        eta = etaMinutesFromSpeed(dist, v.speed_kmh);
+      }
+      items.push({ line, eta, sub: v.next_station_name || line.name });
+    });
+  });
+  items.sort((a,b)=>(a.eta??999)-(b.eta??999));
+
+  if (!items.length) { el.innerHTML=''; return; }
+
+  el.innerHTML = `<div class="journey-arrivals-strip">` + items.slice(0,4).map(a => `
+    <div class="arrival-card" style="background:${a.line.color};color:${a.line.text_color};padding:.7rem 1rem">
+      <div class="line-badge" style="width:38px;height:38px;font-size:1rem">${a.line.id}</div>
+      <div class="arrival-main">
+        <div class="arrival-title" style="font-size:.9rem">${a.eta!=null?'🔴 ':''}${escapeHtml(a.line.name)}</div>
+        <div class="arrival-sub">${escapeHtml(a.sub)}</div>
+      </div>
+      <div class="arrival-mins">
+        <div class="arrival-num" style="font-size:1.5rem">${a.eta??'—'}</div>
+        <div class="arrival-unit">${a.eta!=null?(a.eta===1?'minute':'minutes'):''}</div>
+      </div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+// ── BUILD FLAT STEP LIST from legs ─────────────────────
+function buildJourneySteps(legs, depTime) {
+  const steps = [];
+  let runningTime = depTime;
+
+  // Initial walk to first station (if any meaningful distance)
+  const firstStation = legs[0].stations[0];
+  if (fromStation && fromStation.id !== firstStation.id) {
+    const dist = Math.hypot(firstStation.x-fromStation.x, firstStation.y-fromStation.y);
+    const mins = walkMinutesFromPx(dist);
+    steps.push({
+      type:'walk', title:`Walk to ${firstStation.name}`,
+      sub:`${mins} min walk`, icon:'🚶', color:'#6B7280', textColor:'#fff',
+      duration: mins*60, highlightStation: firstStation
+    });
+    runningTime += mins*60000;
+  }
+
+  legs.forEach((leg, li) => {
+    if (li > 0) {
+      const prevLeg = legs[li-1];
+      steps.push({
+        type:'transfer',
+        title:`Transfer to ${leg.line.id} — ${leg.line.name}`,
+        sub:`at ${leg.stations[0].name}`,
+        icon:'🔄', color:'#F59E0B', textColor:'#fff',
+        duration:0, highlightStation: leg.stations[0]
+      });
+    }
+
+    // Board step
+    steps.push({
+      type:'board', title:`Board ${leg.line.id} toward ${leg.stations[leg.stations.length-1].name}`,
+      sub:`at ${leg.stations[0].name} · ${new Date(runningTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`,
+      icon:leg.line.id, color:leg.line.color, textColor:leg.line.text_color,
+      duration:0, highlightStation: leg.stations[0]
+    });
+
+    const perHopSeconds = leg.seconds/(leg.stations.length-1);
+    for (let si=0; si<leg.stations.length-1; si++) {
+      runningTime += perHopSeconds*1000;
+      const arriving = leg.stations[si+1];
+      const isLast = si === leg.stations.length-2;
+      steps.push({
+        type: isLast ? 'arrive-leg' : 'ride',
+        title: isLast ? `Arrive ${arriving.name}` : `Passing through ${arriving.name}`,
+        sub: new Date(runningTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+        icon: leg.line.id, color: leg.line.color, textColor: leg.line.text_color,
+        duration: perHopSeconds, highlightStation: arriving
+      });
+    }
+  });
+
+  // Final walk to destination (if any meaningful distance)
+  const lastStation = legs[legs.length-1].stations[legs[legs.length-1].stations.length-1];
+  if (toStation && toStation.id !== lastStation.id) {
+    const dist = Math.hypot(toStation.x-lastStation.x, toStation.y-lastStation.y);
+    const mins = walkMinutesFromPx(dist);
+    steps.push({
+      type:'walk', title:`Walk to ${toStation.name}`,
+      sub:`${mins} min walk`, icon:'🚶', color:'#6B7280', textColor:'#fff',
+      duration: mins*60, highlightStation: toStation
+    });
+  }
+
+  steps.push({
+    type:'end', title:`You've arrived at ${toStation.name}`,
+    sub:'Journey complete', icon:'🏁', color:'#059669', textColor:'#fff',
+    duration:0, highlightStation: null
+  });
+
+  return steps;
+}
+
+// ── SHOW DETAIL (entry point) ──────────────────────────
 function showDetail() {
   if (!currentLegs) return;
+  initDetailEngine();
+
   const legs = currentLegs;
   const firstLine = legs[0].line;
   const jhead = document.getElementById('jhead');
@@ -337,35 +603,85 @@ function showDetail() {
     `Leave ${dep.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Arrive ${arr.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
   document.getElementById('jheadDur').textContent = `${Math.round(totalSeconds/60)} min`;
 
-  const tl = document.getElementById('timeline');
-  let html = '';
-  let runningTime = dep.getTime();
+  renderJourneyArrivals();
 
-  legs.forEach((leg, li) => {
-    if (li > 0) {
-      html += `<div style="padding:.4rem 0"><span class="transfer-tag">🔄 Transfer to ${leg.line.id} — ${escapeHtml(leg.line.name)}</span></div>`;
-    }
-    leg.stations.forEach((st, si) => {
-      const isEnd = si === 0 || si === leg.stations.length-1;
-      const t = new Date(runningTime);
-      html += timelineRow(escapeHtml(st.name), t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), isEnd, leg.line.color, isEnd);
-      if (si < leg.stations.length-1) runningTime += (leg.seconds/(leg.stations.length-1))*1000;
-    });
-  });
+  journeySteps = buildJourneySteps(legs, dep.getTime());
+  journeyStepIndex = 0;
+  renderCurrentStep();
 
-  tl.innerHTML = html;
   document.getElementById('detailPanel').classList.add('open');
+  setTimeout(() => { detailEngine.resize(); centerMapOnStep(); }, 50);
 }
 
-function timelineRow(name, time, major, color, filled) {
-  return `<div class="tl-row">
-    <div class="tl-dots">
-      <div class="tl-dot${filled?' filled':''}" style="border-color:${color};${filled?'background:'+color:''}"></div>
-      <div class="tl-seg" style="background:${color}"></div>
+// ── STEP RENDERING ──────────────────────────────────────
+function renderCurrentStep() {
+  const step = journeySteps[journeyStepIndex];
+  const nav = document.getElementById('stepNav');
+  const isWalk = step.type === 'walk';
+  const isEnd = step.type === 'end';
+
+  nav.innerHTML = `
+    <div class="step-card">
+      <div class="step-icon-row">
+        <div class="step-icon" style="background:${step.color};color:${step.textColor}">
+          ${isWalk ? '🚶' : isEnd ? '🏁' : step.type==='transfer' ? '🔄' : escapeHtml(step.icon)}
+        </div>
+        <div>
+          <div class="step-headline">${escapeHtml(step.title)}</div>
+          <div class="step-subline">${escapeHtml(step.sub)}</div>
+        </div>
+      </div>
+      ${step.duration > 0 ? `
+        <div class="step-detail-row">
+          <div class="step-detail-label">Duration</div>
+          <div class="step-detail-val">${fmtSeconds(step.duration)}</div>
+        </div>
+      ` : ''}
+      <div class="step-detail-row">
+        <div class="step-detail-label">Step</div>
+        <div class="step-detail-val">${journeyStepIndex+1} of ${journeySteps.length}</div>
+      </div>
     </div>
-    <div class="tl-name${major?' bold':''}">${name}</div>
-    <div class="tl-time">${time}</div>
-  </div>`;
+  `;
+
+  document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
+  document.getElementById('stepPrevBtn').disabled = journeyStepIndex === 0;
+
+  const nextBtn = document.getElementById('stepNextBtn');
+  if (isEnd) {
+    nextBtn.textContent = 'End journey ✓';
+    nextBtn.classList.add('end');
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.classList.remove('end');
+  }
+
+  centerMapOnStep();
+  detailEngine?.render();
+}
+
+function centerMapOnStep() {
+  if (!detailEngine) return;
+  const step = journeySteps[journeyStepIndex];
+  if (step?.highlightStation) {
+    detailEngine.centerOn(step.highlightStation.x, step.highlightStation.y, Math.max(detailEngine.scale, 0.8));
+  }
+}
+
+function stepNext() {
+  const step = journeySteps[journeyStepIndex];
+  if (step.type === 'end') { closeDetail(); return; }
+  if (journeyStepIndex < journeySteps.length-1) {
+    journeyStepIndex++;
+    renderCurrentStep();
+  }
+}
+
+function stepPrev() {
+  if (journeyStepIndex > 0) {
+    journeyStepIndex--;
+    renderCurrentStep();
+  }
 }
 
 function closeDetail() { document.getElementById('detailPanel').classList.remove('open'); }
