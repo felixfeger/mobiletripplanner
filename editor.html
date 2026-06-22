@@ -93,6 +93,7 @@ body,html{height:100%;overflow:hidden;}
   <button class="ed-btn" onclick="openPanel('lines')" title="Manage lines">☰</button>
   <button class="ed-btn" onclick="openPanel('stations')" title="Manage stations">🗂</button>
   <button class="ed-btn" onclick="openPanel('vehicles')" title="Live vehicles">🔴</button>
+  <button class="ed-btn" onclick="openPanel('streets')" title="Manage streets">🛣</button>
   <div style="height:8px"></div>
   <button class="ed-btn" onclick="resetAdminToken()" title="Change admin token">🔑</button>
 </div>
@@ -219,6 +220,22 @@ body,html{height:100%;overflow:hidden;}
     <div class="ed-sec">
       <div class="ed-lbl">Live vehicles</div>
       <div id="vehicleList"></div>
+    </div>
+  </div>
+
+  <!-- STREETS TAB -->
+  <div id="panelStreets" class="hidden">
+    <div class="ed-head"><span>Streets</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
+
+    <div class="ed-sec">
+      <div class="ed-lbl">Draw a new street</div>
+      <button class="ed-action outline" onclick="setTool('street')">🛣 Click map to draw points</button>
+      <div style="font-size:.72rem;color:var(--gray);margin-top:.4rem">Streets are cosmetic only — they don't affect routing. Press Enter or double-click to finish.</div>
+    </div>
+
+    <div class="ed-sec">
+      <div class="ed-lbl">All streets</div>
+      <div id="streetList"></div>
     </div>
   </div>
 </div>
@@ -612,16 +629,15 @@ function draw(ctx) {
     hitTargets.push({x:s.x,y:s.y,data:s});
   });
 
-  // Vehicles
+  // Vehicles — black circle with bus/train glyph
   allVehicles.forEach(v => {
-    ctx.beginPath(); ctx.arc(v.x,v.y,15,0,Math.PI*2);
-    ctx.fillStyle = v.color||'#666'; ctx.fill();
-    ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/engine.scale,1/engine.scale);
-    ctx.fillStyle = v.text_color||'white'; ctx.font="bold 10px 'Helvetica Neue',Helvetica,Arial,sans-serif";
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.line_id,0,0);
+    const screenRadius = 16;
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.scale(1/engine.scale, 1/engine.scale);
+    drawVehicleMarker(ctx, 0, 0, v.line_type, screenRadius);
     ctx.restore();
-    hitTargets.push({x:v.x,y:v.y,data:v,isVehicle:true});
+    hitTargets.push({x:v.x,y:v.y,data:v,isVehicle:true,r:(screenRadius+5)/engine.scale});
   });
 }
 
@@ -636,10 +652,11 @@ let currentPanel = null;
 function openPanel(name) {
   currentPanel = name;
   document.getElementById('edPanel').classList.add('open');
-  ['Lines','Stations','Vehicles'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
+  ['Lines','Stations','Vehicles','Streets'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
   if (name==='lines') refreshLineList();
   if (name==='stations') refreshStationList();
   if (name==='vehicles') refreshVehicleList();
+  if (name==='streets') refreshStreetList();
 }
 function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
@@ -796,6 +813,31 @@ function refreshVehicleList() {
       <div style="width:26px;height:26px;border-radius:50%;background:${v.color||'#666'};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${v.line_id}</div>
       <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} mph · ${v.status}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No vehicles placed.</div>';
+}
+
+// ── STREETS: list + delete ────────────────────────────
+function refreshStreetList() {
+  document.getElementById('streetList').innerHTML = allStreets.map(st => {
+    const pts = (() => { try { return JSON.parse(st.points_json); } catch { return []; } })();
+    return `
+    <div class="line-item" style="cursor:default">
+      <div style="width:26px;height:26px;border-radius:6px;background:${st.color||'#D1D5DB'};flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.82rem">${escapeHtml(st.name) || 'Unnamed street'}</div>
+        <div style="font-size:.7rem;color:var(--gray)">${pts.length} point(s)</div>
+      </div>
+      <button onclick="deleteStreetById(${st.id})" title="Delete street" style="background:none;border:none;color:var(--red);font-size:1rem;padding:.25rem;cursor:pointer;flex-shrink:0">🗑</button>
+    </div>`;
+  }).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No streets drawn yet.</div>';
+}
+
+async function deleteStreetById(id) {
+  if (!confirm('Delete this street?')) return;
+  try {
+    await adminFetch(`/api/admin/streets/${id}`, { method:'DELETE' });
+    toast('Street deleted');
+    loadAllData();
+  } catch(e) { toast(e.message); }
 }
 
 // ── LOAD ALL DATA ─────────────────────────────────────
