@@ -199,27 +199,17 @@ function draw(ctx) {
     stationScreenPos.push({x:s.x, y:s.y, r:r+4, data:s});
   });
 
-  // Live vehicles
+  // Live vehicles — black circle with bus/train glyph, counter-scaled so
+  // they stay a consistent visual size regardless of zoom level.
   allVehicles.forEach(v => {
-    const r = 16;
-    ctx.beginPath();
-    ctx.arc(v.x, v.y, r, 0, Math.PI*2);
-    ctx.fillStyle = v.color;
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
+    const screenRadius = 17;
     ctx.save();
     ctx.translate(v.x, v.y);
     ctx.scale(1/engine.scale, 1/engine.scale);
-    ctx.fillStyle = v.text_color || 'white';
-    ctx.font = "bold 11px 'Helvetica Neue',Helvetica,Arial,sans-serif";
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(v.line_id, 0, 0);
+    drawVehicleMarker(ctx, 0, 0, v.line_type, screenRadius);
     ctx.restore();
 
-    stationScreenPos.push({x:v.x, y:v.y, r:r+6, data:v, isVehicle:true});
+    stationScreenPos.push({x:v.x, y:v.y, r:(screenRadius+6)/engine.scale, data:v, isVehicle:true});
   });
 }
 
@@ -355,10 +345,13 @@ function showStationPopup(s) {
 function showVehiclePopup(v) {
   const head = document.getElementById('vpopupHead');
   head.style.background = v.color; head.style.color = v.text_color;
-  document.getElementById('vpopupBig').style.fontSize = '3rem';
-  document.getElementById('vpopupDir').innerHTML = `→ ${v.next_station_name || v.line_name}`;
-  document.getElementById('vpopupBig').textContent = v.line_id;
-  document.getElementById('vpopupSub').textContent = v.line_name || '';
+
+  const vehicleNum = v.vehicle_label?.trim() || `${v.line_type==='rail'?'Train':'Bus'} ${v.id}`;
+
+  document.getElementById('vpopupBig').style.fontSize = '2.1rem';
+  document.getElementById('vpopupDir').innerHTML = `${v.line_type==='rail'?'🚆':'🚌'} ${escapeHtml(v.line_name||v.line_id)}`;
+  document.getElementById('vpopupBig').textContent = vehicleNum;
+  document.getElementById('vpopupSub').textContent = `→ ${v.next_station_name || 'Unknown next stop'}`;
 
   let etaMin = '—';
   if (v.next_x != null) {
@@ -367,13 +360,17 @@ function showVehiclePopup(v) {
   }
 
   document.getElementById('vpopupLbl1').textContent='Next stop';
-  document.getElementById('vpopupVal1').textContent='1';
+  document.getElementById('vpopupVal1').textContent=v.next_station_name||'—';
+  document.getElementById('vpopupVal1').style.fontSize='1rem';
   document.getElementById('vpopupLbl2').textContent='Minutes';
   document.getElementById('vpopupVal2').textContent=etaMin;
-  document.getElementById('vpopupLbl3').textContent='mph';
+  document.getElementById('vpopupVal2').style.fontSize='1.6rem';
+  document.getElementById('vpopupLbl3').textContent='Speed (mph)';
   document.getElementById('vpopupVal3').textContent=Math.round(v.speed_kmh||0);
+  document.getElementById('vpopupVal3').style.fontSize='1.6rem';
   document.getElementById('vpopupLbl4').textContent='Status';
   document.getElementById('vpopupVal4').textContent=v.status==='in_service'?'✓':v.status;
+  document.getElementById('vpopupVal4').style.fontSize='1.6rem';
 
   document.getElementById('vpopup').classList.add('open');
 }
