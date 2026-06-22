@@ -428,12 +428,10 @@ function drawDetailMap(ctx) {
   const journeyLineIds = new Set(currentLegs.map(l=>l.line.id));
   allVehicles.forEach(v => {
     if (!journeyLineIds.has(v.line_id)) return;
-    ctx.beginPath(); ctx.arc(v.x,v.y,14,0,Math.PI*2);
-    ctx.fillStyle = v.color||'#666'; ctx.fill();
-    ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/detailEngine.scale,1/detailEngine.scale);
-    ctx.fillStyle=v.text_color||'white'; ctx.font="bold 9px 'Helvetica Neue',Helvetica,Arial,sans-serif";
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.line_id,0,0);
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.scale(1/detailEngine.scale, 1/detailEngine.scale);
+    drawVehicleMarker(ctx, 0, 0, v.line_type, 14);
     ctx.restore();
   });
 
