@@ -220,7 +220,7 @@ button{cursor:pointer;font-family:inherit;}
 }
 .vpopup-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;padding:.85rem 1rem;}
 .vpopup-cell{background:var(--gray-light);border-radius:var(--r-xs);padding:.8rem;text-align:center;}
-.vpopup-val{font-size:1.6rem;font-weight:900;}
+.vpopup-val{font-size:1.6rem;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .vpopup-lbl{font-size:.7rem;color:var(--gray);font-weight:600;margin-top:2px;}
 
 /* TRIP PLANNER */
