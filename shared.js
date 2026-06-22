@@ -456,3 +456,95 @@ function pointAtFraction(points, frac) {
   }
   return points[points.length-1];
 }
+
+// ═══════════════════════════════════════════════════════════════
+// LIVE VEHICLE MARKERS — black circle with a bus or train glyph,
+// drawn with canvas paths (not images) so they stay crisp at any zoom.
+// ═══════════════════════════════════════════════════════════════
+
+// Draws a simple front-facing bus glyph in the given color, centered at (0,0),
+// scaled to fit roughly within a `size`-px box. Call after ctx.translate(x,y).
+function drawBusGlyph(ctx, size, color) {
+  const s = size / 24; // glyph authored on a 24x24 grid, scaled to fit
+  ctx.fillStyle = color;
+  ctx.save();
+  ctx.scale(s, s);
+  // Body
+  roundRectPath(ctx, -8, -9, 16, 16, 2.5);
+  ctx.fill();
+  // Roof accent (small notch at top, like the reference icon's angled roofline)
+  ctx.beginPath();
+  ctx.moveTo(-8, -9); ctx.lineTo(-4, -11); ctx.lineTo(4, -11); ctx.lineTo(8, -9);
+  ctx.closePath(); ctx.fill();
+  // Windshield (cut out as a white rectangle)
+  ctx.fillStyle = '#fff';
+  roundRectPath(ctx, -6, -6.5, 12, 5, 1);
+  ctx.fill();
+  // Wheels
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(-5, 8, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(5, 8, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+// Draws a simple front-facing tram/train glyph, centered at (0,0).
+function drawTrainGlyph(ctx, size, color) {
+  const s = size / 24;
+  ctx.save();
+  ctx.scale(s, s);
+  ctx.fillStyle = color;
+  // Pantograph arm (the angled lines above the roof in the reference icon)
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-5,-10); ctx.lineTo(-2,-13); ctx.lineTo(2,-13); ctx.lineTo(5,-10);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-13); ctx.lineTo(0,-15); ctx.stroke();
+  // Body
+  roundRectPath(ctx, -8, -10, 16, 15, 2);
+  ctx.fill();
+  // Windshield
+  ctx.fillStyle = '#fff';
+  roundRectPath(ctx, -6, -7.5, 12, 5, 1);
+  ctx.fill();
+  // Front headlight dots
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-4.5, 1.5, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(4.5, 1.5, 1.2, 0, Math.PI*2); ctx.fill();
+  // Rails (small marks under the body instead of round wheels, train-like)
+  ctx.fillStyle = color;
+  roundRectPath(ctx, -7, 5.5, 14, 2, 1);
+  ctx.fill();
+  ctx.restore();
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+// Draws a complete vehicle marker: black circle + white glyph, at world
+// coordinates (x,y). `lineType` is 'rail' or 'bus'. `radius` is the circle's
+// world-space radius (will be visually consistent regardless of zoom since
+// callers should pass a radius already adjusted, same as other markers).
+function drawVehicleMarker(ctx, x, y, lineType, radius = 15) {
+  ctx.save();
+  ctx.translate(x, y);
+  // Black circle background
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI*2);
+  ctx.fillStyle = '#111827';
+  ctx.fill();
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  // Glyph in white, sized to fit inside the circle with a little padding
+  const glyphSize = radius * 1.5;
+  if (lineType === 'rail') drawTrainGlyph(ctx, glyphSize, '#fff');
+  else drawBusGlyph(ctx, glyphSize, '#fff');
+  ctx.restore();
+}
