@@ -137,6 +137,10 @@ body { overflow:hidden; }
 <!-- STATION PICKER MODAL -->
 <div class="picker-overlay" id="pickerOverlay">
   <div class="picker-card">
+    <div class="picker-header">
+      <h3 id="pickerTitle">Choose station</h3>
+      <button class="picker-close" onclick="document.getElementById('pickerOverlay').classList.remove('open')">✕</button>
+    </div>
     <div class="picker-search">
       <input type="text" id="pickerSearch" placeholder="Search stations…" oninput="filterPicker(this.value)">
     </div>
@@ -254,6 +258,7 @@ function handleUrlParams() {
 // ── STATION PICKER ────────────────────────────────────
 function openPicker(target) {
   pickerTarget = target;
+  document.getElementById('pickerTitle').textContent = target === 'from' ? 'Choose origin' : 'Choose destination';
   document.getElementById('pickerOverlay').classList.add('open');
   document.getElementById('pickerSearch').value = '';
   renderPickerList(allStations);
@@ -508,75 +513,38 @@ function renderJourneyArrivals() {
   `).join('') + `</div>`;
 }
 
-// ── BUILD FLAT STEP LIST from legs ─────────────────────
+// ── BUILD STEPS — one screen per leg, new screen per transfer ──
 function buildJourneySteps(legs, depTime) {
   const steps = [];
   let runningTime = depTime;
 
-  // Initial walk to first station (if any meaningful distance)
-  const firstStation = legs[0].stations[0];
-  if (fromStation && fromStation.id !== firstStation.id) {
-    const dist = Math.hypot(firstStation.x-fromStation.x, firstStation.y-fromStation.y);
-    const mins = walkMinutesFromPx(dist);
-    steps.push({
-      type:'walk', title:`Walk to ${firstStation.name}`,
-      sub:`${mins} min walk`, icon:'🚶', color:'#6B7280', textColor:'#fff',
-      duration: mins*60, highlightStation: firstStation
-    });
-    runningTime += mins*60000;
-  }
-
   legs.forEach((leg, li) => {
-    if (li > 0) {
-      const prevLeg = legs[li-1];
-      steps.push({
-        type:'transfer',
-        title:`Transfer to ${leg.line.id} — ${leg.line.name}`,
-        sub:`at ${leg.stations[0].name}`,
-        icon:'🔄', color:'#F59E0B', textColor:'#fff',
-        duration:0, highlightStation: leg.stations[0]
-      });
-    }
+    const perHopSec = leg.stations.length > 1
+      ? leg.seconds / (leg.stations.length - 1)
+      : leg.seconds;
 
-    // Board step
-    steps.push({
-      type:'board', title:`Board ${leg.line.id} toward ${leg.stations[leg.stations.length-1].name}`,
-      sub:`at ${leg.stations[0].name} · ${new Date(runningTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`,
-      icon:leg.line.id, color:leg.line.color, textColor:leg.line.text_color,
-      duration:0, highlightStation: leg.stations[0]
+    // Build the full stop timeline for this leg
+    const stopRows = [];
+    leg.stations.forEach((st, si) => {
+      const t = new Date(runningTime + si * perHopSec * 1000);
+      const timeStr = t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      const isFirst = si === 0, isLast = si === leg.stations.length - 1;
+      stopRows.push({ station: st, time: timeStr, isFirst, isLast });
     });
+    runningTime += leg.seconds * 1000;
 
-    const perHopSeconds = leg.seconds/(leg.stations.length-1);
-    for (let si=0; si<leg.stations.length-1; si++) {
-      runningTime += perHopSeconds*1000;
-      const arriving = leg.stations[si+1];
-      const isLast = si === leg.stations.length-2;
-      steps.push({
-        type: isLast ? 'arrive-leg' : 'ride',
-        title: isLast ? `Arrive ${arriving.name}` : `Passing through ${arriving.name}`,
-        sub: new Date(runningTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-        icon: leg.line.id, color: leg.line.color, textColor: leg.line.text_color,
-        duration: perHopSeconds, highlightStation: arriving
-      });
-    }
+    steps.push({
+      type: 'leg',
+      leg,
+      stopRows,
+      isTransfer: li > 0,
+      transferFrom: li > 0 ? legs[li-1].line : null
+    });
   });
 
-  // Final walk to destination (if any meaningful distance)
-  const lastStation = legs[legs.length-1].stations[legs[legs.length-1].stations.length-1];
-  if (toStation && toStation.id !== lastStation.id) {
-    const dist = Math.hypot(toStation.x-lastStation.x, toStation.y-lastStation.y);
-    const mins = walkMinutesFromPx(dist);
-    steps.push({
-      type:'walk', title:`Walk to ${toStation.name}`,
-      sub:`${mins} min walk`, icon:'🚶', color:'#6B7280', textColor:'#fff',
-      duration: mins*60, highlightStation: toStation
-    });
-  }
-
   steps.push({
-    type:'end', title:`You've arrived at ${toStation.name}`,
-    sub:'Journey complete', icon:'🏁', color:'#059669', textColor:'#fff',
-    duration:0, highlightStation: null
+    type: 'end',
+    destination: toStation?.name || legs[legs.length-1].stations[legs[legs.length-1].stations.length-1].name
   });
 
   return steps;
@@ -615,55 +583,85 @@ function showDetail() {
 function renderCurrentStep() {
   const step = journeySteps[journeyStepIndex];
   const nav = document.getElementById('stepNav');
-  const isWalk = step.type === 'walk';
-  const isEnd = step.type === 'end';
 
-  nav.innerHTML = `
-    <div class="step-card">
-      <div class="step-icon-row">
-        <div class="step-icon" style="background:${step.color};color:${step.textColor}">
-          ${isWalk ? '🚶' : isEnd ? '🏁' : step.type==='transfer' ? '🔄' : escapeHtml(step.icon)}
+  if (step.type === 'end') {
+    nav.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;gap:1rem">
+        <div style="font-size:3rem">🏁</div>
+        <div style="font-size:1.4rem;font-weight:800">You've arrived!</div>
+        <div style="font-size:1rem;color:var(--gray)">${escapeHtml(step.destination)}</div>
+      </div>`;
+    document.getElementById('stepNextBtn').textContent = 'End journey ✓';
+    document.getElementById('stepNextBtn').style.background = 'var(--green)';
+    document.getElementById('stepPrevBtn').disabled = journeyStepIndex === 0;
+    document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
+    detailEngine?.render();
+    return;
+  }
+
+  // 'leg' step — show the full timeline for this leg
+  const { leg, stopRows, isTransfer, transferFrom } = step;
+  const line = leg.line;
+  const first = stopRows[0], last = stopRows[stopRows.length-1];
+
+  // Transfer notice at top if this is a connection
+  const transferBanner = isTransfer ? `
+    <div style="background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:.75rem 1.25rem;display:flex;align-items:center;gap:.6rem">
+      <span style="font-size:1.2rem">🔄</span>
+      <div>
+        <div style="font-size:.8rem;font-weight:800;color:#92400E">TRANSFER</div>
+        <div style="font-size:.85rem;color:#78350F">
+          From <strong>${transferFrom?.id}</strong> · Board <strong>${line.id}</strong> at ${escapeHtml(first.station.name)}
         </div>
+      </div>
+    </div>` : '';
+
+  // Header card — line color, headsign, times
+  const header = `
+    <div style="background:${line.color};color:${line.text_color};padding:1.1rem 1.25rem">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">
+        <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;flex-shrink:0">${line.id}</div>
         <div>
-          <div class="step-headline">${escapeHtml(step.title)}</div>
-          <div class="step-subline">${escapeHtml(step.sub)}</div>
+          <div style="font-size:1rem;font-weight:800">${escapeHtml(line.name)}</div>
+          <div style="font-size:.8rem;opacity:.8">→ ${escapeHtml(last.station.name)}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:.7rem;opacity:.75">DEPART</div>
+          <div style="font-size:1.1rem;font-weight:800">${first.time}</div>
         </div>
       </div>
-      ${step.duration > 0 ? `
-        <div class="step-detail-row">
-          <div class="step-detail-label">Duration</div>
-          <div class="step-detail-val">${fmtSeconds(step.duration)}</div>
-        </div>
-      ` : ''}
-      <div class="step-detail-row">
-        <div class="step-detail-label">Step</div>
-        <div class="step-detail-val">${journeyStepIndex+1} of ${journeySteps.length}</div>
-      </div>
-    </div>
-  `;
+    </div>`;
 
-  document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
+  // Full stop timeline — all stops on this screen
+  const timeline = stopRows.map((row, i) => {
+    const isF = row.isFirst, isL = row.isLast;
+    const dotColor = isF || isL ? line.color : '#CBD5E1';
+    const segColor = i < stopRows.length - 1 ? line.color : 'transparent';
+    return `
+      <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.5rem 1.25rem">
+        <div style="display:flex;flex-direction:column;align-items:center;width:16px;flex-shrink:0;margin-top:3px">
+          <div style="width:${isF||isL?14:10}px;height:${isF||isL?14:10}px;border-radius:50%;background:${isF||isL?line.color:'white'};border:3px solid ${dotColor};flex-shrink:0"></div>
+          ${i < stopRows.length-1 ? `<div style="width:3px;background:${segColor};flex:1;min-height:20px;margin-top:1px"></div>` : ''}
+        </div>
+        <div style="flex:1;padding-bottom:${i<stopRows.length-1?'.5rem':0}">
+          <div style="font-size:${isF||isL?'1rem':'.9rem'};font-weight:${isF||isL?800:500};color:${isF||isL?'#111827':'#6B7280'}">${escapeHtml(row.station.name)}</div>
+        </div>
+        <div style="font-size:.85rem;color:var(--gray);padding-top:2px;flex-shrink:0">${row.time}</div>
+      </div>`;
+  }).join('');
+
+  nav.innerHTML = transferBanner + header + `<div style="padding:.5rem 0">${timeline}</div>`;
+
   document.getElementById('stepPrevBtn').disabled = journeyStepIndex === 0;
+  document.getElementById('stepNextBtn').textContent = journeyStepIndex === journeySteps.length - 1 ? 'End journey ✓' : 'Next →';
+  document.getElementById('stepNextBtn').style.background = '';
+  document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
 
-  const nextBtn = document.getElementById('stepNextBtn');
-  if (isEnd) {
-    nextBtn.textContent = 'End journey ✓';
-    nextBtn.classList.add('end');
-  } else {
-    nextBtn.textContent = 'Next →';
-    nextBtn.classList.remove('end');
+  // Center map on first station of this leg
+  if (first?.station && detailEngine) {
+    detailEngine.centerOn(first.station.x, first.station.y, Math.max(detailEngine.scale, 0.7));
   }
-
-  centerMapOnStep();
   detailEngine?.render();
-}
-
-function centerMapOnStep() {
-  if (!detailEngine) return;
-  const step = journeySteps[journeyStepIndex];
-  if (step?.highlightStation) {
-    detailEngine.centerOn(step.highlightStation.x, step.highlightStation.y, Math.max(detailEngine.scale, 0.8));
-  }
 }
 
 function stepNext() {
