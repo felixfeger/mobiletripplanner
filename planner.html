@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6,109 +5,257 @@
 <title>Plan a Trip — City Metro</title>
 <link rel="stylesheet" href="style.css">
 <style>
-body { overflow:hidden; }
-.planner-wrap { margin-top:var(--nav-h);display:flex;flex-direction:column;height:calc(100vh - var(--nav-h)); }
-.results-panel { flex:1;overflow-y:auto;background:var(--white); }
-.mini-canvas-wrap { height:200px;flex-shrink:0;position:relative;overflow:hidden;background:var(--canvas-bg);touch-action:none; }
-#miniCanvas { position:absolute;top:0;left:0;transform-origin:0 0; }
-.detail-panel { position:fixed;inset:0;margin-top:var(--nav-h);background:var(--white);z-index:1600;overflow-y:auto;transform:translateX(100%);transition:.3s;display:flex;flex-direction:column; }
-.detail-panel.open { transform:translateX(0); }
-.detail-map-wrap { height:220px;flex-shrink:0;position:relative;overflow:hidden;background:var(--canvas-bg);touch-action:none; }
-#detailCanvas { position:absolute;top:0;left:0;transform-origin:0 0; }
-.step-nav { flex:1;overflow-y:auto;min-height:0; }
-.step-controls {
-  flex-shrink:0;display:flex;align-items:center;gap:.6rem;
-  padding:.85rem 1rem;border-top:1px solid #E5E7EB;background:white;
-}
-.step-btn {
-  padding:.7rem 1.1rem;border-radius:var(--r-xs);font-size:.9rem;font-weight:700;
-  border:none;cursor:pointer;
-}
-.step-btn.primary { background:var(--blue);color:white;flex:1; }
-.step-btn.primary:disabled { background:#CBD5E1;cursor:not-allowed; }
-.step-btn.outline { background:none;border:2px solid var(--gray-light);color:var(--gray-dark); }
-.step-btn.outline:disabled { opacity:.4;cursor:not-allowed; }
-.step-btn.end { background:var(--green); }
-.step-progress { font-size:.78rem;color:var(--gray);font-weight:700;white-space:nowrap; }
-.step-card { padding:1.5rem 1.25rem; }
-.step-icon-row { display:flex;align-items:center;gap:.85rem;margin-bottom:1rem; }
-.step-icon {
-  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-  font-size:1.3rem;font-weight:900;flex-shrink:0;
-}
-.step-headline { font-size:1.25rem;font-weight:800;line-height:1.25; }
-.step-subline { font-size:.9rem;color:var(--gray);margin-top:.2rem; }
-.step-detail-row {
-  display:flex;align-items:center;gap:.7rem;padding:.7rem 0;border-top:1px solid #F3F4F6;
-}
-.step-detail-row:first-of-type { border-top:none; }
-.step-detail-label { font-size:.78rem;color:var(--gray);font-weight:600;width:90px;flex-shrink:0; }
-.step-detail-val { font-size:.9rem;font-weight:700; }
-.step-walk-icon { font-size:1.5rem; }
-.journey-arrivals-strip { border-bottom:1px solid #E5E7EB; }
+body {{ overflow: hidden; }}
+
+/* ── Screen 1 wrapper ── */
+.planner-wrap {{
+  margin-top: var(--nav-h);
+  display: flex; flex-direction: column;
+  height: calc(100vh - var(--nav-h)); overflow: hidden;
+}}
+.mini-canvas-wrap {{
+  height: 190px; flex-shrink: 0; position: relative;
+  overflow: hidden; background: var(--canvas-bg); touch-action: none;
+}}
+#miniCanvas {{ position: absolute; top: 0; left: 0; transform-origin: 0 0; }}
+.results-panel {{ flex: 1; overflow-y: auto; background: #111827; }}
+
+/* Route list (Screen 1, dark bg like screenshot 2) */
+.route-section-label {{
+  font-size: .65rem; font-weight: 800; letter-spacing: .1em;
+  color: rgba(255,255,255,.35); text-transform: uppercase;
+  padding: .85rem 1.25rem .4rem;
+}}
+.route-option {{
+  display: flex; align-items: center; gap: 1rem;
+  padding: .95rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  cursor: pointer; transition: background .12s;
+}}
+.route-option:hover {{ background: rgba(255,255,255,.05); }}
+.route-option-badge {{
+  border-radius: 12px; min-width: 110px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; font-weight: 900; flex-shrink: 0;
+}}
+.route-option-info {{ flex: 1; }}
+.route-go-time {{ font-size: 1rem; font-weight: 800; color: #34D399; display: flex; align-items: center; gap: .4rem; }}
+.route-total-time {{ font-size: .82rem; color: rgba(255,255,255,.55); margin-top: 2px; }}
+.route-option-right {{ text-align: right; flex-shrink: 0; }}
+.route-mins-big {{ font-size: 1.8rem; font-weight: 900; color: white; line-height: 1; }}
+.route-mins-label {{ font-size: .65rem; color: rgba(255,255,255,.45); font-weight: 600; }}
+.no-routes {{
+  color: rgba(255,255,255,.4); text-align: center;
+  padding: 3rem 1.5rem; font-size: .95rem; line-height: 1.6;
+}}
+
+/* ── Screen 2: Route overview ── */
+.route-overview-panel {{
+  position: fixed; inset: 0; margin-top: var(--nav-h);
+  background: var(--white); z-index: 1600;
+  transform: translateX(100%); transition: .3s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column; overflow: hidden;
+}}
+.route-overview-panel.open {{ transform: translateX(0); }}
+.rop-header {{ color: white; padding: 1.1rem 1.1rem .85rem; position: relative; flex-shrink: 0; }}
+.rop-back {{
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.2); border: none; color: white;
+  font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+  margin-bottom: .65rem; cursor: pointer;
+}}
+.rop-times {{ font-size: 1.2rem; font-weight: 800; margin-bottom: .3rem; }}
+.rop-dur-pill {{
+  display: inline-block; background: rgba(255,255,255,.18);
+  padding: .2rem .8rem; border-radius: 999px; font-size: .875rem; font-weight: 700;
+}}
+.rop-go-btn {{
+  position: absolute; top: 1rem; right: 1rem;
+  background: white; border: none; border-radius: var(--r-xs);
+  width: 64px; height: 42px; font-size: 1rem; font-weight: 900;
+  cursor: pointer; transition: opacity .15s;
+}}
+.rop-go-btn:hover {{ opacity: .85; }}
+
+/* Departure chips */
+.rop-chips-scroll {{
+  flex-shrink: 0; display: flex; gap: .65rem; overflow-x: auto;
+  padding: .85rem 1rem; scrollbar-width: none;
+  border-bottom: 3px solid var(--gray-light);
+}}
+.rop-chips-scroll::-webkit-scrollbar {{ display: none; }}
+.dep-chip {{
+  flex-shrink: 0; border-radius: var(--r-sm); padding: .75rem 1rem;
+  text-align: center; min-width: 88px;
+  border: 2px solid var(--border); cursor: pointer; transition: .15s;
+  background: var(--white);
+}}
+.dep-chip.live {{
+  border-color: var(--blue); background: var(--blue-l);
+}}
+.dep-chip-num {{
+  font-size: 1.8rem; font-weight: 900; line-height: 1;
+  color: var(--blue);
+}}
+.dep-chip.live .dep-chip-num {{ color: var(--blue); }}
+.dep-chip-label {{ font-size: .65rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .2rem; }}
+.dep-chip-unit {{ font-size: .7rem; color: var(--gray); font-weight: 600; margin-top: 2px; }}
+.dep-chip-badge {{
+  font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  background: var(--gray-light); color: var(--gray); padding: .15rem .45rem;
+  border-radius: 999px; margin-top: 3px; display: inline-block;
+}}
+
+/* Route overview map */
+.rop-map-wrap {{
+  height: 180px; flex-shrink: 0; position: relative;
+  overflow: hidden; background: var(--canvas-bg); touch-action: none;
+}}
+#ropCanvas {{ position: absolute; top: 0; left: 0; transform-origin: 0 0; }}
+
+/* Stop list inside overview */
+.rop-body {{ flex: 1; overflow-y: auto; }}
+.rop-leg {{ border-bottom: 4px solid var(--gray-light); }}
+.rop-leg-header {{
+  display: flex; align-items: center; gap: .85rem; padding: .95rem 1rem .75rem;
+}}
+.rop-leg-badge {{
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 900; flex-shrink: 0;
+}}
+.rop-leg-name {{ font-size: .95rem; font-weight: 800; }}
+.rop-leg-toward {{ font-size: .75rem; color: var(--gray); margin-top: 2px; }}
+.rop-leg-time {{ margin-left: auto; text-align: right; flex-shrink: 0; }}
+.rop-leg-time-val {{ font-size: 1rem; font-weight: 800; }}
+.rop-leg-time-lbl {{ font-size: .65rem; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }}
+.stop-row {{
+  display: flex; align-items: flex-start; gap: .85rem;
+  padding: .45rem 1rem;
+}}
+.stop-dot-col {{
+  display: flex; flex-direction: column; align-items: center;
+  width: 16px; flex-shrink: 0; margin-top: 4px;
+}}
+.stop-dot {{
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 3px solid currentColor; background: white; flex-shrink: 0;
+}}
+.stop-dot.major {{ background: currentColor; width: 14px; height: 14px; }}
+.stop-seg {{ width: 3px; flex: 1; min-height: 18px; margin-top: 1px; }}
+.stop-name {{ flex: 1; font-size: .9rem; font-weight: 500; padding-bottom: .4rem; }}
+.stop-name.major {{ font-weight: 800; font-size: .95rem; }}
+.stop-time {{ font-size: .82rem; color: var(--gray); padding-top: 2px; flex-shrink: 0; }}
+.stops-collapsed {{
+  margin: .1rem 1rem .1rem 2.85rem; font-size: .82rem;
+  color: var(--gray); font-weight: 600; cursor: pointer;
+  padding: .3rem 0; text-decoration: underline;
+}}
+
+/* Transfer badge between legs */
+.transfer-banner {{
+  display: flex; align-items: center; gap: .65rem;
+  padding: .85rem 1rem;
+  background: #FFFBEB; border-bottom: 1.5px solid #FDE68A;
+  border-top: 1.5px solid #FDE68A;
+}}
+.transfer-label {{ font-size: .68rem; font-weight: 900; color: #92400E; text-transform: uppercase; letter-spacing: .05em; }}
+.transfer-detail {{ font-size: .85rem; color: #78350F; }}
+
+/* Walk tag */
+.walk-tag {{
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: var(--gray-light); border-radius: 999px;
+  padding: .35rem .85rem; font-size: .82rem; font-weight: 700;
+  color: var(--gray-dark); margin: .4rem 1rem;
+}}
+
+/* Advisory card */
+.advisory-card {{
+  margin: .5rem 1rem; border-radius: 10px; padding: .85rem;
+  border: 1.5px solid var(--border);
+}}
+.advisory-icon {{ font-size: 1rem; margin-right: .4rem; }}
+.advisory-title {{ font-size: .72rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem; }}
+.advisory-body {{ font-size: .82rem; line-height: 1.45; color: var(--gray-dark); }}
+.advisory-meta {{ font-size: .68rem; color: var(--gray); margin-top: .35rem; }}
+
+/* ── Screen 3: Active navigation ── */
+.nav-panel {{
+  position: fixed; inset: 0; margin-top: var(--nav-h);
+  background: var(--white); z-index: 1700;
+  transform: translateX(100%); transition: .3s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column; overflow: hidden;
+}}
+.nav-panel.open {{ transform: translateX(0); }}
+.nav-header {{ padding: 1.1rem 1.1rem .85rem; color: white; flex-shrink: 0; position: relative; }}
+.nav-close {{
+  position: absolute; top: 1rem; right: 1rem;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.22); border: none; color: white; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}}
+.nav-title {{ font-size: 1.25rem; font-weight: 900; margin-bottom: .25rem; }}
+.nav-subtitle {{ font-size: .85rem; opacity: .8; }}
+.nav-steps {{ flex: 1; overflow-y: auto; padding-bottom: 2rem; }}
+.step-controls {{
+  flex-shrink: 0; display: flex; align-items: center; gap: .6rem;
+  padding: .85rem 1rem; border-top: 1.5px solid var(--border);
+  background: white; position: sticky; bottom: 0;
+}}
+.step-btn-back {{
+  padding: .7rem 1rem; border-radius: var(--r-xs);
+  background: none; border: 2px solid var(--border);
+  color: var(--gray-dark); font-size: .9rem; font-weight: 700; font-family: inherit;
+}}
+.step-btn-back:disabled {{ opacity: .4; cursor: not-allowed; }}
+.step-btn-next {{
+  flex: 1; padding: .75rem; border-radius: var(--r-xs);
+  background: var(--black); color: white;
+  font-size: .9rem; font-weight: 700; border: none; font-family: inherit;
+}}
+.step-btn-next.end {{ background: var(--green); }}
+.step-progress {{ font-size: .78rem; color: var(--gray); font-weight: 700; white-space: nowrap; }}
+
+/* Arrival-style card used inside nav steps */
+.nav-step-card {{
+  display: flex; align-items: center; padding: 1rem 1.1rem; gap: .85rem;
+  cursor: pointer; border-bottom: 1.5px solid rgba(255,255,255,.12);
+}}
+.nav-step-badge {{
+  width: 46px; height: 46px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; font-weight: 900; flex-shrink: 0;
+  background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
+}}
+.nav-step-main {{ flex: 1; min-width: 0; }}
+.nav-step-title {{ font-size: 1rem; font-weight: 800; }}
+.nav-step-sub {{ font-size: .75rem; opacity: .75; margin-top: 2px; }}
+.nav-step-eta {{ text-align: right; flex-shrink: 0; }}
+.nav-step-num {{ font-size: 2rem; font-weight: 900; line-height: 1; }}
+.nav-step-unit {{ font-size: .65rem; opacity: .75; font-weight: 600; }}
+
+/* picker */
+.picker-overlay {{ display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2500;align-items:flex-end; }}
+.picker-overlay.open {{ display:flex; }}
+.picker-card {{ background:white;border-radius:var(--r) var(--r) 0 0;width:100%;max-height:75vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-lg);animation:slideUp .22s ease; }}
+@keyframes slideUp {{ from {{ transform:translateY(30px);opacity:0; }} to {{ transform:translateY(0);opacity:1; }} }}
+.picker-header {{ padding:.75rem 1rem .5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }}
+.picker-header h3 {{ font-size:1rem;font-weight:800; }}
+.picker-close {{ width:32px;height:32px;border-radius:50%;background:var(--gray-light);border:none;font-size:1rem;display:flex;align-items:center;justify-content:center; }}
+.picker-search {{ padding:.75rem 1rem;border-bottom:1px solid var(--border); }}
+.picker-search input {{ width:100%;padding:.65rem .9rem;border:2px solid var(--border);border-radius:var(--r-xs);font-size:.95rem;outline:none;font-family:inherit; }}
+.picker-search input:focus {{ border-color:var(--black); }}
+.picker-list {{ overflow-y:auto;flex:1; }}
+.picker-item {{ display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;cursor:pointer;border-bottom:1px solid var(--gray-light); }}
+.picker-item:hover {{ background:var(--gray-light); }}
 </style>
 </head>
 <body>
 
-<nav class="navbar">
-  <button class="nav-logo-btn" onclick="toggleLogin()" aria-label="Account">
-    <img src="data:image/png;base64,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" alt="City Metro">
-  </button>
-  <span class="nav-title">City <span>Metro</span></span>
-  <nav class="nav-links">
-    <a href="index.html">Map</a>
-    <a href="planner.html">Plan Trip</a>
-    <a href="editor.html">Editor</a>
-  </nav>
-  <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
-<div class="nav-drawer" id="navDrawer">
-  <a href="index.html">Map</a>
-  <a href="planner.html">Plan Trip</a>
-  <a href="editor.html">Editor</a>
-</div>
+{nav_login}
 
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-card">
-    <div class="login-head">
-      <img src="data:image/png;base64,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" alt="CM">
-      <div class="login-head-text"><h2>City Metro</h2><p>Transit account</p></div>
-    </div>
-    <div class="login-body">
-      <div id="loginForm">
-        <div class="login-tabs">
-          <button class="login-tab active" id="tabLogin">Sign in</button>
-          <button class="login-tab" id="tabSignup">Sign up</button>
-        </div>
-        <div id="loginError" class="login-error"></div>
-        <div class="form-field hidden" id="nameField">
-          <label>Name</label>
-          <input type="text" id="authName" placeholder="Your name" autocomplete="name">
-        </div>
-        <div class="form-field">
-          <label>Email</label>
-          <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
-        </div>
-        <div class="form-field">
-          <label>Password</label>
-          <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
-        </div>
-        <button class="btn-black" id="authBtn">Sign in</button>
-      </div>
-      <div id="userView" class="hidden">
-        <div class="login-user-name" id="userName"></div>
-        <div class="login-user-email" id="userEmail"></div>
-        <div style="font-size:.75rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Saved Journeys</div>
-        <div id="savedList"></div>
-        <button class="btn-black" style="margin-top:1rem" onclick="document.getElementById('loginOverlay').classList.remove('open');window.location.href='planner.html'">+ Plan new trip</button>
-        <button class="btn-outline-red" id="logoutBtn">Sign out</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!-- ── SCREEN 1: Route selection ─────────────────────── -->
 <div class="planner-wrap">
   <div class="planner-top">
     <div class="planner-row" onclick="openPicker('from')">
@@ -119,66 +266,57 @@ body { overflow:hidden; }
       <div class="planner-dot" style="background:white;border:2px solid rgba(255,255,255,.4)"></div>
       <span class="ptxt placeholder" id="toLabel">Where to?</span>
     </div>
-    <button class="swap-btn" onclick="swapStations()" title="Swap">⇅</button>
+    <button class="swap-btn" onclick="swapStations()">⇅</button>
   </div>
-
   <div class="mini-canvas-wrap" id="miniWrap">
     <canvas id="miniCanvas"></canvas>
   </div>
-
   <div class="results-panel" id="resultsPanel">
-    <div class="empty" style="padding:2rem">
-      <span style="font-size:2rem">🔍</span>
-      <span>Choose an origin and destination station to see route options</span>
-    </div>
+    <div class="no-routes">Choose an origin and destination to see route options</div>
   </div>
 </div>
 
-<!-- STATION PICKER MODAL -->
+<!-- ── SCREEN 2: Route overview ───────────────────────── -->
+<div class="route-overview-panel" id="ropPanel">
+  <div class="rop-header" id="ropHeader">
+    <button class="rop-back" onclick="closeRouteOverview()">←</button>
+    <div class="rop-times" id="ropTimes"></div>
+    <span class="rop-dur-pill" id="ropDur"></span>
+    <button class="rop-go-btn" id="ropGoBtn" onclick="startNavigation()">GO</button>
+  </div>
+  <div class="rop-chips-scroll" id="ropChips"></div>
+  <div class="rop-map-wrap" id="ropMapWrap">
+    <canvas id="ropCanvas"></canvas>
+  </div>
+  <div class="rop-body" id="ropBody"></div>
+</div>
+
+<!-- ── SCREEN 3: Active navigation ────────────────────── -->
+<div class="nav-panel" id="navPanel">
+  <div class="nav-header" id="navHeader">
+    <button class="nav-close" onclick="endNavigation()">✕</button>
+    <div class="nav-title" id="navTitle"></div>
+    <div class="nav-subtitle" id="navSubtitle"></div>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+  <div class="step-controls">
+    <button class="step-btn-back" id="stepBack" onclick="stepPrev()" disabled>← Back</button>
+    <span class="step-progress" id="stepProgress">1 / 1</span>
+    <button class="step-btn-next" id="stepNext" onclick="stepNext()">Next →</button>
+  </div>
+</div>
+
+<!-- ── STATION PICKER ──────────────────────────────────── -->
 <div class="picker-overlay" id="pickerOverlay">
   <div class="picker-card">
     <div class="picker-header">
       <h3 id="pickerTitle">Choose station</h3>
-      <button class="picker-close" onclick="document.getElementById('pickerOverlay').classList.remove('open')">✕</button>
+      <button class="picker-close" onclick="closePicker()">✕</button>
     </div>
     <div class="picker-search">
       <input type="text" id="pickerSearch" placeholder="Search stations…" oninput="filterPicker(this.value)">
     </div>
     <div class="picker-list" id="pickerList"></div>
-  </div>
-</div>
-
-<!-- JOURNEY DETAIL -->
-<div class="detail-panel" id="detailPanel">
-  <div class="jhead" id="jhead">
-    <button class="detail-back" onclick="closeDetail()">←</button>
-    <div style="height:36px"></div>
-    <div class="jhead-times" id="jheadTimes"></div>
-    <div><span class="jhead-dur" id="jheadDur"></span></div>
-  </div>
-
-  <!-- Live arrivals for the lines used in this journey -->
-  <div id="journeyArrivals"></div>
-
-  <!-- Route map -->
-  <div class="detail-map-wrap" id="detailMapWrap">
-    <canvas id="detailCanvas"></canvas>
-  </div>
-  <div class="canvas-ctrls" style="position:absolute;right:.65rem;bottom:calc(220px - 1rem);" id="detailMapCtrls">
-    <button class="zoom-btn" onclick="detailEngine.zoomBy(1.25)">+</button>
-    <button class="zoom-btn" onclick="detailEngine.zoomBy(0.8)">−</button>
-  </div>
-
-  <!-- Step-by-step navigator -->
-  <div class="step-nav" id="stepNav"></div>
-  <div class="step-controls">
-    <button class="step-btn outline" id="stepPrevBtn" onclick="stepPrev()">← Back</button>
-    <div class="step-progress" id="stepProgress"></div>
-    <button class="step-btn primary" id="stepNextBtn" onclick="stepNext()">Next →</button>
-  </div>
-
-  <div style="padding:1rem">
-    <button onclick="saveCurrentJourney()" style="width:100%;padding:.8rem;border-radius:var(--r-xs);border:2px solid var(--black);background:none;font-size:.9rem;font-weight:700;">💾 Save this journey</button>
   </div>
 </div>
 
@@ -189,513 +327,596 @@ body { overflow:hidden; }
 setActiveNav('planner');
 initLoginForms();
 
-let allStations = [], allLines = {}, allSegments = [], allVehicles = [];
+// ── STATE ─────────────────────────────────────────────────
+let allStations = [], allLines = {{}}, allSegments = [], allVehicles = [];
 let fromStation = null, toStation = null;
 let pickerTarget = 'to';
-let currentLegs = null;
+let currentPlanData = null;  // full plan response
+let currentLegs = null;      // legs for selected route option
+let navStepIndex = 0;
+let ropEngine = null, miniEngine = null;
 
-const mini = new CanvasEngine('miniWrap','miniCanvas', {
-  scale: .4, minScale:.1, maxScale:3, worldW:6000, worldH:6000, gridSize:100,
+// ── MINI-MAP ENGINE ──────────────────────────────────────
+miniEngine = new CanvasEngine('miniWrap','miniCanvas', {{
+  scale:.4, minScale:.1, maxScale:3,
+  worldW:6000, worldH:6000, gridSize:100,
   onDraw: drawMini
-});
-mini.render(); // safe now that `mini` is fully assigned
+}});
+miniEngine.render();
 
-function drawMini(ctx) {
-  allSegments.forEach(seg => {
-    const line = allLines[seg.line_id];
-    if (!line) return;
-    const pts = JSON.parse(seg.points_json);
-    if (pts.length<2) return;
-    ctx.strokeStyle = line.color; ctx.lineWidth = line.type==='rail'?5:3.5;
-    ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.85;
+function drawMini(ctx) {{
+  allSegments.forEach(seg => {{
+    const line = allLines[seg.line_id]; if (!line) return;
+    const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+    ctx.strokeStyle = line.color;
+    ctx.lineWidth = line.type==='rail' ? 5 : 3.5;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.85;
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.globalAlpha=1;
-  });
-  allStations.forEach(s => {
-    const isSel = (fromStation && s.id===fromStation.id) || (toStation && s.id===toStation.id);
-    ctx.beginPath();
-    ctx.arc(s.x,s.y, isSel?12:6, 0, Math.PI*2);
-    ctx.fillStyle = isSel ? (fromStation && s.id===fromStation.id ? '#34D399' : '#1D4ED8') : '#9CA3AF';
-    ctx.fill();
-    ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
-  });
-}
-
-// ── LOAD DATA ─────────────────────────────────────────
-async function loadData() {
-  try {
-    const [lines, stations, vehicles] = await Promise.all([apiFetch('/api/lines'), apiFetch('/api/stations'), apiFetch('/api/live')]);
-    allLines = {}; lines.forEach(l=>allLines[l.id]=l);
-    allStations = stations;
-    allVehicles = vehicles;
-    allSegments = [];
-    for (const line of lines) {
-      try { const d = await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
-    }
-    mini.render();
-    {
-      const pts = allStations.map(s=>[s.x,s.y]);
-      allSegments.forEach(seg => {
-        try { JSON.parse(seg.points_json).forEach(p => pts.push(p)); } catch {}
-      });
-      if (pts.length) mini.fitToContent(pts);
-    }
-
-    handleUrlParams();
-  } catch {}
-}
-
-function handleUrlParams() {
-  const pending = sessionStorage.getItem('pendingJourney');
-  if (pending) {
-    sessionStorage.removeItem('pendingJourney');
-    const j = JSON.parse(pending);
-    applyJourney(j.from_station_id, j.to_station_id);
-  }
-}
-
-// ── STATION PICKER ────────────────────────────────────
-function openPicker(target) {
-  pickerTarget = target;
-  document.getElementById('pickerTitle').textContent = target === 'from' ? 'Choose origin' : 'Choose destination';
-  document.getElementById('pickerOverlay').classList.add('open');
-  document.getElementById('pickerSearch').value = '';
-  renderPickerList(allStations);
-  setTimeout(()=>document.getElementById('pickerSearch').focus(), 80);
-}
-
-function filterPicker(q) {
-  q = q.toLowerCase();
-  renderPickerList(allStations.filter(s => s.name.toLowerCase().includes(q)));
-}
-
-function renderPickerList(stations) {
-  const list = document.getElementById('pickerList');
-  if (!stations.length) { list.innerHTML = '<div class="empty" style="padding:1.5rem">No stations found.</div>'; return; }
-  list.innerHTML = stations.map(s => {
+  }});
+  // Highlight journey route if a plan is selected
+  if (currentLegs) {{
+    currentLegs.forEach(leg => {{
+      const segs = allSegments.filter(s => s.line_id === leg.line.id);
+      segs.forEach(seg => {{
+        const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+        ctx.strokeStyle = leg.line.color;
+        ctx.lineWidth = leg.line.type==='rail' ? 8 : 6;
+        ctx.lineCap='round'; ctx.lineJoin='round';
+        ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+        pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+        ctx.stroke();
+      }});
+    }});
+  }}
+  // Draw stations
+  allStations.forEach(s => {{
     const lineIds = (s.line_ids||'').split(',').filter(Boolean);
-    const chips = lineIds.map(id => {
-      const l = allLines[id]; if (!l) return '';
-      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${l.id}</span>`;
-    }).join(' ');
-    return `
-      <div class="picker-item" onclick='selectPickerStation(${s.id})'>
-        <span class="picker-item-icon">${s.type==='hub'?'🔀':s.type==='station'?'🚆':'🚌'}</span>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:.9rem">${escapeHtml(s.name)}</div>
-          <div style="display:flex;gap:4px;margin-top:3px">${chips}</div>
-        </div>
-      </div>`;
-  }).join('');
-}
+    const col = allLines[lineIds[0]]?.color || '#6B7280';
+    const isSel = (fromStation&&s.id===fromStation.id)||(toStation&&s.id===toStation.id);
+    ctx.beginPath(); ctx.arc(s.x,s.y,isSel?12:6,0,Math.PI*2);
+    ctx.fillStyle = isSel ? (fromStation&&s.id===fromStation.id ? '#34D399' : '#1D4ED8') : col;
+    ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+  }});
+}}
 
-function selectPickerStation(id) {
-  const s = allStations.find(x => x.id === id);
-  if (!s) return;
-  if (pickerTarget === 'from') {
-    fromStation = s;
-    document.getElementById('fromLabel').textContent = s.name;
-    document.getElementById('fromLabel').classList.remove('placeholder');
-  } else {
-    toStation = s;
-    document.getElementById('toLabel').textContent = s.name;
-    document.getElementById('toLabel').classList.remove('placeholder');
-  }
-  document.getElementById('pickerOverlay').classList.remove('open');
-  mini.render();
-  if (fromStation && toStation) planTrip();
-}
+// ── ROP MAP ENGINE ───────────────────────────────────────
+function initRopEngine() {{
+  if (ropEngine) return;
+  ropEngine = new CanvasEngine('ropMapWrap','ropCanvas', {{
+    scale:.4, minScale:.1, maxScale:3,
+    worldW:6000, worldH:6000, gridSize:100,
+    onDraw: drawRop
+  }});
+  ropEngine.render();
+}}
 
-document.getElementById('pickerOverlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
-});
-
-function swapStations() {
-  [fromStation,toStation] = [toStation,fromStation];
-  document.getElementById('fromLabel').textContent = fromStation ? fromStation.name : 'Choose origin station';
-  document.getElementById('fromLabel').classList.toggle('placeholder', !fromStation);
-  document.getElementById('toLabel').textContent = toStation ? toStation.name : 'Where to?';
-  document.getElementById('toLabel').classList.toggle('placeholder', !toStation);
-  mini.render();
-  if (fromStation && toStation) planTrip();
-}
-
-function applyJourney(fromId, toId) {
-  const f = allStations.find(s=>s.id===fromId), t = allStations.find(s=>s.id===toId);
-  if (f) { fromStation=f; document.getElementById('fromLabel').textContent=f.name; document.getElementById('fromLabel').classList.remove('placeholder'); }
-  if (t) { toStation=t; document.getElementById('toLabel').textContent=t.name; document.getElementById('toLabel').classList.remove('placeholder'); }
-  mini.render();
-  if (fromStation && toStation) planTrip();
-}
-
-window.addEventListener('loadJourney', e => applyJourney(e.detail.from_station_id, e.detail.to_station_id));
-
-// ── PLAN TRIP (graph routing) ─────────────────────────
-async function planTrip() {
-  const panel = document.getElementById('resultsPanel');
-  panel.innerHTML = '<div class="empty"><div class="spinner"></div><span>Finding routes…</span></div>';
-  try {
-    const data = await apiFetch(`/api/plan?from_station=${fromStation.id}&to_station=${toStation.id}`);
-    if (!data.found || !data.legs.length) {
-      panel.innerHTML = '<div class="empty"><span style="font-size:1.5rem">😕</span><span>No connected route found between these stations.<br><small>Try the Editor to connect lines.</small></span></div>';
-      return;
-    }
-    currentLegs = data.legs;
-    renderRouteOption(data);
-  } catch(e) {
-    panel.innerHTML = `<div class="empty">⚠️ ${e.message}</div>`;
-  }
-}
-
-function renderRouteOption(data) {
-  const panel = document.getElementById('resultsPanel');
-  const legs = data.legs;
-  const totalMin = Math.max(1, Math.round(data.totalSeconds/60));
-  const chips = legs.map((leg,i) => `
-    <span class="chip" style="background:${leg.line.color};color:${leg.line.text_color}">${leg.line.id}</span>
-    ${i<legs.length-1 ? '<span class="route-transfer-arrow">→</span>' : ''}
-  `).join('');
-
-  panel.innerHTML = `
-    <div style="padding:.85rem 1rem;border-bottom:1px solid #E5E7EB">
-      <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Best route</div>
-    </div>
-    <div class="route-opt" onclick="showDetail()">
-      <div style="width:52px;height:52px;border-radius:12px;background:${legs[0].line.color};display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:900;color:${legs[0].line.text_color};flex-shrink:0">${legs[0].line.id}</div>
-      <div class="route-opt-left">
-        <div class="route-chips">${chips}</div>
-        <div style="font-size:.85rem;font-weight:700">${data.transfers===0?'Direct route':data.transfers+' transfer'+(data.transfers>1?'s':'')}</div>
-        <div style="font-size:.78rem;color:var(--gray);margin-top:2px">${escapeHtml(fromStation.name)} → ${escapeHtml(toStation.name)}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:1.6rem;font-weight:900;color:var(--black);line-height:1">${totalMin}</div>
-        <div style="font-size:.72rem;color:var(--gray);font-weight:600">min</div>
-      </div>
-    </div>
-  `;
-}
-
-// ── DETAIL PANEL STATE ────────────────────────────────
-let journeySteps = [];      // flat list of step objects, one screen each
-let journeyStepIndex = 0;
-let detailEngine = null;
-
-// ── DETAIL MAP ────────────────────────────────────────
-function initDetailEngine() {
-  if (detailEngine) return;
-  detailEngine = new CanvasEngine('detailMapWrap','detailCanvas', {
-    scale:.5, minScale:.1, maxScale:3, worldW:6000, worldH:6000, gridSize:100,
-    onDraw: drawDetailMap
-  });
-  detailEngine.render();
-}
-
-function drawDetailMap(ctx) {
-  if (!currentLegs) return;
-  // Draw all line segments faintly for context
-  allSegments.forEach(seg => {
-    const line = allLines[seg.line_id];
-    if (!line) return;
-    const pts = JSON.parse(seg.points_json);
-    if (pts.length<2) return;
+function drawRop(ctx) {{
+  // All lines faint
+  allSegments.forEach(seg => {{
+    const line = allLines[seg.line_id]; if (!line) return;
+    const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
     ctx.strokeStyle = line.color; ctx.lineWidth = line.type==='rail'?4:3;
-    ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.25;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.2;
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.globalAlpha=1;
-  });
-
-  // Highlight this journey's actual path on top, full opacity
-  currentLegs.forEach(leg => {
-    const segs = legSegmentPolylines(leg);
-    segs.forEach(pts => {
-      ctx.strokeStyle = leg.line.color; ctx.lineWidth = leg.line.type==='rail'?6:5;
-      ctx.lineCap='round';ctx.lineJoin='round';
+  }});
+  if (!currentLegs) return;
+  // Route highlighted
+  currentLegs.forEach(leg => {{
+    const segs = allSegments.filter(s => s.line_id === leg.line.id);
+    segs.forEach(seg => {{
+      const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+      ctx.strokeStyle = leg.line.color;
+      ctx.lineWidth = leg.line.type==='rail' ? 7 : 5;
+      ctx.lineCap='round'; ctx.lineJoin='round';
       ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
       pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
       ctx.stroke();
-    });
-  });
-
-  // Stations along the journey
-  currentLegs.forEach(leg => {
-    leg.stations.forEach((s,i) => {
-      const isEndpoint = (leg===currentLegs[0]&&i===0) || (leg===currentLegs[currentLegs.length-1]&&i===leg.stations.length-1);
-      const r = isEndpoint?10:6;
-      ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
-      ctx.fillStyle = isEndpoint ? '#111827' : leg.line.color;
-      ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-    });
-  });
-
-  // Live vehicles on the lines used in this journey
+    }});
+    // Station dots
+    leg.stations.forEach(s => {{
+      ctx.beginPath(); ctx.arc(s.x,s.y,7,0,Math.PI*2);
+      ctx.fillStyle = leg.line.color; ctx.fill();
+      ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+    }});
+  }});
+  // Live vehicles on these lines
   const journeyLineIds = new Set(currentLegs.map(l=>l.line.id));
-  allVehicles.forEach(v => {
+  allVehicles.forEach(v => {{
     if (!journeyLineIds.has(v.line_id)) return;
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    ctx.scale(1/detailEngine.scale, 1/detailEngine.scale);
-    drawVehicleMarker(ctx, 0, 0, v.line_type, 14);
+    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/ropEngine.scale,1/ropEngine.scale);
+    drawVehicleMarker(ctx,0,0,v.line_type,14);
     ctx.restore();
-  });
+  }});
+}}
 
-  // Highlight current step's relevant station(s)
-  const step = journeySteps[journeyStepIndex];
-  if (step && step.highlightStation) {
-    const s = step.highlightStation;
-    ctx.beginPath(); ctx.arc(s.x,s.y,15,0,Math.PI*2);
-    ctx.strokeStyle='#DC2626'; ctx.lineWidth=3; ctx.stroke();
-  }
-}
+// ── DATA LOADING ─────────────────────────────────────────
+async function loadData() {{
+  try {{
+    const [lines, stations, vehicles] = await Promise.all([
+      apiFetch('/api/lines'), apiFetch('/api/stations'), apiFetch('/api/live')
+    ]);
+    allLines = {{}}; lines.forEach(l=>allLines[l.id]=l);
+    allStations = stations;
+    allVehicles = vehicles;
+    allSegments = [];
+    for (const line of lines) {{
+      try {{ const d=await apiFetch(`/api/lines/${{encodeURIComponent(line.id)}}`); allSegments.push(...d.segments); }} catch {{}}
+    }}
+    miniEngine.render();
+    const pts = allStations.map(s=>[s.x,s.y]);
+    allSegments.forEach(seg=>{{ try{{JSON.parse(seg.points_json).forEach(p=>pts.push(p));}}catch{{}} }});
+    if (pts.length) miniEngine.fitToContent(pts);
 
-// Reconstruct the actual drawn polyline(s) for a leg from allSegments,
-// matching consecutive station pairs in the leg.
-function legSegmentPolylines(leg) {
-  const result = [];
-  for (let i=0; i<leg.stations.length-1; i++) {
-    const a = leg.stations[i].id, b = leg.stations[i+1].id;
-    const seg = allSegments.find(s =>
-      s.line_id === leg.line.id &&
-      ((s.from_station_id===a && s.to_station_id===b) || (s.from_station_id===b && s.to_station_id===a))
-    );
-    if (seg) {
-      let pts = JSON.parse(seg.points_json);
-      if (seg.from_station_id === b) pts = [...pts].reverse();
-      result.push(pts);
-    } else {
-      result.push([[leg.stations[i].x,leg.stations[i].y],[leg.stations[i+1].x,leg.stations[i+1].y]]);
-    }
-  }
-  return result;
-}
+    // Handle pending journey from saved journeys
+    const pending = sessionStorage.getItem('pendingJourney');
+    if (pending) {{
+      sessionStorage.removeItem('pendingJourney');
+      const j = JSON.parse(pending);
+      applyJourney(j.from_station_id, j.to_station_id);
+    }}
+    // Handle plan-from-popup
+    const plannerFrom = sessionStorage.getItem('plannerFrom');
+    if (plannerFrom) {{
+      sessionStorage.removeItem('plannerFrom');
+      const s = JSON.parse(plannerFrom);
+      const found = allStations.find(x=>x.id===s.id);
+      if (found) {{
+        fromStation=found;
+        document.getElementById('fromLabel').textContent=found.name;
+        document.getElementById('fromLabel').classList.remove('placeholder');
+      }}
+    }}
+  }} catch(e) {{ console.error(e); }}
+}}
+window.addEventListener('loadJourney', e => applyJourney(e.detail.from_station_id, e.detail.to_station_id));
 
-// ── LIVE ARRIVALS STRIP for lines used in this journey ────────
-function renderJourneyArrivals() {
-  const el = document.getElementById('journeyArrivals');
-  if (!currentLegs) { el.innerHTML=''; return; }
-  const journeyLineIds = [...new Set(currentLegs.map(l=>l.line.id))];
+function applyJourney(fromId, toId) {{
+  const f=allStations.find(s=>s.id===fromId), t=allStations.find(s=>s.id===toId);
+  if(f){{ fromStation=f; document.getElementById('fromLabel').textContent=f.name; document.getElementById('fromLabel').classList.remove('placeholder'); }}
+  if(t){{ toStation=t; document.getElementById('toLabel').textContent=t.name; document.getElementById('toLabel').classList.remove('placeholder'); }}
+  miniEngine.render();
+  if(fromStation&&toStation) planTrip();
+}}
 
-  const items = [];
-  journeyLineIds.forEach(lineId => {
-    const line = allLines[lineId];
-    if (!line) return;
-    const vehicles = allVehicles.filter(v => v.line_id === lineId);
-    if (!vehicles.length) {
-      items.push({ line, eta:null, sub: line.frequency || 'See schedule' });
-      return;
-    }
-    vehicles.forEach(v => {
-      let eta = null;
-      if (v.next_x != null) {
-        const dist = Math.hypot(v.next_x-v.x, v.next_y-v.y);
-        eta = etaMinutesFromSpeed(dist, v.speed_kmh);
-      }
-      items.push({ line, eta, sub: v.next_station_name || line.name });
-    });
-  });
-  items.sort((a,b)=>(a.eta??999)-(b.eta??999));
+// ── PICKER ────────────────────────────────────────────────
+function openPicker(target) {{
+  pickerTarget = target;
+  document.getElementById('pickerTitle').textContent = target==='from' ? 'Choose origin' : 'Choose destination';
+  document.getElementById('pickerSearch').value = '';
+  renderPickerList(allStations);
+  document.getElementById('pickerOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('pickerSearch').focus(), 80);
+}}
+function closePicker() {{ document.getElementById('pickerOverlay').classList.remove('open'); }}
 
-  if (!items.length) { el.innerHTML=''; return; }
-
-  el.innerHTML = `<div class="journey-arrivals-strip">` + items.slice(0,4).map(a => `
-    <div class="arrival-card" style="background:${a.line.color};color:${a.line.text_color};padding:.7rem 1rem">
-      <div class="line-badge" style="width:38px;height:38px;font-size:1rem">${a.line.id}</div>
-      <div class="arrival-main">
-        <div class="arrival-title" style="font-size:.9rem">${a.eta!=null?'🔴 ':''}${escapeHtml(a.line.name)}</div>
-        <div class="arrival-sub">${escapeHtml(a.sub)}</div>
-      </div>
-      <div class="arrival-mins">
-        <div class="arrival-num" style="font-size:1.5rem">${a.eta??'—'}</div>
-        <div class="arrival-unit">${a.eta!=null?(a.eta===1?'minute':'minutes'):''}</div>
-      </div>
-    </div>
-  `).join('') + `</div>`;
-}
-
-// ── BUILD STEPS — one screen per leg, new screen per transfer ──
-function buildJourneySteps(legs, depTime) {
-  const steps = [];
-  let runningTime = depTime;
-
-  legs.forEach((leg, li) => {
-    const perHopSec = leg.stations.length > 1
-      ? leg.seconds / (leg.stations.length - 1)
-      : leg.seconds;
-
-    // Build the full stop timeline for this leg
-    const stopRows = [];
-    leg.stations.forEach((st, si) => {
-      const t = new Date(runningTime + si * perHopSec * 1000);
-      const timeStr = t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-      const isFirst = si === 0, isLast = si === leg.stations.length - 1;
-      stopRows.push({ station: st, time: timeStr, isFirst, isLast });
-    });
-    runningTime += leg.seconds * 1000;
-
-    steps.push({
-      type: 'leg',
-      leg,
-      stopRows,
-      isTransfer: li > 0,
-      transferFrom: li > 0 ? legs[li-1].line : null
-    });
-  });
-
-  steps.push({
-    type: 'end',
-    destination: toStation?.name || legs[legs.length-1].stations[legs[legs.length-1].stations.length-1].name
-  });
-
-  return steps;
-}
-
-// ── SHOW DETAIL (entry point) ──────────────────────────
-function showDetail() {
-  if (!currentLegs) return;
-  initDetailEngine();
-
-  const legs = currentLegs;
-  const firstLine = legs[0].line;
-  const jhead = document.getElementById('jhead');
-  jhead.style.background = firstLine.color;
-  jhead.style.color = firstLine.text_color;
-
-  const now = new Date();
-  const totalSeconds = legs.reduce((a,l)=>a+l.seconds,0);
-  const dep = new Date(now.getTime()+3*60000);
-  const arr = new Date(dep.getTime()+totalSeconds*1000);
-  document.getElementById('jheadTimes').textContent =
-    `Leave ${dep.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Arrive ${arr.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-  document.getElementById('jheadDur').textContent = `${Math.round(totalSeconds/60)} min`;
-
-  renderJourneyArrivals();
-
-  journeySteps = buildJourneySteps(legs, dep.getTime());
-  journeyStepIndex = 0;
-  renderCurrentStep();
-
-  document.getElementById('detailPanel').classList.add('open');
-  setTimeout(() => { detailEngine.resize(); centerMapOnStep(); }, 50);
-}
-
-// ── STEP RENDERING ──────────────────────────────────────
-function renderCurrentStep() {
-  const step = journeySteps[journeyStepIndex];
-  const nav = document.getElementById('stepNav');
-
-  if (step.type === 'end') {
-    nav.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;gap:1rem">
-        <div style="font-size:3rem">🏁</div>
-        <div style="font-size:1.4rem;font-weight:800">You've arrived!</div>
-        <div style="font-size:1rem;color:var(--gray)">${escapeHtml(step.destination)}</div>
-      </div>`;
-    document.getElementById('stepNextBtn').textContent = 'End journey ✓';
-    document.getElementById('stepNextBtn').style.background = 'var(--green)';
-    document.getElementById('stepPrevBtn').disabled = journeyStepIndex === 0;
-    document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
-    detailEngine?.render();
-    return;
-  }
-
-  // 'leg' step — show the full timeline for this leg
-  const { leg, stopRows, isTransfer, transferFrom } = step;
-  const line = leg.line;
-  const first = stopRows[0], last = stopRows[stopRows.length-1];
-
-  // Transfer notice at top if this is a connection
-  const transferBanner = isTransfer ? `
-    <div style="background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:.75rem 1.25rem;display:flex;align-items:center;gap:.6rem">
-      <span style="font-size:1.2rem">🔄</span>
-      <div>
-        <div style="font-size:.8rem;font-weight:800;color:#92400E">TRANSFER</div>
-        <div style="font-size:.85rem;color:#78350F">
-          From <strong>${transferFrom?.id}</strong> · Board <strong>${line.id}</strong> at ${escapeHtml(first.station.name)}
-        </div>
-      </div>
-    </div>` : '';
-
-  // Header card — line color, headsign, times
-  const header = `
-    <div style="background:${line.color};color:${line.text_color};padding:1.1rem 1.25rem">
-      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">
-        <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;flex-shrink:0">${line.id}</div>
-        <div>
-          <div style="font-size:1rem;font-weight:800">${escapeHtml(line.name)}</div>
-          <div style="font-size:.8rem;opacity:.8">→ ${escapeHtml(last.station.name)}</div>
-        </div>
-        <div style="margin-left:auto;text-align:right">
-          <div style="font-size:.7rem;opacity:.75">DEPART</div>
-          <div style="font-size:1.1rem;font-weight:800">${first.time}</div>
-        </div>
+function filterPicker(q) {{
+  q = q.toLowerCase();
+  renderPickerList(allStations.filter(s=>s.name.toLowerCase().includes(q)));
+}}
+function renderPickerList(stations) {{
+  const list = document.getElementById('pickerList');
+  if (!stations.length) {{ list.innerHTML='<div class="empty" style="padding:1.5rem">No stations found</div>'; return; }}
+  list.innerHTML = stations.map(s => {{
+    const lineIds = (s.line_ids||'').split(',').filter(Boolean);
+    const chips = lineIds.map(id => {{
+      const l=allLines[id]; if(!l) return '';
+      return `<span class="chip-sm" style="background:${{l.color}};color:${{l.text_color}}">${{l.id}}</span>`;
+    }}).join('');
+    return `<div class="picker-item" onclick="selectStation(${{s.id}})">
+      <span style="font-size:1.1rem">${{s.type==='hub'?'🔀':s.type==='station'?'🚆':'📍'}}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.9rem">${{escapeHtml(s.name)}}</div>
+        <div style="display:flex;gap:3px;margin-top:3px">${{chips}}</div>
       </div>
     </div>`;
+  }}).join('');
+}}
+function selectStation(id) {{
+  const s=allStations.find(x=>x.id===id); if(!s) return;
+  closePicker();
+  if (pickerTarget==='from') {{
+    fromStation=s;
+    document.getElementById('fromLabel').textContent=s.name;
+    document.getElementById('fromLabel').classList.remove('placeholder');
+  }} else {{
+    toStation=s;
+    document.getElementById('toLabel').textContent=s.name;
+    document.getElementById('toLabel').classList.remove('placeholder');
+  }}
+  miniEngine.render();
+  if (fromStation&&toStation) planTrip();
+}}
+document.getElementById('pickerOverlay').addEventListener('click', e => {{
+  if (e.target===e.currentTarget) closePicker();
+}});
 
-  // Full stop timeline — all stops on this screen
-  const timeline = stopRows.map((row, i) => {
-    const isF = row.isFirst, isL = row.isLast;
-    const dotColor = isF || isL ? line.color : '#CBD5E1';
-    const segColor = i < stopRows.length - 1 ? line.color : 'transparent';
-    return `
-      <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.5rem 1.25rem">
-        <div style="display:flex;flex-direction:column;align-items:center;width:16px;flex-shrink:0;margin-top:3px">
-          <div style="width:${isF||isL?14:10}px;height:${isF||isL?14:10}px;border-radius:50%;background:${isF||isL?line.color:'white'};border:3px solid ${dotColor};flex-shrink:0"></div>
-          ${i < stopRows.length-1 ? `<div style="width:3px;background:${segColor};flex:1;min-height:20px;margin-top:1px"></div>` : ''}
+function swapStations() {{
+  [fromStation,toStation]=[toStation,fromStation];
+  document.getElementById('fromLabel').textContent=fromStation?fromStation.name:'Choose origin station';
+  document.getElementById('fromLabel').classList.toggle('placeholder',!fromStation);
+  document.getElementById('toLabel').textContent=toStation?toStation.name:'Where to?';
+  document.getElementById('toLabel').classList.toggle('placeholder',!toStation);
+  miniEngine.render();
+  if (fromStation&&toStation) planTrip();
+}}
+
+// ── SCREEN 1: PLAN TRIP ───────────────────────────────────
+async function planTrip() {{
+  const panel = document.getElementById('resultsPanel');
+  panel.innerHTML = '<div class="no-routes"><div class="spinner" style="margin:0 auto .75rem"></div>Finding routes…</div>';
+  try {{
+    const data = await apiFetch(`/api/plan?from_station=${{fromStation.id}}&to_station=${{toStation.id}}`);
+    currentPlanData = data;
+    if (!data.found || !data.legs.length) {{
+      panel.innerHTML = `<div class="no-routes">No connected route found between<br><strong>${{escapeHtml(fromStation.name)}}</strong> and <strong>${{escapeHtml(toStation.name)}}</strong>.<br><small>Make sure lines are drawn between these stations in the editor.</small></div>`;
+      return;
+    }}
+    renderRouteList([data]);
+  }} catch(e) {{
+    panel.innerHTML = `<div class="no-routes">⚠️ ${{e.message}}</div>`;
+  }}
+}}
+
+function renderRouteList(plans) {{
+  const panel = document.getElementById('resultsPanel');
+  const now = new Date();
+
+  // Calculate "go in X min" from live vehicles
+  function getGoInMins(legs) {{
+    const firstLeg = legs[0];
+    const boardStation = firstLeg.stations[0];
+    const liveVehicle = allVehicles.find(v=>v.line_id===firstLeg.line.id && v.next_x!=null);
+    if (liveVehicle) {{
+      const dist = Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y);
+      const eta = etaMinutesFromSpeed(dist, liveVehicle.speed_kmh);
+      if (eta) return eta;
+    }}
+    // Fallback: parse frequency
+    const freq = firstLeg.line.frequency || '';
+    const m = freq.match(/(\\d+)/);
+    return m ? Math.floor(parseInt(m[1])/2) : null;
+  }}
+
+  const html = plans.map((data, idx) => {{
+    const legs = data.legs;
+    const totalMin = Math.round(data.totalSeconds / 60);
+    const goIn = getGoInMins(legs);
+    const firstLine = legs[0].line;
+
+    // Build badge — shows all line IDs if multi-leg
+    const badgeIds = legs.map(l=>l.line.id).join(' → ');
+    const transfers = data.transfers;
+
+    return `<div class="route-option" onclick="showRouteOverview(${{idx}})">
+      <div class="route-option-badge" style="background:${{firstLine.color}};color:${{firstLine.text_color}}">
+        ${{legs.length===1 ? legs[0].line.id : legs.map(l=>`<span style="margin:0 2px">${{l.line.id}}</span>`).join('→')}}
+      </div>
+      <div class="route-option-info">
+        <div class="route-go-time">
+          ${{goIn!=null ? `Go in ${{goIn}} min` : legs[0].line.name}}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.111 16.404a5.5 5.5 0 0 1 7.778 0M12 20h.01M4.929 7.929a10 10 0 0 1 14.142 0M6.34 10.66a8 8 0 0 1 11.32 0" stroke-linecap="round"/></svg>
         </div>
-        <div style="flex:1;padding-bottom:${i<stopRows.length-1?'.5rem':0}">
-          <div style="font-size:${isF||isL?'1rem':'.9rem'};font-weight:${isF||isL?800:500};color:${isF||isL?'#111827':'#6B7280'}">${escapeHtml(row.station.name)}</div>
+        <div class="route-total-time">
+          ${{legs[0].stations[0]?.name||''}} → ${{legs[legs.length-1].stations[legs[legs.length-1].stations.length-1]?.name||''}}
         </div>
-        <div style="font-size:.85rem;color:var(--gray);padding-top:2px;flex-shrink:0">${row.time}</div>
+      </div>
+      <div class="route-option-right">
+        <div class="route-mins-big">${{totalMin}}</div>
+        <div class="route-mins-label">min</div>
+      </div>
+    </div>`;
+  }}).join('');
+
+  panel.innerHTML = `<div class="route-section-label">Route options</div>${{html}}`;
+}}
+
+// ── SCREEN 2: ROUTE OVERVIEW ─────────────────────────────
+async function showRouteOverview(planIdx) {{
+  const data = currentPlanData;
+  if (!data) return;
+  currentLegs = data.legs;
+
+  initRopEngine();
+
+  const firstLine = currentLegs[0].line;
+  const lastStation = currentLegs[currentLegs.length-1].stations[currentLegs[currentLegs.length-1].stations.length-1];
+  const totalMin = Math.round(data.totalSeconds / 60);
+
+  // Header
+  const header = document.getElementById('ropHeader');
+  header.style.background = firstLine.color;
+  header.style.color = firstLine.text_color;
+  const goBtn = document.getElementById('ropGoBtn');
+  goBtn.style.color = firstLine.color;
+
+  const now = new Date();
+  const dep = new Date(now.getTime() + 3*60000);
+  const arr = new Date(dep.getTime() + data.totalSeconds*1000);
+  document.getElementById('ropTimes').textContent =
+    `Leave ${{dep.toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}})}} · Arrive ${{arr.toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}})}}`;
+  document.getElementById('ropDur').textContent = `${{totalMin}} min`;
+
+  // Departure chips
+  renderDepartureChips(currentLegs[0].line);
+
+  // Fit map to route
+  const routePts = [];
+  currentLegs.forEach(leg=>leg.stations.forEach(s=>routePts.push([s.x,s.y])));
+  if (routePts.length) {{
+    setTimeout(()=>{{ ropEngine.resize(); ropEngine.fitToContent(routePts, 40); }}, 50);
+  }}
+  ropEngine.render();
+
+  // Build stop list
+  await buildRopBody(currentLegs, dep.getTime(), data.totalSeconds);
+
+  document.getElementById('ropPanel').classList.add('open');
+  miniEngine.render();
+}}
+
+function renderDepartureChips(line) {{
+  const chips = document.getElementById('ropChips');
+  const freq = line.frequency || '';
+  const m = freq.match(/(\\d+)/);
+  const freqMin = m ? parseInt(m[1]) : 15;
+
+  const liveVehicle = allVehicles.find(v=>v.line_id===line.id && v.next_x!=null);
+  const liveEta = liveVehicle
+    ? etaMinutesFromSpeed(Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y), liveVehicle.speed_kmh)
+    : null;
+
+  const departures = [];
+  if (liveEta != null) {{
+    departures.push({{ mins: liveEta, isLive: true }});
+    departures.push({{ mins: liveEta + freqMin, isLive: false }});
+    departures.push({{ mins: liveEta + freqMin*2, isLive: false }});
+  }} else {{
+    departures.push({{ mins: Math.floor(freqMin/2), isLive: false }});
+    departures.push({{ mins: freqMin, isLive: false }});
+    departures.push({{ mins: freqMin*2, isLive: false }});
+  }}
+
+  const now = new Date();
+  chips.innerHTML = departures.map((d,i) => {{
+    const depTime = new Date(now.getTime()+d.mins*60000);
+    const timeStr = depTime.toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}});
+    return `<div class="dep-chip ${{d.isLive?'live':''}}">
+      ${{d.isLive ? '<div class="dep-chip-label">Live</div>' : ''}}
+      <div class="dep-chip-num">${{d.mins}}</div>
+      <div class="dep-chip-unit">min</div>
+      ${{!d.isLive ? '<div class="dep-chip-badge">Sched</div>' : ''}}
+    </div>`;
+  }}).join('');
+}}
+
+async function buildRopBody(legs, depTimeMs, totalSeconds) {{
+  const body = document.getElementById('ropBody');
+  let html = '';
+  let runningMs = depTimeMs;
+
+  legs.forEach((leg, li) => {{
+    const perHopSec = leg.stations.length > 1 ? leg.seconds/(leg.stations.length-1) : leg.seconds;
+
+    if (li > 0) {{
+      html += `<div class="transfer-banner">
+        <span style="font-size:1.2rem">🔄</span>
+        <div>
+          <div class="transfer-label">Transfer</div>
+          <div class="transfer-detail">Board <strong>${{leg.line.id}}</strong> — ${{escapeHtml(leg.line.name)}} at ${{escapeHtml(leg.stations[0].name)}}</div>
+        </div>
       </div>`;
-  }).join('');
+    }}
 
-  nav.innerHTML = transferBanner + header + `<div style="padding:.5rem 0">${timeline}</div>`;
+    html += `<div class="rop-leg">
+      <div class="rop-leg-header">
+        <div class="rop-leg-badge" style="background:${{leg.line.color}};color:${{leg.line.text_color}}">${{leg.line.id}}</div>
+        <div>
+          <div class="rop-leg-name">${{escapeHtml(leg.line.name)}}</div>
+          <div class="rop-leg-toward">→ ${{escapeHtml(leg.stations[leg.stations.length-1].name)}}</div>
+        </div>
+        <div class="rop-leg-time">
+          <div class="rop-leg-time-lbl">Depart</div>
+          <div class="rop-leg-time-val">${{new Date(runningMs).toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}})}}</div>
+        </div>
+      </div>`;
 
-  document.getElementById('stepPrevBtn').disabled = journeyStepIndex === 0;
-  document.getElementById('stepNextBtn').textContent = journeyStepIndex === journeySteps.length - 1 ? 'End journey ✓' : 'Next →';
-  document.getElementById('stepNextBtn').style.background = '';
-  document.getElementById('stepProgress').textContent = `${journeyStepIndex+1} / ${journeySteps.length}`;
+    // Stop rows: show first, collapse middle (>2 stops), show last
+    const stops = leg.stations;
+    if (stops.length <= 3) {{
+      stops.forEach((s,si) => {{
+        const t = new Date(runningMs + si*perHopSec*1000);
+        const isFirst = si===0, isLast = si===stops.length-1;
+        html += stopRow(s.name, t.toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}}), isFirst||isLast, leg.line.color);
+      }});
+    }} else {{
+      // First stop
+      html += stopRow(stops[0].name, new Date(runningMs).toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}}), true, leg.line.color);
+      // Collapsed middle
+      html += `<div class="stops-collapsed">+ ${{stops.length-2}} stop${{stops.length-2!==1?'s':''}} in between</div>`;
+      // Last stop
+      const arrMs = runningMs + leg.seconds*1000;
+      html += stopRow(stops[stops.length-1].name, new Date(arrMs).toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}}), true, leg.line.color);
+    }}
 
-  // Center map on first station of this leg
-  if (first?.station && detailEngine) {
-    detailEngine.centerOn(first.station.x, first.station.y, Math.max(detailEngine.scale, 0.7));
-  }
-  detailEngine?.render();
-}
+    html += '</div>';
+    runningMs += leg.seconds * 1000;
+  }});
 
-function stepNext() {
-  const step = journeySteps[journeyStepIndex];
-  if (step.type === 'end') { closeDetail(); return; }
-  if (journeyStepIndex < journeySteps.length-1) {
-    journeyStepIndex++;
-    renderCurrentStep();
-  }
-}
+  // Fetch advisories for the lines used
+  try {{
+    const lineId = legs[0].line.id;
+    const advisories = await apiFetch(`/api/advisories?line_id=${{lineId}}`);
+    if (advisories.length) {{
+      html += `<div style="padding:.5rem 0 0">`;
+      html += advisories.map(a => {{
+        const icon = a.severity==='alert'?'🔴':a.severity==='warning'?'⚠️':'ℹ️';
+        const bg   = a.severity==='alert'?'#FEF2F2':a.severity==='warning'?'#FFFBEB':'#EFF6FF';
+        const bc   = a.severity==='alert'?'#FECACA':a.severity==='warning'?'#FDE68A':'#BFDBFE';
+        return `<div class="advisory-card" style="background:${{bg}};border-color:${{bc}}">
+          <div class="advisory-title">${{icon}} ${{escapeHtml(a.title)}}</div>
+          <div class="advisory-body">${{escapeHtml(a.body)}}</div>
+          ${{a.source ? `<div class="advisory-meta">Source: ${{escapeHtml(a.source)}}</div>` : ''}}
+          <div class="advisory-meta">Posted ${{new Date(a.posted_at).toLocaleDateString()}}</div>
+        </div>`;
+      }}).join('');
+      html += '</div>';
+    }}
+  }} catch {{}}
 
-function stepPrev() {
-  if (journeyStepIndex > 0) {
-    journeyStepIndex--;
-    renderCurrentStep();
-  }
-}
+  // Save button
+  html += `<div style="padding:1rem">
+    <button onclick="saveCurrentJourney()" style="width:100%;padding:.8rem;border-radius:var(--r-xs);border:2px solid var(--black);background:none;font-size:.9rem;font-weight:700;font-family:inherit">💾 Save this journey</button>
+  </div>`;
 
-function closeDetail() { document.getElementById('detailPanel').classList.remove('open'); }
+  body.innerHTML = html;
+}}
 
-// ── SAVE JOURNEY ──────────────────────────────────────
-async function saveCurrentJourney() {
-  if (!Auth.isLoggedIn()) { toast('Sign in to save journeys'); toggleLogin(); return; }
+function stopRow(name, time, major, lineColor) {{
+  return `<div class="stop-row">
+    <div class="stop-dot-col" style="color:${{lineColor}}">
+      <div class="stop-dot ${{major?'major':''}}"></div>
+      <div class="stop-seg" style="background:${{lineColor}}"></div>
+    </div>
+    <div class="stop-name ${{major?'major':''}}">${{escapeHtml(name)}}</div>
+    <div class="stop-time">${{time}}</div>
+  </div>`;
+}}
+
+function closeRouteOverview() {{
+  document.getElementById('ropPanel').classList.remove('open');
+  currentLegs = null;
+  miniEngine.render();
+}}
+
+// ── SCREEN 3: ACTIVE NAVIGATION ───────────────────────────
+function startNavigation() {{
+  if (!currentLegs) return;
+  navStepIndex = 0;
+  buildNavSteps();
+  document.getElementById('navPanel').classList.add('open');
+}}
+
+function buildNavSteps() {{
+  const legs = currentLegs;
+  const now = new Date();
+  let runningMs = now.getTime() + 3*60000;
+  const steps = [];
+
+  legs.forEach((leg, li) => {{
+    const perHopSec = leg.stations.length>1 ? leg.seconds/(leg.stations.length-1) : leg.seconds;
+    // Each leg is one step — show as an arrival-style card
+    const liveVehicle = allVehicles.find(v=>v.line_id===leg.line.id && v.next_x!=null);
+    let eta = null;
+    if (liveVehicle) {{
+      const dist = Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y);
+      eta = etaMinutesFromSpeed(dist, liveVehicle.speed_kmh);
+    }}
+    steps.push({{
+      leg, runningMs,
+      eta,
+      isTransfer: li>0,
+      depTime: new Date(runningMs).toLocaleTimeString([],{{hour:'2-digit',minute:'2-digit'}})
+    }});
+    runningMs += leg.seconds * 1000;
+  }});
+
+  steps.push({{ isEnd: true, name: currentLegs[currentLegs.length-1].stations[currentLegs[currentLegs.length-1].stations.length-1].name }});
+
+  // Store steps on window for navigation
+  window._navSteps = steps;
+  renderNavStep();
+}}
+
+function renderNavStep() {{
+  const steps = window._navSteps;
+  const step = steps[navStepIndex];
+  const nav = document.getElementById('navSteps');
+  const header = document.getElementById('navHeader');
+
+  if (step.isEnd) {{
+    header.style.background = '#059669';
+    document.getElementById('navTitle').textContent = 'You\'ve arrived!';
+    document.getElementById('navSubtitle').textContent = escapeHtml(step.name);
+    nav.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;gap:1rem">
+      <div style="font-size:3.5rem">🏁</div>
+      <div style="font-size:1.3rem;font-weight:800;color:var(--black)">${{escapeHtml(step.name)}}</div>
+      <div style="font-size:.9rem;color:var(--gray)">Journey complete</div>
+    </div>`;
+    document.getElementById('stepNext').textContent = 'End ✓';
+    document.getElementById('stepNext').classList.add('end');
+  }} else {{
+    const leg = step.leg;
+    const line = leg.line;
+    header.style.background = line.color;
+    header.style.color = line.text_color;
+    document.getElementById('navTitle').textContent = `Board ${{line.id}} — ${{escapeHtml(line.name)}}`;
+    document.getElementById('navSubtitle').textContent = `→ ${{escapeHtml(leg.stations[leg.stations.length-1].name)}}`;
+    document.getElementById('stepNext').classList.remove('end');
+    document.getElementById('stepNext').textContent = navStepIndex < steps.length-1 ? 'Next →' : 'Arrive ✓';
+
+    // Show as arrival card (like index.html homepage style)
+    nav.innerHTML = `
+      <div class="nav-step-card" style="background:${{line.color}};color:${{line.text_color}}">
+        <div class="nav-step-badge">${{line.id}}</div>
+        <div class="nav-step-main">
+          <div class="nav-step-title">${{escapeHtml(leg.stations[0].name)}}</div>
+          <div class="nav-step-sub">→ ${{escapeHtml(leg.stations[leg.stations.length-1].name)}}</div>
+        </div>
+        <div class="nav-step-eta">
+          <div class="nav-step-num">${{step.eta ?? '—'}}</div>
+          <div class="nav-step-unit">${{step.eta ? 'min' : ''}}</div>
+        </div>
+      </div>
+      <div style="padding:1rem">
+        <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.65rem">Stops on this leg</div>
+        ${{leg.stations.map((s,i) => {{
+          const isFirst=i===0, isLast=i===leg.stations.length-1;
+          return `<div style="display:flex;align-items:center;gap:.75rem;padding:.4rem 0;border-bottom:1px solid var(--gray-light)">
+            <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;
+                        background:${{isFirst||isLast?line.color:'var(--border)'}};
+                        border:2px solid ${{line.color}}"></div>
+            <div style="font-size:.9rem;font-weight:${{isFirst||isLast?800:400}};color:${{isFirst||isLast?'var(--black)':'var(--gray)'}}">
+              ${{escapeHtml(s.name)}}
+            </div>
+          </div>`;
+        }}).join('')}}
+      </div>
+      ${{step.isTransfer ? `<div class="transfer-banner"><span>🔄</span><div><div class="transfer-label">Transfer at this station</div></div></div>` : ''}}`;
+  }}
+
+  document.getElementById('stepBack').disabled = navStepIndex === 0;
+  document.getElementById('stepProgress').textContent = `${{navStepIndex+1}} / ${{steps.length}}`;
+}}
+
+function stepNext() {{
+  const steps = window._navSteps;
+  if (steps[navStepIndex].isEnd) {{ endNavigation(); return; }}
+  if (navStepIndex < steps.length-1) {{ navStepIndex++; renderNavStep(); }}
+}}
+function stepPrev() {{
+  if (navStepIndex > 0) {{ navStepIndex--; renderNavStep(); }}
+}}
+function endNavigation() {{
+  document.getElementById('navPanel').classList.remove('open');
+}}
+
+// ── SAVE JOURNEY ─────────────────────────────────────────
+async function saveCurrentJourney() {{
+  if (!Auth.isLoggedIn()) {{ toast('Sign in to save journeys'); toggleLogin(); return; }}
   if (!fromStation||!toStation) return;
-  try {
-    await apiFetch('/api/journeys', { method:'POST', body: JSON.stringify({
-      from_station_id: fromStation.id, to_station_id: toStation.id,
-      from_name: fromStation.name, to_name: toStation.name
-    })});
+  try {{
+    await apiFetch('/api/journeys', {{
+      method:'POST',
+      body:JSON.stringify({{from_station_id:fromStation.id, to_station_id:toStation.id,
+        from_name:fromStation.name, to_name:toStation.name}})
+    }});
     toast('Journey saved ✓');
-  } catch(e) { toast(e.message); }
-}
-
-const urlLine = new URLSearchParams(location.search).get('line');
+  }} catch(e) {{ toast(e.message); }}
+}}
 
 loadData();
 </script>
