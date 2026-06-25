@@ -262,7 +262,7 @@ function renderArrivalsList(filterLineIds) {
 function renderNearby() { renderArrivalsList([]); }
 
 // ── STATION POPUP ────────────────────────────────────────
-function showStationPopup(s) {
+async function showStationPopup(s) {
   _popupStationId = s.id;
   const lineIds=(s.line_ids||'').split(',').filter(Boolean);
   const lines=lineIds.map(id=>allLines[id]).filter(Boolean);
@@ -296,17 +296,67 @@ function showStationPopup(s) {
       </div>`).join('')
     : `<div style="font-size:.82rem;color:var(--gray);padding:.5rem 0">No live vehicles detected</div>`;
 
-  document.getElementById('vpopupBody').innerHTML = `
-    <div class="vpopup-lines">${lineChips||'<span style="color:var(--gray);font-size:.85rem">No lines assigned</span>'}</div>
-    <div class="vpopup-arrivals">
-      <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Next arrivals</div>
-      ${arrivalRows}
-    </div>`;
+  // Fetch advisories for this station
+let advisoryHtml = '';
 
-  // Update the sheet arrivals to show this stop's lines
-  renderArrivalsList(lineIds);
-  document.getElementById('vpopup').classList.add('open');
+try {
+  const qp = lineIds.length
+    ? `?station_id=${s.id}&line_id=${lineIds[0]}`
+    : `?station_id=${s.id}`;
+
+  const advisories = await apiFetch('/api/advisories' + qp);
+
+  if (advisories.length) {
+    advisoryHtml = advisories.map(a => {
+      const icon =
+        a.severity === 'alert' ? '🔴' :
+        a.severity === 'warning' ? '⚠️' : 'ℹ️';
+
+      const bg =
+        a.severity === 'alert' ? '#FEF2F2' :
+        a.severity === 'warning' ? '#FFFBEB' : '#EFF6FF';
+
+      const bc =
+        a.severity === 'alert' ? '#FECACA' :
+        a.severity === 'warning' ? '#FDE68A' : '#BFDBFE';
+
+      return `
+        <div style="background:${bg};border:1.5px solid ${bc};border-radius:10px;padding:.85rem;margin:.5rem 1rem">
+          <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#374151;margin-bottom:.3rem">
+            ${icon} ${escapeHtml(a.title)}
+          </div>
+          <div style="font-size:.82rem;color:#374151;line-height:1.45">
+            ${escapeHtml(a.body)}
+          </div>
+          ${a.source ? `
+            <div style="font-size:.7rem;color:#9CA3AF;margin-top:.4rem">
+              Source: ${escapeHtml(a.source)}
+            </div>
+          ` : ''}
+          <div style="font-size:.68rem;color:#9CA3AF;margin-top:.2rem">
+            Posted ${new Date(a.posted_at).toLocaleDateString()}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+} catch (e) {
+  console.error('Failed to load advisories', e);
 }
+
+document.getElementById('vpopupBody').innerHTML = `
+  <div class="vpopup-lines">${lineChips||'<span style="color:var(--gray);font-size:.85rem">No lines assigned</span>'}</div>
+  <div class="vpopup-arrivals">
+    <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">
+      Next arrivals
+    </div>
+    ${arrivalRows}
+  </div>
+  ${advisoryHtml}`;
+
+// Update the sheet arrivals to show this stop's lines
+renderArrivalsList(lineIds, s);
+document.getElementById('vpopup').classList.add('open');
 
 // ── VEHICLE POPUP ────────────────────────────────────────
 function showVehiclePopup(v) {
