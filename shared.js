@@ -548,4 +548,3 @@ function drawVehicleMarker(ctx, x, y, lineType, radius = 15) {
   else drawBusGlyph(ctx, glyphSize, '#fff');
   ctx.restore();
 }
- 
