@@ -94,6 +94,7 @@ body,html{height:100%;overflow:hidden;}
   <button class="ed-btn" onclick="openPanel('stations')" title="Manage stations">🗂</button>
   <button class="ed-btn" onclick="openPanel('vehicles')" title="Live vehicles">🔴</button>
   <button class="ed-btn" onclick="openPanel('streets')" title="Manage streets">🛣</button>
+  <button class="ed-btn" onclick="openPanel('advisories')" title="Service advisories">⚠️</button>
   <div style="height:8px"></div>
   <button class="ed-btn" onclick="resetAdminToken()" title="Change admin token">🔑</button>
 </div>
@@ -223,6 +224,40 @@ body,html{height:100%;overflow:hidden;}
     </div>
   </div>
 
+
+  <!-- ADVISORIES TAB -->
+  <div id="panelAdvisories" class="hidden">
+    <div class="ed-head"><span>⚠️ Service Advisories</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
+
+    <div class="ed-sec">
+      <div class="ed-lbl">Create advisory</div>
+      <input class="ed-input" id="advTitle" placeholder="Title (e.g. DELAYS ON A LINE)" style="margin-bottom:.4rem;font-weight:700">
+      <textarea class="ed-input" id="advBody" placeholder="Details…" rows="3" style="resize:vertical;margin-bottom:.4rem"></textarea>
+      <div class="ed-lbl">Severity</div>
+      <select class="ed-input" id="advSeverity" style="margin-bottom:.4rem">
+        <option value="info">ℹ️ Info</option>
+        <option value="warning">⚠️ Warning</option>
+        <option value="alert">🔴 Alert</option>
+      </select>
+      <div class="ed-lbl">Line (optional)</div>
+      <select class="ed-input" id="advLine" style="margin-bottom:.4rem">
+        <option value="">All lines</option>
+      </select>
+      <div class="ed-lbl">Station (optional)</div>
+      <select class="ed-input" id="advStation" style="margin-bottom:.4rem">
+        <option value="">All stations</option>
+      </select>
+      <input class="ed-input" id="advSource" placeholder="Source (e.g. City Metro Transit)" style="margin-bottom:.4rem">
+      <input class="ed-input" id="advExpires" type="datetime-local" placeholder="Expires (optional)" style="margin-bottom:.4rem">
+      <button class="ed-action" onclick="saveAdvisory()">Post advisory</button>
+    </div>
+
+    <div class="ed-sec">
+      <div class="ed-lbl">Active advisories</div>
+      <div id="advisoryList"></div>
+    </div>
+  </div>
+</div>
   <!-- STREETS TAB -->
   <div id="panelStreets" class="hidden">
     <div class="ed-head"><span>Streets</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
@@ -652,11 +687,12 @@ let currentPanel = null;
 function openPanel(name) {
   currentPanel = name;
   document.getElementById('edPanel').classList.add('open');
-  ['Lines','Stations','Vehicles','Streets'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
+  ['Lines','Stations','Vehicles','Streets','Advisories'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
   if (name==='lines') refreshLineList();
   if (name==='stations') refreshStationList();
   if (name==='vehicles') refreshVehicleList();
   if (name==='streets') refreshStreetList();
+  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); }
 }
 function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
@@ -837,6 +873,72 @@ async function deleteStreetById(id) {
     await adminFetch(`/api/admin/streets/${id}`, { method:'DELETE' });
     toast('Street deleted');
     loadAllData();
+  } catch(e) { toast(e.message); }
+}
+
+
+// ── ADVISORIES ─────────────────────────────────────────
+function populateAdvSelects() {
+  document.getElementById('advLine').innerHTML =
+    '<option value="">All lines</option>' +
+    Object.values(allLines).map(l=>`<option value="${l.id}">${l.id} — ${escapeHtml(l.name)}</option>`).join('');
+  document.getElementById('advStation').innerHTML =
+    '<option value="">All stations</option>' +
+    allStations.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+}
+
+async function saveAdvisory() {
+  const title = document.getElementById('advTitle').value.trim();
+  const body  = document.getElementById('advBody').value.trim();
+  if (!title || !body) { toast('Title and body required'); return; }
+  const payload = {
+    title, body,
+    severity: document.getElementById('advSeverity').value,
+    line_id:  document.getElementById('advLine').value || null,
+    station_id: document.getElementById('advStation').value ? parseInt(document.getElementById('advStation').value) : null,
+    source:   document.getElementById('advSource').value.trim(),
+    expires_at: document.getElementById('advExpires').value || null
+  };
+  try {
+    await adminFetch('/api/admin/advisories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    toast('Advisory posted ✓');
+    document.getElementById('advTitle').value = '';
+    document.getElementById('advBody').value  = '';
+    document.getElementById('advSource').value = '';
+    document.getElementById('advExpires').value = '';
+    refreshAdvisoryList();
+  } catch(e) { toast(e.message); }
+}
+
+async function refreshAdvisoryList() {
+  const el = document.getElementById('advisoryList');
+  el.innerHTML = '<div class="spinner" style="margin:.5rem auto"></div>';
+  try {
+    const advisories = await apiFetch('/api/advisories');
+    if (!advisories.length) { el.innerHTML = '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No active advisories.</div>'; return; }
+    const icons = { info:'ℹ️', warning:'⚠️', alert:'🔴' };
+    const bgs   = { info:'#EFF6FF', warning:'#FFFBEB', alert:'#FEF2F2' };
+    el.innerHTML = advisories.map(a => `
+      <div style="background:${bgs[a.severity]||'#F9FAFB'};border-radius:8px;padding:.75rem;margin-bottom:.5rem;position:relative">
+        <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin-bottom:.25rem">
+          ${icons[a.severity]||'ℹ️'} ${escapeHtml(a.title)}
+        </div>
+        <div style="font-size:.8rem;color:#374151;margin-bottom:.3rem">${escapeHtml(a.body)}</div>
+        ${a.line_name ? `<div style="font-size:.7rem;color:var(--gray)">Line: ${escapeHtml(a.line_name)}</div>` : ''}
+        ${a.station_name ? `<div style="font-size:.7rem;color:var(--gray)">Station: ${escapeHtml(a.station_name)}</div>` : ''}
+        ${a.source ? `<div style="font-size:.7rem;color:var(--gray)">Source: ${escapeHtml(a.source)}</div>` : ''}
+        <div style="font-size:.68rem;color:var(--gray);margin-top:.25rem">Posted ${new Date(a.posted_at).toLocaleString()}</div>
+        <button onclick="deleteAdvisory(${a.id})" title="Delete" style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;color:var(--red);font-size:.9rem;cursor:pointer">🗑</button>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = `<div style="font-size:.8rem;color:var(--red)">${e.message}</div>`; }
+}
+
+async function deleteAdvisory(id) {
+  if (!confirm('Delete this advisory?')) return;
+  try {
+    await adminFetch(`/api/admin/advisories/${id}`, { method:'DELETE' });
+    toast('Advisory deleted');
+    refreshAdvisoryList();
   } catch(e) { toast(e.message); }
 }
 
