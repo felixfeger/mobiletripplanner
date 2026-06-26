@@ -121,6 +121,8 @@ initLoginForms();
 let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
 let stationScreenPos = [];
 let _popupStationId = null;
+let locationPin = null;    // {x,y} world coords of the blue location pin
+let nearestStation = null; // station closest to the pin
 
 // ── ENGINE ─────────────────────────────────────────────
 const engine = new CanvasEngine('canvasWrap','canvas', {
@@ -191,19 +193,69 @@ function draw(ctx) {
     ctx.restore();
     stationScreenPos.push({x:v.x,y:v.y,r:(sr+6)/engine.scale,data:v,isVehicle:true});
   });
+
+  // Location pin — blue pulsing dot showing where the user last tapped
+  if (locationPin) {
+    ctx.save();
+    ctx.translate(locationPin.x, locationPin.y);
+    ctx.scale(1/engine.scale, 1/engine.scale);
+    // Outer halo
+    ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2);
+    ctx.fillStyle='rgba(29,78,216,0.12)'; ctx.fill();
+    // Mid ring
+    ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2);
+    ctx.strokeStyle='rgba(29,78,216,0.35)'; ctx.lineWidth=2; ctx.stroke();
+    // Center dot
+    ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2);
+    ctx.fillStyle='#1D4ED8'; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.restore();
+  }
 }
 
 // ── CLICK ──────────────────────────────────────────────
-function handleClick(wx,wy) {
+function handleClick(wx, wy) {
   const tol = 18/engine.scale;
-  let best=null,bestD=Infinity;
+  let best=null, bestD=Infinity;
   for (const item of stationScreenPos) {
-    const d = Math.hypot(item.x-wx,item.y-wy);
+    const d = Math.hypot(item.x-wx, item.y-wy);
     if (d<tol && d<bestD) { bestD=d; best=item; }
   }
-  if (!best) { closeVpopup(); renderArrivalsList([]); return; }
-  if (best.isVehicle) showVehiclePopup(best.data);
-  else showStationPopup(best.data);
+
+  if (!best) {
+    // Empty canvas tap — drop pin and show nearest station's services
+    closeVpopup();
+    setLocationPin(wx, wy);
+    return;
+  }
+  if (best.isVehicle) {
+    showVehiclePopup(best.data);
+  } else {
+    // Station tap — snap pin to station, show its services
+    locationPin = {x: best.data.x, y: best.data.y};
+    nearestStation = best.data;
+    engine.render();
+    showStationPopup(best.data);
+  }
+}
+
+// Place pin at (wx,wy) and update sheet to show nearest station's services
+function setLocationPin(wx, wy) {
+  locationPin = {x: wx, y: wy};
+  engine.render();
+
+  if (!allStations.length) { renderArrivalsList([], null, 'Tap a station'); return; }
+
+  // Find nearest station by straight-line canvas distance
+  let closest=null, closestD=Infinity;
+  allStations.forEach(s => {
+    const d = Math.hypot(s.x-wx, s.y-wy);
+    if (d < closestD) { closestD=d; closest=s; }
+  });
+
+  nearestStation = closest;
+  const lineIds = (closest.line_ids||'').split(',').filter(Boolean);
+  renderArrivalsList(lineIds, closest);
 }
 
 // ── FIT ────────────────────────────────────────────────
@@ -216,8 +268,10 @@ function fitAll() {
 }
 
 // ── ARRIVALS LIST ───────────────────────────────────────
-function renderArrivalsList(filterLineIds) {
-  const content = document.getElementById('nearbyContent');
+// filterLineIds: only show these line IDs ([] = show all)
+// station: if provided, show as the location heading in the sheet
+function renderArrivalsList(filterLineIds, station, fallbackTitle) {
+  const el = document.getElementById('nearbyContent');
   const lineSet = filterLineIds.length ? new Set(filterLineIds) : null;
 
   const cards=[];
@@ -236,20 +290,35 @@ function renderArrivalsList(filterLineIds) {
       cards.push({line,eta:null,headsign:line.frequency||'See schedule',isLive:false});
   });
 
+  // Build header: station name if we have one, else a generic label
+  let header = '';
+  if (station) {
+    const lineIds = (station.line_ids||'').split(',').filter(Boolean);
+    const chips = lineIds.map(id => {
+      const l = allLines[id]; if (!l) return '';
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:1px 6px;border-radius:5px;background:${l.color};color:${l.text_color};font-weight:900;font-size:.72rem;margin-left:4px">${l.id}</span>`;
+    }).join('');
+    header = `<div style="padding:.7rem 1rem .3rem;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:.65rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.07em">Nearest station</div>
+        <div style="font-size:.95rem;font-weight:800;color:var(--black);display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-top:2px">${escapeHtml(station.name)}${chips}</div>
+      </div>
+    </div>`;
+  } else {
+    header = `<div class="arrival-section-title">${fallbackTitle||'All services'}</div>`;
+  }
+
   if (!cards.length) {
-    content.innerHTML='<div class="empty">No services here</div>'; return;
+    el.innerHTML = header + '<div class="empty" style="padding:1.5rem">No services at this stop</div>';
+    return;
   }
   cards.sort((a,b)=>(a.eta??999)-(b.eta??999));
 
-  const title = lineSet
-    ? `<div class="arrival-section-title">Services at this stop</div>`
-    : `<div class="arrival-section-title">Nearby services</div>`;
-
-  content.innerHTML = title + cards.slice(0,10).map(c => `
+  el.innerHTML = header + cards.slice(0,10).map(c => `
     <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?line=${c.line.id}'">
       <div class="line-badge">${c.line.id}</div>
       <div class="arrival-main">
-        <div class="arrival-title">${c.isLive?'● ':''}${escapeHtml(c.line.name)}</div>
+        <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
         <div class="arrival-sub">${escapeHtml(c.headsign)}</div>
       </div>
       <div class="arrival-mins">
@@ -259,7 +328,10 @@ function renderArrivalsList(filterLineIds) {
     </div>`).join('');
 }
 
-function renderNearby() { renderArrivalsList([]); }
+function renderNearby() {
+  // Show all services — called on initial load before any tap
+  renderArrivalsList([], null, 'All services');
+}
 
 // ── STATION POPUP ────────────────────────────────────────
 async function showStationPopup(s) {
@@ -296,67 +368,38 @@ async function showStationPopup(s) {
       </div>`).join('')
     : `<div style="font-size:.82rem;color:var(--gray);padding:.5rem 0">No live vehicles detected</div>`;
 
-  // Fetch advisories for this station
-let advisoryHtml = '';
+  // Fetch advisories for this station and its lines asynchronously
+  let advisoryHtml = '';
+  try {
+    const qp = lineIds.length ? `?station_id=${s.id}&line_id=${lineIds[0]}` : `?station_id=${s.id}`;
+    const advisories = await apiFetch('/api/advisories' + qp);
+    if (advisories.length) {
+      advisoryHtml = advisories.map(a => {
+        const icon = a.severity==='alert' ? '🔴' : a.severity==='warning' ? '⚠️' : 'ℹ️';
+        const bg   = a.severity==='alert' ? '#FEF2F2' : a.severity==='warning' ? '#FFFBEB' : '#EFF6FF';
+        const bc   = a.severity==='alert' ? '#FECACA' : a.severity==='warning' ? '#FDE68A' : '#BFDBFE';
+        return `<div style="background:${bg};border:1.5px solid ${bc};border-radius:10px;padding:.85rem;margin:.5rem 1rem">
+          <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#374151;margin-bottom:.3rem">${icon} ${escapeHtml(a.title)}</div>
+          <div style="font-size:.82rem;color:#374151;line-height:1.45">${escapeHtml(a.body)}</div>
+          ${a.source ? `<div style="font-size:.7rem;color:#9CA3AF;margin-top:.4rem">Source: ${escapeHtml(a.source)}</div>` : ''}
+          <div style="font-size:.68rem;color:#9CA3AF;margin-top:.2rem">Posted ${new Date(a.posted_at).toLocaleDateString()}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch {}
 
-try {
-  const qp = lineIds.length
-    ? `?station_id=${s.id}&line_id=${lineIds[0]}`
-    : `?station_id=${s.id}`;
-
-  const advisories = await apiFetch('/api/advisories' + qp);
-
-  if (advisories.length) {
-    advisoryHtml = advisories.map(a => {
-      const icon =
-        a.severity === 'alert' ? '🔴' :
-        a.severity === 'warning' ? '⚠️' : 'ℹ️';
-
-      const bg =
-        a.severity === 'alert' ? '#FEF2F2' :
-        a.severity === 'warning' ? '#FFFBEB' : '#EFF6FF';
-
-      const bc =
-        a.severity === 'alert' ? '#FECACA' :
-        a.severity === 'warning' ? '#FDE68A' : '#BFDBFE';
-
-      return `
-        <div style="background:${bg};border:1.5px solid ${bc};border-radius:10px;padding:.85rem;margin:.5rem 1rem">
-          <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#374151;margin-bottom:.3rem">
-            ${icon} ${escapeHtml(a.title)}
-          </div>
-          <div style="font-size:.82rem;color:#374151;line-height:1.45">
-            ${escapeHtml(a.body)}
-          </div>
-          ${a.source ? `
-            <div style="font-size:.7rem;color:#9CA3AF;margin-top:.4rem">
-              Source: ${escapeHtml(a.source)}
-            </div>
-          ` : ''}
-          <div style="font-size:.68rem;color:#9CA3AF;margin-top:.2rem">
-            Posted ${new Date(a.posted_at).toLocaleDateString()}
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-} catch (e) {
-  console.error('Failed to load advisories', e);
-}
-
-document.getElementById('vpopupBody').innerHTML = `
-  <div class="vpopup-lines">${lineChips||'<span style="color:var(--gray);font-size:.85rem">No lines assigned</span>'}</div>
-  <div class="vpopup-arrivals">
-    <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">
-      Next arrivals
+  document.getElementById('vpopupBody').innerHTML = `
+    <div class="vpopup-lines">${lineChips||'<span style="color:var(--gray);font-size:.85rem">No lines assigned</span>'}</div>
+    <div class="vpopup-arrivals">
+      <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Next arrivals</div>
+      ${arrivalRows}
     </div>
-    ${arrivalRows}
-  </div>
-  ${advisoryHtml}`;
+    ${advisoryHtml}`;
 
-// Update the sheet arrivals to show this stop's lines
-renderArrivalsList(lineIds, s);
-document.getElementById('vpopup').classList.add('open');
+  // Update the sheet arrivals to show this stop's lines
+  renderArrivalsList(lineIds, s);
+  document.getElementById('vpopup').classList.add('open');
+}
 
 // ── VEHICLE POPUP ────────────────────────────────────────
 function showVehiclePopup(v) {
@@ -444,10 +487,17 @@ async function loadAll() {
 
     // Center on Union Station if it exists, else fit all
     const union=allStations.find(s=>s.name.toLowerCase().includes('union'));
-    if (union) engine.centerOn(union.x,union.y,1.3);
-    else fitAll();
-
-    renderNearby();
+    if (union) {
+      engine.centerOn(union.x, union.y, 1.3);
+      // Place pin at Union Station and show its services by default
+      locationPin = {x: union.x, y: union.y};
+      nearestStation = union;
+      const unionLineIds = (union.line_ids||'').split(',').filter(Boolean);
+      renderArrivalsList(unionLineIds, union);
+    } else {
+      fitAll();
+      renderNearby();
+    }
   } catch(e) {
     document.getElementById('nearbyContent').innerHTML='<div class="empty">⚠️ Could not load network.<br><small>Check that the Worker is deployed and the DB binding is set.</small></div>';
   }
