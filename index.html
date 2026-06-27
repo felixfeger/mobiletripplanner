@@ -3,20 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Editor — City Metro Transit</title>
+<title>City Metro Transit</title>
 <link rel="stylesheet" href="style.css">
-<style>
-body,html{height:100%;overflow:hidden;}
-.hint-bar{
-  position:fixed;top:calc(var(--nav-h));left:0;right:0;z-index:1700;
-  background:rgba(17,24,39,.92);color:white;padding:.5rem 1rem;
-  font-size:.8rem;font-weight:600;text-align:center;
-  display:none;
-}
-.hint-bar.show{display:block;}
-</style>
 </head>
 <body>
+
 <nav class="navbar">
   <button class="nav-logo-btn" onclick="toggleLogin()" aria-label="Account">
     <img src="data:image/png;base64,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" alt="City Metro">
@@ -76,517 +67,84 @@ body,html{height:100%;overflow:hidden;}
   </div>
 </div>
 
-<div class="hint-bar" id="hintBar"></div>
-
+<!-- CANVAS MAP -->
 <div class="canvas-wrap" id="canvasWrap">
   <canvas id="canvas"></canvas>
 </div>
 
-<!-- LEFT TOOLBAR -->
-<div class="ed-toolbar">
-  <button class="ed-btn active" id="btnSelect" onclick="setTool('select')" title="Select / Pan">✋</button>
-  <button class="ed-btn" id="btnStreet" onclick="setTool('street')" title="Draw street (cosmetic)">🛣</button>
-  <button class="ed-btn" id="btnLine" onclick="setTool('line')" title="Draw transit line">✏️</button>
-  <button class="ed-btn" id="btnStation" onclick="setTool('station')" title="Place station/stop">📍</button>
-  <button class="ed-btn" id="btnVehicle" onclick="setTool('vehicle')" title="Place live vehicle">🚌</button>
-  <div style="height:8px"></div>
-  <button class="ed-btn" onclick="openPanel('lines')" title="Manage lines">☰</button>
-  <button class="ed-btn" onclick="openPanel('stations')" title="Manage stations">🗂</button>
-  <button class="ed-btn" onclick="openPanel('vehicles')" title="Live vehicles">🔴</button>
-  <button class="ed-btn" onclick="openPanel('streets')" title="Manage streets">🛣</button>
-  <button class="ed-btn" onclick="openPanel('advisories')" title="Service advisories">⚠️</button>
-  <div style="height:8px"></div>
-  <button class="ed-btn" onclick="resetAdminToken()" title="Change admin token">🔑</button>
-</div>
+<!-- SEARCH PILL -->
+<button class="search-pill" onclick="window.location.href='planner.html'" aria-label="Search">
+  <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
+  <input placeholder="Where to?" readonly tabindex="-1">
+</button>
 
 <!-- ZOOM CONTROLS -->
-<div class="canvas-ctrls with-toolbar">
-  <button class="zoom-btn" onclick="engine.zoomBy(1.25)">+</button>
-  <button class="zoom-btn" onclick="engine.zoomBy(0.8)">−</button>
-  <button class="zoom-btn" onclick="fitAll()" title="Fit all">⤢</button>
-  <div class="zoom-pct" id="zoomPct">100%</div>
+<div class="canvas-ctrls" id="zoomCtrls">
+  <button class="zoom-btn" onclick="engine.zoomBy(1.3)" aria-label="Zoom in">+</button>
+  <button class="zoom-btn" onclick="engine.zoomBy(0.77)" aria-label="Zoom out">−</button>
+  <button class="zoom-btn" onclick="fitAll()" aria-label="Fit all" title="Show full network">⤢</button>
 </div>
 
-<!-- RIGHT PANEL -->
-<div class="ed-panel" id="edPanel">
-
-  <!-- LINES TAB -->
-  <div id="panelLines">
-    <div class="ed-head"><span>Lines</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Create / edit line</div>
-      <div class="ed-row">
-        <input class="ed-input" id="lineId" placeholder="ID (A, 38…)" style="width:80px">
-        <input class="ed-input" id="lineName" placeholder="Full name" style="flex:1">
-      </div>
-      <div class="ed-row" style="margin-top:.4rem">
-        <select class="ed-input" id="lineType" style="flex:1">
-          <option value="rail">Rail</option>
-          <option value="bus">Bus</option>
-        </select>
-        <input type="color" class="ed-clr" id="lineColor" value="#2563EB" title="Line color">
-        <input type="color" class="ed-clr" id="lineTextColor" value="#FFFFFF" title="Text color">
-      </div>
-      <input class="ed-input" id="lineFreq" placeholder="Frequency (e.g. Every 10 min)" style="margin-top:.4rem">
-      <div class="chk-row"><input type="checkbox" id="lineLoop"><label for="lineLoop">Loop line (path forms a closed circuit back to start)</label></div>
-      <button class="ed-action" onclick="saveLine()">Save line</button>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Route direction being edited</div>
-      <select class="ed-input" id="lineDirection">
-        <option value="both">Both directions (same path, two-way)</option>
-        <option value="outbound">Outbound only</option>
-        <option value="inbound">Inbound only</option>
-        <option value="northbound">Northbound only</option>
-        <option value="southbound">Southbound only</option>
-        <option value="eastbound">Eastbound only</option>
-        <option value="westbound">Westbound only</option>
-      </select>
-      <div style="font-size:.72rem;color:var(--gray);margin-top:.35rem;line-height:1.4">
-        "Both directions" draws one path that vehicles travel either way along — use this for a normal two-way line. Use the single directions (outbound/inbound/etc.) only if you need to draw separate paths for each direction, like a one-way couplet. "Loop line" above is separate — check it only if the route's physical path is a closed circuit that returns to its starting station.
-      </div>
-      <button class="ed-action outline" onclick="startDrawLine()" style="margin-top:.5rem">✏️ Draw route (click stations in order)</button>
-      <button class="ed-action outline" onclick="undoLinePoint()">↩ Undo last point</button>
-      <button class="ed-action outline" onclick="cancelDrawLine()">Cancel drawing</button>
-      <div id="drawLineStatus" style="font-size:.75rem;color:var(--gray);margin-top:.4rem"></div>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">All lines</div>
-      <div id="lineList"></div>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl" style="color:var(--red)">Danger</div>
-      <button class="ed-action danger" onclick="deleteSelectedLine()">Delete selected line</button>
-    </div>
+<!-- BOTTOM SHEET -->
+<div class="sheet" id="sheet">
+  <div class="sheet-handle-wrap" id="sheetHandle">
+    <div class="sheet-handle"></div>
   </div>
-
-  <!-- STATIONS TAB -->
-  <div id="panelStations" class="hidden">
-    <div class="ed-head"><span>Stations & Stops</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Selected stop</div>
-      <input class="ed-input" id="stName" placeholder="Station name" style="margin-bottom:.4rem">
-      <input class="ed-input" id="stStreet" placeholder="Street / cross-street (optional)" style="margin-bottom:.4rem">
-      <select class="ed-input" id="stType">
-        <option value="stop">Bus stop</option>
-        <option value="station">Rail station</option>
-        <option value="hub">Hub (multi-line)</option>
-      </select>
-      <div class="ed-row" style="margin-top:.4rem">
-        <input class="ed-input" id="stX" placeholder="X" readonly>
-        <input class="ed-input" id="stY" placeholder="Y" readonly>
-      </div>
-      <button class="ed-action outline" onclick="setTool('station')" style="margin-top:.5rem">📍 Click map to place</button>
-      <button class="ed-action" onclick="saveStation()">Save stop</button>
-      <button class="ed-action danger" onclick="deleteStation()">Delete stop</button>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">All stops</div>
-      <div id="stationList" style="max-height:240px;overflow-y:auto;"></div>
-    </div>
-  </div>
-
-  <!-- VEHICLES TAB -->
-  <div id="panelVehicles" class="hidden">
-    <div class="ed-head"><span>Live Vehicles</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Place / edit vehicle</div>
-      <select class="ed-input" id="vLine" style="margin-bottom:.4rem"><option value="">Select line…</option></select>
-      <input class="ed-input" id="vLabel" placeholder="Vehicle label (e.g. Bus 42)" style="margin-bottom:.4rem">
-      <select class="ed-input" id="vNextStation" style="margin-bottom:.4rem"><option value="">Next station…</option></select>
-      <div class="ed-row">
-        <input class="ed-input" id="vSpeed" type="number" placeholder="Speed mph" value="20">
-        <select class="ed-input" id="vStatus">
-          <option value="in_service">In service</option>
-          <option value="delayed">Delayed</option>
-          <option value="out_of_service">Out of service</option>
-        </select>
-      </div>
-      <div class="ed-row" style="margin-top:.4rem">
-        <input class="ed-input" id="vX" placeholder="X" readonly>
-        <input class="ed-input" id="vY" placeholder="Y" readonly>
-      </div>
-      <button class="ed-action outline" onclick="setTool('vehicle')" style="margin-top:.5rem">🚌 Click map to place</button>
-      <button class="ed-action" onclick="saveVehicle()">Save vehicle</button>
-      <button class="ed-action danger" onclick="deleteVehicle()">Remove vehicle</button>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Live vehicles</div>
-      <div id="vehicleList"></div>
-    </div>
-  </div>
-
-
-  <!-- ADVISORIES TAB -->
-  <div id="panelAdvisories" class="hidden">
-    <div class="ed-head"><span>⚠️ Service Advisories</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Create advisory</div>
-      <input class="ed-input" id="advTitle" placeholder="Title (e.g. DELAYS ON A LINE)" style="margin-bottom:.4rem;font-weight:700">
-      <textarea class="ed-input" id="advBody" placeholder="Details…" rows="3" style="resize:vertical;margin-bottom:.4rem"></textarea>
-      <div class="ed-lbl">Severity</div>
-      <select class="ed-input" id="advSeverity" style="margin-bottom:.4rem">
-        <option value="info">ℹ️ Info</option>
-        <option value="warning">⚠️ Warning</option>
-        <option value="alert">🔴 Alert</option>
-      </select>
-      <div class="ed-lbl">Line (optional)</div>
-      <select class="ed-input" id="advLine" style="margin-bottom:.4rem">
-        <option value="">All lines</option>
-      </select>
-      <div class="ed-lbl">Station (optional)</div>
-      <select class="ed-input" id="advStation" style="margin-bottom:.4rem">
-        <option value="">All stations</option>
-      </select>
-      <input class="ed-input" id="advSource" placeholder="Source (e.g. City Metro Transit)" style="margin-bottom:.4rem">
-      <input class="ed-input" id="advExpires" type="datetime-local" placeholder="Expires (optional)" style="margin-bottom:.4rem">
-      <button class="ed-action" onclick="saveAdvisory()">Post advisory</button>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Active advisories</div>
-      <div id="advisoryList"></div>
-    </div>
-  </div>
-</div>
-  <!-- STREETS TAB -->
-  <div id="panelStreets" class="hidden">
-    <div class="ed-head"><span>Streets</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">Draw a new street</div>
-      <button class="ed-action outline" onclick="setTool('street')">🛣 Click map to draw points</button>
-      <div style="font-size:.72rem;color:var(--gray);margin-top:.4rem">Streets are cosmetic only — they don't affect routing. Press Enter or double-click to finish.</div>
-    </div>
-
-    <div class="ed-sec">
-      <div class="ed-lbl">All streets</div>
-      <div id="streetList"></div>
+  <div class="sheet-scroll">
+    <div id="nearbyContent">
+      <div class="empty"><div class="spinner"></div><span>Loading network…</span></div>
     </div>
   </div>
 </div>
 
-<div class="ed-status" id="edStatus"></div>
+<!-- STATION / VEHICLE POPUP -->
+<div class="vpopup" id="vpopup">
+  <div class="vpopup-head" id="vpopupHead">
+    <button class="vpopup-close" onclick="closeVpopup()">✕</button>
+    <div class="vpopup-direction" id="vpopupDir"></div>
+    <div class="vpopup-big" id="vpopupBig"></div>
+    <div class="vpopup-sub" id="vpopupSub"></div>
+  </div>
+  <div id="vpopupBody"></div>
+  <div class="vpopup-action-row">
+    <button onclick="planFromPopup()">Plan a trip →</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="shared.js"></script>
 <script>
-// ════════════════════════════════════════════════════════════════
-// ⚠️ SET THIS to the exact same value as the ADMIN_TOKEN secret you
-// create in your Worker (Cloudflare dashboard → Worker → Settings →
-// Variables and Secrets → ADMIN_TOKEN). Pick any long random string,
-// e.g. a UUID — it just needs to match on both sides.
-// ════════════════════════════════════════════════════════════════
-const ADMIN = localStorage.getItem('cm_admin_token') || '';
-if (!ADMIN) {
-  const entered = prompt('Enter your admin token (must match the ADMIN_TOKEN secret set in your Cloudflare Worker):');
-  if (entered && entered.trim()) {
-    localStorage.setItem('cm_admin_token', entered.trim());
-    location.reload();
-  }
-}
-setActiveNav('editor');
+setActiveNav('index');
 initLoginForms();
 
-// ── STATE ─────────────────────────────────────────────
-let tool = 'select';
 let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
-let selectedLine = null, selectedStation = null, selectedVehicle = null;
-let hitTargets = [];
+let stationScreenPos = [];
+let _popupStationId = null;
+let locationPin = null;    // {x,y} world coords of the blue location pin
+let nearestStation = null; // station closest to the pin
 
-// Line-drawing state: click stations in order to build a route.
-// drawingStations: ordered list of stations clicked so far.
-// drawingSegments: one entry per consecutive station pair, holding the
-//   full polyline (station -> curve points... -> next station) for that hop.
-// currentCurvePoints: curve points collected since the last station click,
-//   not yet committed to a segment (committed when the next station is clicked).
-let drawingStations = [];
-let drawingSegments = [];
-let currentCurvePoints = [];
-let isDrawingLine = false;
-
-// Street drawing state
-let streetPoints = [];
-let isDrawingStreet = false;
-
+// ── ENGINE ─────────────────────────────────────────────
 const engine = new CanvasEngine('canvasWrap','canvas', {
-  scale: 1, minScale:.15, maxScale:4, worldW:6000, worldH:6000, gridSize:100,
-  onDraw: draw,
-  onClick: handleClick
+  scale:1, minScale:.1, maxScale:4, fitMaxScale:2.0,
+  worldW:6000, worldH:6000, gridSize:100,
+  onDraw: draw, onClick: handleClick
 });
-engine.render(); // safe now that `engine` is fully assigned
+engine.render();
 
-function resetAdminToken() {
-  localStorage.removeItem('cm_admin_token');
-  location.reload();
-}
-
-// Wraps admin-authenticated fetch calls and throws on any non-2xx response,
-// so callers can no longer show a misleading "saved ✓" toast on failure.
-async function adminFetch(path, opts = {}) {
-  const headers = { 'Authorization': 'Bearer ' + ADMIN, ...opts.headers };
-  const r = await fetch(API + path, { ...opts, headers });
-  let data = null;
-  try { data = await r.json(); } catch {}
-  if (!r.ok) {
-    const msg = data?.error || `${r.status} ${r.statusText}`;
-    throw new Error(msg);
-  }
-  return data;
-}
-
-function status(msg, dur=3000) {
-  const el = document.getElementById('edStatus');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), dur);
-}
-
-function hint(msg) {
-  const el = document.getElementById('hintBar');
-  if (!msg) { el.classList.remove('show'); return; }
-  el.textContent = msg; el.classList.add('show');
-}
-
-// ── TOOL SWITCHING ────────────────────────────────────
-function setTool(t) {
-  tool = t;
-  if (t !== 'line') cancelDrawLine();
-  if (t !== 'street') cancelDrawStreet();
-  document.querySelectorAll('.ed-toolbar .ed-btn').forEach(b=>b.classList.remove('active'));
-  const map = {select:'btnSelect',street:'btnStreet',line:'btnLine',station:'btnStation',vehicle:'btnVehicle'};
-  document.getElementById(map[t])?.classList.add('active');
-
-  const hints = {
-    select: '',
-    street: 'Click to add street points. Click ✓ Finish Street button when done.',
-    line: selectedLine ? `Drawing route for ${selectedLine}. Click stations in order, or click empty space to add a curve point, then click the next station.` : 'Select a line in the panel first.',
-    station: 'Click the map to place a new station/stop.',
-    vehicle: 'Click the map to place a live vehicle.'
-  };
-  hint(hints[t]);
-  engine.wrap.classList.toggle('drawing', t!=='select');
-}
-
-// ── MAP CLICK ROUTING ─────────────────────────────────
-function handleClick(wx, wy) {
-  if (tool === 'station') {
-    document.getElementById('stX').value = Math.round(wx);
-    document.getElementById('stY').value = Math.round(wy);
-    selectedStation = null;
-    document.getElementById('stName').value = '';
-    document.getElementById('stStreet').value = '';
-    openPanel('stations');
-    status('Position set — fill in name and save.');
-    return;
-  }
-
-  if (tool === 'vehicle') {
-    document.getElementById('vX').value = Math.round(wx);
-    document.getElementById('vY').value = Math.round(wy);
-    selectedVehicle = null;
-    openPanel('vehicles');
-    status('Position set — fill in details and save.');
-    return;
-  }
-
-  if (tool === 'street') {
-    streetPoints.push([Math.round(wx), Math.round(wy)]);
-    isDrawingStreet = true;
-    status(`Street point ${streetPoints.length} added`);
-    engine.render();
-    return;
-  }
-
-  if (tool === 'line') {
-    handleLineDrawClick(wx, wy);
-    return;
-  }
-
-  // select tool: hit test stations / vehicles
-  const tolerance = 16/engine.scale;
-  let best=null,bestDist=Infinity;
-  for (const item of hitTargets) {
-    const d = Math.hypot(item.x-wx,item.y-wy);
-    if (d<tolerance && d<bestDist) { bestDist=d; best=item; }
-  }
-  if (best) {
-    if (best.isVehicle) { selectVehicleForEdit(best.data); openPanel('vehicles'); }
-    else { selectStationForEdit(best.data); openPanel('stations'); }
-  }
-}
-
-// ── LINE DRAWING (click stations in order; supports curve points between) ──
-function startDrawLine() {
-  if (!selectedLine) { toast('Select or create a line first'); return; }
-  setTool('line');
-  drawingStations = [];
-  drawingSegments = [];
-  currentCurvePoints = [];
-  isDrawingLine = true;
-  document.getElementById('drawLineStatus').textContent = 'Click your first station…';
-}
-
-function handleLineDrawClick(wx, wy) {
-  if (!isDrawingLine) { toast('Click "Draw route" first'); return; }
-
-  // Check if click is near an existing station (snap)
-  // Snap tolerance is capped in screen-space (not pure world-space) so it
-  // stays roughly the same visual size regardless of zoom level, and is
-  // kept tight to the actual station marker radius so clicks intended as
-  // curve points near a station don't accidentally snap onto it.
-  const tolerance = Math.min(14, 14/engine.scale);
-  const station = allStations.find(s => Math.hypot(s.x-wx,s.y-wy) < tolerance);
-  console.log('[lineDraw] click at', Math.round(wx), Math.round(wy), 'snapped station:', station?.name || 'none (curve point)');
-
-  if (station) {
-    if (drawingStations.length > 0) {
-      // Commit the segment from the previous station, through any curve
-      // points collected since, to this new station.
-      const prevStation = drawingStations[drawingStations.length-1];
-      if (station.id === prevStation.id) { toast('Already at this station'); return; }
-      const points = [[prevStation.x, prevStation.y], ...currentCurvePoints, [station.x, station.y]];
-      console.log('[lineDraw] committing segment', prevStation.name, '->', station.name, 'with', currentCurvePoints.length, 'curve point(s). Full points:', JSON.stringify(points));
-      drawingSegments.push({
-        from_station_id: prevStation.id,
-        to_station_id: station.id,
-        points
-      });
-      currentCurvePoints = [];
-    }
-    drawingStations.push(station);
-    document.getElementById('drawLineStatus').textContent =
-      `${drawingStations.length} station(s): ${drawingStations.map(s=>s.name).join(' → ')}. Click next station (or curve point).`;
-    status(`Added station: ${station.name}`);
-  } else {
-    // Curve point (only valid once we have at least one station to draw from)
-    if (drawingStations.length === 0) { toast('Click a station first'); return; }
-    currentCurvePoints.push([Math.round(wx), Math.round(wy)]);
-    console.log('[lineDraw] curve point added, currentCurvePoints now:', JSON.stringify(currentCurvePoints));
-    status(`Curve point added (${currentCurvePoints.length} total for this segment)`);
-  }
-  engine.render();
-}
-
-function undoLinePoint() {
-  if (currentCurvePoints.length > 0) {
-    // Undo the most recent curve point first
-    currentCurvePoints.pop();
-  } else if (drawingSegments.length > 0) {
-    // No pending curve points: undo the last committed segment instead,
-    // restoring its curve points so they can still be edited/undone further.
-    const lastSeg = drawingSegments.pop();
-    drawingStations.pop();
-    // points = [fromStation, ...curvePoints, toStation] — strip the two endpoints
-    currentCurvePoints = lastSeg.points.slice(1, -1);
-  } else if (drawingStations.length > 1) {
-    drawingStations.pop();
-  }
-  document.getElementById('drawLineStatus').textContent = drawingStations.length
-    ? `${drawingStations.length} station(s): ${drawingStations.map(s=>s.name).join(' → ')}. Click next station (or curve point).`
-    : 'Click your first station…';
-  engine.render();
-}
-
-async function finishDrawLine() {
-  if (drawingStations.length < 2) { toast('Need at least 2 stations'); return; }
-  if (currentCurvePoints.length > 0) {
-    toast('Click a final station to complete the last segment first');
-    return;
-  }
-  const direction = document.getElementById('lineDirection').value;
-
-  // drawingSegments already holds the real polylines (including curve
-  // points) for every committed station-to-station hop.
-  const segments = drawingSegments;
-  console.log('[lineDraw] FINISHING — sending segments to server:', JSON.stringify(segments, null, 2));
-
-  try {
-    await adminFetch('/api/admin/line-segments', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ line_id: selectedLine, direction, segments })
-    });
-    toast('Route saved ✓');
-    cancelDrawLine();
-    loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-function cancelDrawLine() {
-  isDrawingLine = false;
-  drawingStations = [];
-  drawingSegments = [];
-  currentCurvePoints = [];
-  document.getElementById('drawLineStatus').textContent = '';
-  engine.render();
-}
-
-// ── STREET DRAWING ────────────────────────────────────
-async function finishDrawStreet() {
-  if (streetPoints.length < 2) { toast('Need at least 2 points'); return; }
-  try {
-    await adminFetch('/api/admin/streets', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ name:'', points: streetPoints, width:6, color:'#D1D5DB' })
-    });
-    toast('Street saved ✓');
-    cancelDrawStreet();
-    loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-function cancelDrawStreet() {
-  isDrawingStreet = false;
-  streetPoints = [];
-  engine.render();
-}
-
-// Double-click / Enter to finish either drawing mode
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    if (isDrawingLine) finishDrawLine();
-    if (isDrawingStreet) finishDrawStreet();
-  }
-  if (e.key === 'Escape') {
-    cancelDrawLine(); cancelDrawStreet(); setTool('select');
-  }
-});
-engine.wrap.addEventListener('dblclick', () => {
-  if (isDrawingLine) finishDrawLine();
-  if (isDrawingStreet) finishDrawStreet();
-});
-
-// ── DRAW (canvas render) ──────────────────────────────
+// ── DRAW ───────────────────────────────────────────────
 function draw(ctx) {
-  document.getElementById('zoomPct').textContent = Math.round(engine.scale*100)+'%';
-
   // Streets
   allStreets.forEach(st => {
     const pts = JSON.parse(st.points_json);
     if (pts.length<2) return;
-    ctx.strokeStyle = st.color||'#D1D5DB'; ctx.lineWidth = st.width||6;
-    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle = st.color||'#D1D5DB';
+    ctx.lineWidth = st.width||6;
+    ctx.lineCap='round'; ctx.lineJoin='round';
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke();
   });
-
-  // In-progress street
-  if (isDrawingStreet && streetPoints.length) {
-    ctx.strokeStyle = '#9CA3AF'; ctx.lineWidth=5; ctx.setLineDash([8,6]);
-    ctx.beginPath(); ctx.moveTo(streetPoints[0][0],streetPoints[0][1]);
-    streetPoints.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
-    ctx.stroke(); ctx.setLineDash([]);
-    streetPoints.forEach(p => { ctx.beginPath(); ctx.arc(p[0],p[1],5,0,7); ctx.fillStyle='#6B7280'; ctx.fill(); });
-  }
 
   // Line segments
   allSegments.forEach(seg => {
@@ -594,395 +152,359 @@ function draw(ctx) {
     if (!line) return;
     const pts = JSON.parse(seg.points_json);
     if (pts.length<2) return;
-    const isSel = seg.line_id === selectedLine;
-    ctx.strokeStyle = line.color; ctx.lineWidth = (line.type==='rail'?6:4) + (isSel?2:0);
-    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha = isSel?1:.75;
+    ctx.strokeStyle = line.color;
+    ctx.lineWidth = line.type==='rail' ? 6 : 4;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.92;
     ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
     pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.globalAlpha=1;
   });
 
-  // In-progress line drawing
-  if (isDrawingLine && drawingStations.length) {
-    const color = allLines[selectedLine]?.color || '#2563EB';
-
-    // Draw already-committed segments (these have real curve geometry)
-    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.globalAlpha=.9;
-    drawingSegments.forEach(seg => {
-      ctx.beginPath(); ctx.moveTo(seg.points[0][0], seg.points[0][1]);
-      seg.points.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
-      ctx.stroke();
-    });
-    ctx.globalAlpha=1;
-
-    // Draw the in-progress segment: last station -> curve points so far
-    if (currentCurvePoints.length > 0) {
-      const lastStation = drawingStations[drawingStations.length-1];
-      const previewPts = [[lastStation.x,lastStation.y], ...currentCurvePoints];
-      ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.setLineDash([10,6]); ctx.globalAlpha=.8;
-      ctx.beginPath(); ctx.moveTo(previewPts[0][0],previewPts[0][1]);
-      previewPts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
-      ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
-
-      // Mark individual curve points so they're visible/selectable while drawing
-      currentCurvePoints.forEach(p => {
-        ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2);
-        ctx.fillStyle = color; ctx.fill();
-        ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
-      });
-    }
-
-    // highlight selected stations in order
-    drawingStations.forEach((s,i) => {
-      ctx.beginPath(); ctx.arc(s.x,s.y,12,0,Math.PI*2);
-      ctx.fillStyle = color; ctx.fill();
-      ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
-      ctx.save(); ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
-      ctx.fillStyle='white'; ctx.font="bold 11px 'Helvetica Neue',Helvetica,Arial,sans-serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(i+1, 0, 0);
-      ctx.restore();
-    });
-  }
-
   // Stations
-  hitTargets = [];
+  stationScreenPos = [];
   allStations.forEach(s => {
-    const isSel = selectedStation && s.id === selectedStation.id;
-    const r = s.type === 'hub' ? 11 : 7;
-    ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
-    ctx.fillStyle = isSel ? '#DC2626' : (s.type==='hub' ? '#111827' : '#374151');
-    ctx.fill();
-    ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+    const lineIds = (s.line_ids||'').split(',').filter(Boolean);
+    const isHub = lineIds.length>1 || s.type==='hub';
+    const col = allLines[lineIds[0]]?.color || '#6B7280';
+    const r = isHub ? 11 : 7;
 
-    if (engine.scale > .4) {
-      ctx.save(); ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
-      ctx.fillStyle='#111827'; ctx.font="600 11px 'Helvetica Neue',Helvetica,Arial,sans-serif";
+    ctx.beginPath(); ctx.arc(s.x,s.y,r,0,Math.PI*2);
+    ctx.fillStyle = isHub ? '#111827' : col;
+    ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+
+    if (engine.scale > 0.45) {
+      ctx.save();
+      ctx.translate(s.x,s.y); ctx.scale(1/engine.scale,1/engine.scale);
+      ctx.fillStyle='#111827';
+      ctx.font="600 11px 'Helvetica Neue',Helvetica,Arial,sans-serif";
       ctx.textAlign='left'; ctx.textBaseline='middle';
       ctx.fillText(s.name, r*engine.scale+6, 0);
       ctx.restore();
     }
-    hitTargets.push({x:s.x,y:s.y,data:s});
+
+    stationScreenPos.push({x:s.x,y:s.y,r:(r+5)/engine.scale,data:s});
   });
 
-  // Vehicles — black circle with bus/train glyph
+  // Live vehicles
   allVehicles.forEach(v => {
-    const screenRadius = 16;
-    ctx.save();
-    ctx.translate(v.x, v.y);
-    ctx.scale(1/engine.scale, 1/engine.scale);
-    drawVehicleMarker(ctx, 0, 0, v.line_type, screenRadius);
+    const sr=17;
+    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/engine.scale,1/engine.scale);
+    drawVehicleMarker(ctx,0,0,v.line_type,sr);
     ctx.restore();
-    hitTargets.push({x:v.x,y:v.y,data:v,isVehicle:true,r:(screenRadius+5)/engine.scale});
+    stationScreenPos.push({x:v.x,y:v.y,r:(sr+6)/engine.scale,data:v,isVehicle:true});
   });
+
+  // Location pin — blue pulsing dot showing where the user last tapped
+  if (locationPin) {
+    ctx.save();
+    ctx.translate(locationPin.x, locationPin.y);
+    ctx.scale(1/engine.scale, 1/engine.scale);
+    // Outer halo
+    ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2);
+    ctx.fillStyle='rgba(29,78,216,0.12)'; ctx.fill();
+    // Mid ring
+    ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2);
+    ctx.strokeStyle='rgba(29,78,216,0.35)'; ctx.lineWidth=2; ctx.stroke();
+    // Center dot
+    ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2);
+    ctx.fillStyle='#1D4ED8'; ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.restore();
+  }
 }
 
+// ── CLICK ──────────────────────────────────────────────
+function handleClick(wx, wy) {
+  const tol = 18/engine.scale;
+  let best=null, bestD=Infinity;
+  for (const item of stationScreenPos) {
+    const d = Math.hypot(item.x-wx, item.y-wy);
+    if (d<tol && d<bestD) { bestD=d; best=item; }
+  }
+
+  if (!best) {
+    // Empty canvas tap — drop pin and show nearest station's services
+    closeVpopup();
+    setLocationPin(wx, wy);
+    return;
+  }
+  if (best.isVehicle) {
+    showVehiclePopup(best.data);
+  } else {
+    // Station tap — snap pin to station, show its services
+    locationPin = {x: best.data.x, y: best.data.y};
+    nearestStation = best.data;
+    engine.render();
+    showStationPopup(best.data);
+  }
+}
+
+// Place pin at (wx,wy) and update sheet to show nearest station's services
+function setLocationPin(wx, wy) {
+  locationPin = {x: wx, y: wy};
+  engine.render();
+
+  if (!allStations.length) { renderArrivalsList([], null, 'Tap a station'); return; }
+
+  // Find nearest station by straight-line canvas distance
+  let closest=null, closestD=Infinity;
+  allStations.forEach(s => {
+    const d = Math.hypot(s.x-wx, s.y-wy);
+    if (d < closestD) { closestD=d; closest=s; }
+  });
+
+  nearestStation = closest;
+  const lineIds = (closest.line_ids||'').split(',').filter(Boolean);
+  renderArrivalsList(lineIds, closest);
+}
+
+// ── FIT ────────────────────────────────────────────────
 function fitAll() {
-  const pts = allStations.map(s=>[s.x,s.y]);
+  const pts=[];
+  allStations.forEach(s=>pts.push([s.x,s.y]));
+  allSegments.forEach(seg=>{ try{JSON.parse(seg.points_json).forEach(p=>pts.push(p));}catch{} });
   if (pts.length) engine.fitToContent(pts);
   else engine.centerOn(3000,3000,1);
 }
 
-// ── PANEL MANAGEMENT ──────────────────────────────────
-let currentPanel = null;
-function openPanel(name) {
-  currentPanel = name;
-  document.getElementById('edPanel').classList.add('open');
-  ['Lines','Stations','Vehicles','Streets','Advisories'].forEach(n => document.getElementById('panel'+n).classList.toggle('hidden', n.toLowerCase()!==name));
-  if (name==='lines') refreshLineList();
-  if (name==='stations') refreshStationList();
-  if (name==='vehicles') refreshVehicleList();
-  if (name==='streets') refreshStreetList();
-  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); }
-}
-function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
+// ── ARRIVALS LIST ───────────────────────────────────────
+// filterLineIds: only show these line IDs ([] = show all)
+// station: if provided, show as the location heading in the sheet
+function renderArrivalsList(filterLineIds, station, fallbackTitle) {
+  const el = document.getElementById('nearbyContent');
+  const lineSet = filterLineIds.length ? new Set(filterLineIds) : null;
 
-// ── LINES CRUD ────────────────────────────────────────
-async function saveLine() {
-  const id = document.getElementById('lineId').value.trim();
-  const name = document.getElementById('lineName').value.trim();
-  if (!id||!name) { toast('ID and name required'); return; }
-  const body = {
-    id, name, type: document.getElementById('lineType').value,
-    color: document.getElementById('lineColor').value,
-    text_color: document.getElementById('lineTextColor').value,
-    is_loop: document.getElementById('lineLoop').checked,
-    frequency: document.getElementById('lineFreq').value
-  };
-  try {
-    await adminFetch('/api/admin/lines',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    toast('Line saved ✓'); selectedLine=id; loadAllData();
-  } catch(e) { toast(e.message); }
-}
+  const cards=[];
+  allVehicles.forEach(v => {
+    if (lineSet && !lineSet.has(v.line_id)) return;
+    const line=allLines[v.line_id]; if(!line) return;
+    let eta=null;
+    if (v.next_x!=null) eta=etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh);
+    cards.push({line,eta,headsign:v.next_station_name||line.name,isLive:true});
+  });
 
-function selectLine(id) {
-  selectedLine = id;
-  const l = allLines[id]; if (!l) return;
-  document.getElementById('lineId').value=l.id;
-  document.getElementById('lineName').value=l.name;
-  document.getElementById('lineType').value=l.type;
-  document.getElementById('lineColor').value=l.color;
-  document.getElementById('lineTextColor').value=l.text_color||'#FFFFFF';
-  document.getElementById('lineLoop').checked=!!l.is_loop;
-  document.getElementById('lineFreq').value=l.frequency||'';
-  refreshLineList();
-  engine.render();
-}
+  const shown = lineSet ? [...lineSet] : Object.keys(allLines);
+  shown.forEach(lid => {
+    const line=allLines[lid]; if(!line) return;
+    if (!cards.find(c=>c.line.id===lid))
+      cards.push({line,eta:null,headsign:line.frequency||'See schedule',isLive:false});
+  });
 
-function refreshLineList() {
-  document.getElementById('lineList').innerHTML = Object.values(allLines).map(l => `
-    <div class="line-item ${selectedLine===l.id?'sel':''}" onclick="selectLine('${l.id}')">
-      <div style="width:28px;height:28px;border-radius:6px;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:${l.text_color};flex-shrink:0">${l.id}</div>
-      <div><div style="font-weight:700;font-size:.85rem">${l.name}</div><div style="font-size:.7rem;color:var(--gray)">${l.type}</div></div>
-    </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray)">No lines yet.</div>';
-}
-
-async function deleteSelectedLine() {
-  if (!selectedLine||!confirm(`Delete line ${selectedLine}? This removes its route and station assignments.`)) return;
-  try {
-    await adminFetch(`/api/admin/lines/${selectedLine}`,{method:'DELETE'});
-    selectedLine=null; toast('Line deleted'); loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-// ── STATIONS CRUD ─────────────────────────────────────
-async function saveStation() {
-  const name = document.getElementById('stName').value.trim();
-  const x = parseFloat(document.getElementById('stX').value);
-  const y = parseFloat(document.getElementById('stY').value);
-  if (!name||isNaN(x)||isNaN(y)) { toast('Name and position required'); return; }
-  const body = { name, x, y, type: document.getElementById('stType').value, street: document.getElementById('stStreet').value };
-  const method = selectedStation ? 'PUT' : 'POST';
-  const url = selectedStation ? `/api/admin/stations/${selectedStation.id}` : '/api/admin/stations';
-  try {
-    await adminFetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    toast('Stop saved ✓'); selectedStation=null; loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-async function deleteStation() {
-  if (!selectedStation||!confirm('Delete this stop? This also removes its route connections.')) return;
-  try {
-    await adminFetch(`/api/admin/stations/${selectedStation.id}`,{method:'DELETE'});
-    selectedStation=null; toast('Stop deleted'); loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-function selectStationForEdit(s) {
-  selectedStation = s;
-  document.getElementById('stName').value=s.name;
-  document.getElementById('stStreet').value=s.street||'';
-  document.getElementById('stType').value=s.type||'stop';
-  document.getElementById('stX').value=s.x;
-  document.getElementById('stY').value=s.y;
-  engine.render();
-}
-
-function selectStationById(id) {
-  const s = allStations.find(x => x.id === id);
-  if (s) selectStationForEdit(s);
-}
-
-function refreshStationList() {
-  document.getElementById('stationList').innerHTML = allStations.map(s => `
-    <div class="line-item" onclick="selectStationById(${s.id})">
-      <span style="font-size:1rem">${s.type==='hub'?'🔀':s.type==='station'?'🚆':'📍'}</span>
-      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(s.name)}</div><div style="font-size:.7rem;color:var(--gray)">${Math.round(s.x)}, ${Math.round(s.y)}</div></div>
-    </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No stops yet.</div>';
-}
-
-// ── VEHICLES CRUD ─────────────────────────────────────
-function populateVehicleSelects() {
-  document.getElementById('vLine').innerHTML = '<option value="">Select line…</option>' +
-    Object.values(allLines).map(l=>`<option value="${l.id}">${l.id} — ${l.name}</option>`).join('');
-  document.getElementById('vNextStation').innerHTML = '<option value="">Next station…</option>' +
-    allStations.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-}
-
-async function saveVehicle() {
-  const line_id = document.getElementById('vLine').value;
-  const x = parseFloat(document.getElementById('vX').value);
-  const y = parseFloat(document.getElementById('vY').value);
-  if (!line_id||isNaN(x)||isNaN(y)) { toast('Line and position required'); return; }
-  const body = {
-    line_id, x, y,
-    vehicle_label: document.getElementById('vLabel').value,
-    speed_kmh: parseFloat(document.getElementById('vSpeed').value)||0,
-    next_station_id: document.getElementById('vNextStation').value || null,
-    status: document.getElementById('vStatus').value
-  };
-  const method = selectedVehicle ? 'PUT' : 'POST';
-  const url = selectedVehicle ? `/api/admin/live/${selectedVehicle.id}` : '/api/admin/live';
-  try {
-    await adminFetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    toast('Vehicle saved ✓'); selectedVehicle=null; loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-async function deleteVehicle() {
-  if (!selectedVehicle||!confirm('Remove this vehicle?')) return;
-  try {
-    await adminFetch(`/api/admin/live/${selectedVehicle.id}`,{method:'DELETE'});
-    selectedVehicle=null; toast('Vehicle removed'); loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-function selectVehicleForEdit(v) {
-  selectedVehicle=v;
-  document.getElementById('vLine').value=v.line_id;
-  document.getElementById('vLabel').value=v.vehicle_label||'';
-  document.getElementById('vSpeed').value=v.speed_kmh||0;
-  document.getElementById('vStatus').value=v.status||'in_service';
-  document.getElementById('vNextStation').value=v.next_station_id||'';
-  document.getElementById('vX').value=v.x;
-  document.getElementById('vY').value=v.y;
-  engine.render();
-}
-
-function selectVehicleById(id) {
-  const v = allVehicles.find(x => x.id === id);
-  if (v) selectVehicleForEdit(v);
-}
-
-function refreshVehicleList() {
-  document.getElementById('vehicleList').innerHTML = allVehicles.map(v => `
-    <div class="line-item" onclick="selectVehicleById(${v.id})">
-      <div style="width:26px;height:26px;border-radius:50%;background:${v.color||'#666'};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${v.line_id}</div>
-      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} mph · ${v.status}</div></div>
-    </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No vehicles placed.</div>';
-}
-
-// ── STREETS: list + delete ────────────────────────────
-function refreshStreetList() {
-  document.getElementById('streetList').innerHTML = allStreets.map(st => {
-    const pts = (() => { try { return JSON.parse(st.points_json); } catch { return []; } })();
-    return `
-    <div class="line-item" style="cursor:default">
-      <div style="width:26px;height:26px;border-radius:6px;background:${st.color||'#D1D5DB'};flex-shrink:0"></div>
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:.82rem">${escapeHtml(st.name) || 'Unnamed street'}</div>
-        <div style="font-size:.7rem;color:var(--gray)">${pts.length} point(s)</div>
+  // Build header: station name if we have one, else a generic label
+  let header = '';
+  if (station) {
+    const lineIds = (station.line_ids||'').split(',').filter(Boolean);
+    const chips = lineIds.map(id => {
+      const l = allLines[id]; if (!l) return '';
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:1px 6px;border-radius:5px;background:${l.color};color:${l.text_color};font-weight:900;font-size:.72rem;margin-left:4px">${l.id}</span>`;
+    }).join('');
+    header = `<div style="padding:.7rem 1rem .3rem;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:.65rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.07em">Nearest station</div>
+        <div style="font-size:.95rem;font-weight:800;color:var(--black);display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-top:2px">${escapeHtml(station.name)}${chips}</div>
       </div>
-      <button onclick="deleteStreetById(${st.id})" title="Delete street" style="background:none;border:none;color:var(--red);font-size:1rem;padding:.25rem;cursor:pointer;flex-shrink:0">🗑</button>
     </div>`;
-  }).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No streets drawn yet.</div>';
+  } else {
+    header = `<div class="arrival-section-title">${fallbackTitle||'All services'}</div>`;
+  }
+
+  if (!cards.length) {
+    el.innerHTML = header + '<div class="empty" style="padding:1.5rem">No services at this stop</div>';
+    return;
+  }
+  cards.sort((a,b)=>(a.eta??999)-(b.eta??999));
+
+  el.innerHTML = header + cards.slice(0,10).map(c => `
+    <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?line=${c.line.id}'">
+      <div class="line-badge">${c.line.id}</div>
+      <div class="arrival-main">
+        <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
+        <div class="arrival-sub">${escapeHtml(c.headsign)}</div>
+      </div>
+      <div class="arrival-mins">
+        <div class="arrival-num">${c.eta??'—'}</div>
+        <div class="arrival-unit">${c.eta!=null?(c.eta===1?'min':'mins'):''}</div>
+      </div>
+    </div>`).join('');
 }
 
-async function deleteStreetById(id) {
-  if (!confirm('Delete this street?')) return;
+function renderNearby() {
+  // Show all services — called on initial load before any tap
+  renderArrivalsList([], null, 'All services');
+}
+
+// ── STATION POPUP ────────────────────────────────────────
+async function showStationPopup(s) {
+  _popupStationId = s.id;
+  const lineIds=(s.line_ids||'').split(',').filter(Boolean);
+  const lines=lineIds.map(id=>allLines[id]).filter(Boolean);
+  const primary=lines[0]||{color:'#111827',text_color:'#fff'};
+
+  const head=document.getElementById('vpopupHead');
+  head.style.background=primary.color; head.style.color=primary.text_color;
+  document.getElementById('vpopupDir').textContent=s.type==='hub'?'Transit Hub':s.type==='station'?'Rail Station':'Bus Stop';
+  document.getElementById('vpopupBig').textContent=s.name;
+  document.getElementById('vpopupBig').style.fontSize='1.5rem';
+  document.getElementById('vpopupSub').textContent=s.street||'';
+
+  // Lines served chips
+  const lineChips=lines.map(l=>`<span class="line-chip" style="background:${l.color};color:${l.text_color}">${l.id}</span>`).join('');
+  
+  // Next arrivals (from live vehicles heading here)
+  const incoming=allVehicles.filter(v=>
+    v.next_station_name===s.name ||
+    lineIds.includes(v.line_id)
+  ).map(v=>{
+    const eta=v.next_x!=null ? etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh) : null;
+    return {v,eta};
+  }).filter(x=>x.eta!=null).sort((a,b)=>a.eta-b.eta).slice(0,4);
+
+  const arrivalRows = incoming.length
+    ? incoming.map(x=>`
+      <div class="vpopup-arrival-row">
+        <span class="line-chip" style="background:${allLines[x.v.line_id]?.color||'#666'};color:${allLines[x.v.line_id]?.text_color||'#fff'};font-size:.75rem;padding:.25rem .6rem">${x.v.line_id}</span>
+        <div class="vpopup-arrival-name">${escapeHtml(x.v.next_station_name||'Next stop')}</div>
+        <div class="vpopup-arrival-eta live">${x.eta} min</div>
+      </div>`).join('')
+    : `<div style="font-size:.82rem;color:var(--gray);padding:.5rem 0">No live vehicles detected</div>`;
+
+  // Fetch advisories for this station and its lines asynchronously
+  let advisoryHtml = '';
   try {
-    await adminFetch(`/api/admin/streets/${id}`, { method:'DELETE' });
-    toast('Street deleted');
-    loadAllData();
-  } catch(e) { toast(e.message); }
-}
-
-
-// ── ADVISORIES ─────────────────────────────────────────
-function populateAdvSelects() {
-  document.getElementById('advLine').innerHTML =
-    '<option value="">All lines</option>' +
-    Object.values(allLines).map(l=>`<option value="${l.id}">${l.id} — ${escapeHtml(l.name)}</option>`).join('');
-  document.getElementById('advStation').innerHTML =
-    '<option value="">All stations</option>' +
-    allStations.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
-}
-
-async function saveAdvisory() {
-  const title = document.getElementById('advTitle').value.trim();
-  const body  = document.getElementById('advBody').value.trim();
-  if (!title || !body) { toast('Title and body required'); return; }
-  const payload = {
-    title, body,
-    severity: document.getElementById('advSeverity').value,
-    line_id:  document.getElementById('advLine').value || null,
-    station_id: document.getElementById('advStation').value ? parseInt(document.getElementById('advStation').value) : null,
-    source:   document.getElementById('advSource').value.trim(),
-    expires_at: document.getElementById('advExpires').value || null
-  };
-  try {
-    await adminFetch('/api/admin/advisories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    toast('Advisory posted ✓');
-    document.getElementById('advTitle').value = '';
-    document.getElementById('advBody').value  = '';
-    document.getElementById('advSource').value = '';
-    document.getElementById('advExpires').value = '';
-    refreshAdvisoryList();
-  } catch(e) { toast(e.message); }
-}
-
-async function refreshAdvisoryList() {
-  const el = document.getElementById('advisoryList');
-  el.innerHTML = '<div class="spinner" style="margin:.5rem auto"></div>';
-  try {
-    const advisories = await apiFetch('/api/advisories');
-    if (!advisories.length) { el.innerHTML = '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No active advisories.</div>'; return; }
-    const icons = { info:'ℹ️', warning:'⚠️', alert:'🔴' };
-    const bgs   = { info:'#EFF6FF', warning:'#FFFBEB', alert:'#FEF2F2' };
-    el.innerHTML = advisories.map(a => `
-      <div style="background:${bgs[a.severity]||'#F9FAFB'};border-radius:8px;padding:.75rem;margin-bottom:.5rem;position:relative">
-        <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin-bottom:.25rem">
-          ${icons[a.severity]||'ℹ️'} ${escapeHtml(a.title)}
-        </div>
-        <div style="font-size:.8rem;color:#374151;margin-bottom:.3rem">${escapeHtml(a.body)}</div>
-        ${a.line_name ? `<div style="font-size:.7rem;color:var(--gray)">Line: ${escapeHtml(a.line_name)}</div>` : ''}
-        ${a.station_name ? `<div style="font-size:.7rem;color:var(--gray)">Station: ${escapeHtml(a.station_name)}</div>` : ''}
-        ${a.source ? `<div style="font-size:.7rem;color:var(--gray)">Source: ${escapeHtml(a.source)}</div>` : ''}
-        <div style="font-size:.68rem;color:var(--gray);margin-top:.25rem">Posted ${new Date(a.posted_at).toLocaleString()}</div>
-        <button onclick="deleteAdvisory(${a.id})" title="Delete" style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;color:var(--red);font-size:.9rem;cursor:pointer">🗑</button>
-      </div>`).join('');
-  } catch(e) { el.innerHTML = `<div style="font-size:.8rem;color:var(--red)">${e.message}</div>`; }
-}
-
-async function deleteAdvisory(id) {
-  if (!confirm('Delete this advisory?')) return;
-  try {
-    await adminFetch(`/api/admin/advisories/${id}`, { method:'DELETE' });
-    toast('Advisory deleted');
-    refreshAdvisoryList();
-  } catch(e) { toast(e.message); }
-}
-
-// ── LOAD ALL DATA ─────────────────────────────────────
-async function loadAllData() {
-  try {
-    const [lines, stations, streets, vehicles] = await Promise.all([
-      apiFetch('/api/lines'), apiFetch('/api/stations'), apiFetch('/api/streets'), apiFetch('/api/live')
-    ]);
-    allLines = {}; lines.forEach(l=>allLines[l.id]=l);
-    allStations = stations; allStreets = streets; allVehicles = vehicles;
-
-    allSegments = [];
-    for (const line of lines) {
-      try { const d = await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
+    const qp = lineIds.length ? `?station_id=${s.id}&line_id=${lineIds[0]}` : `?station_id=${s.id}`;
+    const advisories = await apiFetch('/api/advisories' + qp);
+    if (advisories.length) {
+      advisoryHtml = advisories.map(a => {
+        const icon = a.severity==='alert' ? '🔴' : a.severity==='warning' ? '⚠️' : 'ℹ️';
+        const bg   = a.severity==='alert' ? '#FEF2F2' : a.severity==='warning' ? '#FFFBEB' : '#EFF6FF';
+        const bc   = a.severity==='alert' ? '#FECACA' : a.severity==='warning' ? '#FDE68A' : '#BFDBFE';
+        return `<div style="background:${bg};border:1.5px solid ${bc};border-radius:10px;padding:.85rem;margin:.5rem 1rem">
+          <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#374151;margin-bottom:.3rem">${icon} ${escapeHtml(a.title)}</div>
+          <div style="font-size:.82rem;color:#374151;line-height:1.45">${escapeHtml(a.body)}</div>
+          ${a.source ? `<div style="font-size:.7rem;color:#9CA3AF;margin-top:.4rem">Source: ${escapeHtml(a.source)}</div>` : ''}
+          <div style="font-size:.68rem;color:#9CA3AF;margin-top:.2rem">Posted ${new Date(a.posted_at).toLocaleDateString()}</div>
+        </div>`;
+      }).join('');
     }
+  } catch {}
 
-    populateVehicleSelects();
+  document.getElementById('vpopupBody').innerHTML = `
+    <div class="vpopup-lines">${lineChips||'<span style="color:var(--gray);font-size:.85rem">No lines assigned</span>'}</div>
+    <div class="vpopup-arrivals">
+      <div style="font-size:.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Next arrivals</div>
+      ${arrivalRows}
+    </div>
+    ${advisoryHtml}`;
+
+  // Update the sheet arrivals to show this stop's lines
+  renderArrivalsList(lineIds, s);
+  document.getElementById('vpopup').classList.add('open');
+}
+
+// ── VEHICLE POPUP ────────────────────────────────────────
+function showVehiclePopup(v) {
+  _popupStationId = null;
+  const head=document.getElementById('vpopupHead');
+  head.style.background=v.color; head.style.color=v.text_color;
+
+  const label=v.vehicle_label?.trim()||(v.line_type==='rail'?'Train':'Bus')+' '+v.id;
+  document.getElementById('vpopupDir').textContent=`${v.line_type==='rail'?'Rail':'Bus'} · ${escapeHtml(v.line_name||v.line_id)}`;
+  document.getElementById('vpopupBig').textContent=label;
+  document.getElementById('vpopupBig').style.fontSize='1.7rem';
+  document.getElementById('vpopupSub').textContent=`→ ${v.next_station_name||'Unknown stop'}`;
+
+  const eta=v.next_x!=null ? etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh) : null;
+
+  document.getElementById('vpopupBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;padding:.85rem 1rem">
+      <div style="background:var(--gray-l);border-radius:var(--r-xs);padding:.8rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;font-weight:800">${escapeHtml(v.next_station_name||'—')}</div>
+        <div style="font-size:.7rem;color:var(--gray);font-weight:600;margin-top:2px">Next stop</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:var(--r-xs);padding:.8rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900">${eta??'—'}</div>
+        <div style="font-size:.7rem;color:var(--gray);font-weight:600;margin-top:2px">Minutes away</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:var(--r-xs);padding:.8rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900">${Math.round(v.speed_kmh||0)}</div>
+        <div style="font-size:.7rem;color:var(--gray);font-weight:600;margin-top:2px">mph</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:var(--r-xs);padding:.8rem;text-align:center">
+        <div style="font-size:1rem;font-weight:800">${v.status==='in_service'?'In Service':v.status}</div>
+        <div style="font-size:.7rem;color:var(--gray);font-weight:600;margin-top:2px">Status</div>
+      </div>
+    </div>`;
+
+  document.getElementById('vpopup').classList.add('open');
+}
+
+function closeVpopup() { document.getElementById('vpopup').classList.remove('open'); }
+
+function planFromPopup() {
+  const s = _popupStationId ? allStations.find(x=>x.id===_popupStationId) : null;
+  if (s) {
+    sessionStorage.setItem('plannerFrom', JSON.stringify({id:s.id,name:s.name,x:s.x,y:s.y}));
+  }
+  window.location.href='planner.html';
+}
+
+// ── SHEET DRAG ───────────────────────────────────────────
+let _sheetDragging=false, _sheetStartY=0, _sheetExpanded=false;
+const sheetEl=document.getElementById('sheet');
+const handleEl=document.getElementById('sheetHandle');
+
+handleEl.addEventListener('pointerdown',e=>{
+  _sheetDragging=true; _sheetStartY=e.clientY;
+  e.currentTarget.setPointerCapture(e.pointerId);
+});
+handleEl.addEventListener('pointermove',e=>{
+  if (!_sheetDragging) return;
+  const dy = _sheetStartY - e.clientY;
+  if (dy > 40)  { sheetEl.classList.add('expanded');    _sheetExpanded = true; }
+  if (dy < -40) { sheetEl.classList.remove('expanded'); _sheetExpanded = false; }
+});
+handleEl.addEventListener('pointerup', () => { _sheetDragging = false; });
+handleEl.addEventListener('click', () => {
+  _sheetExpanded = !_sheetExpanded;
+  sheetEl.classList.toggle('expanded', _sheetExpanded);
+});
+
+// ── LOAD ──────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [lines,stations,streets,vehicles]=await Promise.all([
+      apiFetch('/api/lines'), apiFetch('/api/stations'),
+      apiFetch('/api/streets'), apiFetch('/api/live')
+    ]);
+    allLines={}; lines.forEach(l=>allLines[l.id]=l);
+    allStations=stations; allStreets=streets; allVehicles=vehicles;
+    allSegments=[];
+    for (const line of lines) {
+      try { const d=await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); }
+      catch {}
+    }
     engine.render();
-    if (currentPanel==='lines') refreshLineList();
-    if (currentPanel==='stations') refreshStationList();
-    if (currentPanel==='vehicles') refreshVehicleList();
-  } catch(e) { toast('Failed to load: '+e.message); }
+
+    // Center on Union Station if it exists, else fit all
+    const union=allStations.find(s=>s.name.toLowerCase().includes('union'));
+    if (union) {
+      engine.centerOn(union.x, union.y, 1.3);
+      // Place pin at Union Station and show its services by default
+      locationPin = {x: union.x, y: union.y};
+      nearestStation = union;
+      const unionLineIds = (union.line_ids||'').split(',').filter(Boolean);
+      renderArrivalsList(unionLineIds, union);
+    } else {
+      fitAll();
+      renderNearby();
+    }
+  } catch(e) {
+    document.getElementById('nearbyContent').innerHTML='<div class="empty">⚠️ Could not load network.<br><small>Check that the Worker is deployed and the DB binding is set.</small></div>';
+  }
 }
 
-async function init() {
-  await loadAllData();
-  fitAll();
-  status(`Loaded: ${allStations.length} stations, ${allSegments.length} segments, ${allVehicles.length} vehicles, ${Object.keys(allLines).length} lines`, 6000);
-}
-init();
-
-// Helper finish buttons floating near toolbar when drawing
-const origDraw = draw;
-</script>
-
-<!-- FINISH DRAWING BUTTONS -->
-<div id="finishBar" style="position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:1850;display:none;gap:.5rem;">
-  <button onclick="if(isDrawingLine)finishDrawLine();if(isDrawingStreet)finishDrawStreet();" style="background:var(--green);color:white;border:none;padding:.7rem 1.4rem;border-radius:999px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow-md)">✓ Finish</button>
-</div>
-<script>
-setInterval(() => {
-  document.getElementById('finishBar').style.display = (isDrawingLine||isDrawingStreet) ? 'flex' : 'none';
-}, 200);
+setInterval(async()=>{ try{ allVehicles=await apiFetch('/api/live'); engine.render(); }catch{} },15000);
+loadAll();
 </script>
 </body>
 </html>
