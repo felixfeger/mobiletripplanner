@@ -138,26 +138,45 @@ button { cursor: pointer; font-family: inherit; }
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 1500;
   background: var(--white); border-radius: var(--r) var(--r) 0 0;
   box-shadow: 0 -2px 20px rgba(0,0,0,.12);
-  height: var(--sheet-peek);   /* default: just peek height */
-  max-height: 80vh;            /* cap when expanded */
+  height: var(--sheet-peek);
+  max-height: 85vh;
   transition: height .3s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
   display: flex; flex-direction: column;
 }
-.sheet.expanded { height: 75vh; }
-.sheet-handle-wrap { flex-shrink: 0; padding: 8px 0 4px; display: flex; justify-content: center; cursor: pointer; }
-.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; }
-.sheet-scroll { overflow-y: auto; flex: 1; }
+.sheet.expanded { height: 80vh; }
+.sheet-handle-wrap {
+  flex-shrink: 0; padding: 10px 0 4px;
+  display: flex; justify-content: center;
+  /* Large tap target for mobile */
+  min-height: 44px; align-items: flex-start;
+  cursor: pointer;
+}
+.sheet-handle { width: 40px; height: 5px; background: var(--border); border-radius: 3px; }
+.sheet-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
 
 /* ── ARRIVAL CARDS ── */
 .arrival-section-title { font-size: .68rem; font-weight: 800; letter-spacing: .08em; color: var(--gray); text-transform: uppercase; padding: .75rem 1rem .4rem; }
-.arrival-card { display: flex; align-items: center; padding: .95rem 1rem; gap: .85rem; cursor: pointer; transition: filter .12s; border-bottom: 1.5px solid rgba(255,255,255,.12); }
+.arrival-card {
+  display: flex; align-items: center;
+  /* min 64px tall — comfortable mobile tap target */
+  min-height: 64px; padding: 1rem;
+  gap: .85rem; cursor: pointer;
+  transition: filter .12s;
+  border-bottom: 1.5px solid rgba(255,255,255,.12);
+  -webkit-tap-highlight-color: transparent;
+}
 .arrival-card:last-child { border-bottom: none; }
-.arrival-card:active { filter: brightness(.93); }
-.line-badge { width: 46px; height: 46px; border-radius: 11px; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 900; flex-shrink: 0; }
+.arrival-card:active { filter: brightness(.9); }
+.line-badge {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight: 900; flex-shrink: 0;
+}
 .arrival-main { flex: 1; min-width: 0; }
-.arrival-title { font-size: 1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.arrival-sub { font-size: .75rem; opacity: .75; margin-top: 2px; }
+.arrival-title { font-size: 1rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arrival-sub { font-size: .78rem; opacity: .78; margin-top: 3px; }
 .arrival-mins { text-align: right; flex-shrink: 0; }
 .arrival-num { font-size: 2rem; font-weight: 900; line-height: 1; }
 .arrival-unit { font-size: .65rem; opacity: .75; font-weight: 600; }
@@ -279,10 +298,61 @@ button { cursor: pointer; font-family: inherit; }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .hidden { display: none !important; }
 
-/* ── MOBILE ── */
+/* ── MOBILE FIRST: small phones (≤ 390px) ── */
+@media (max-width: 390px) {
+  :root { --nav-h: 52px; --sheet-peek: 200px; }
+  .nav-title { font-size: .95rem; }
+  .arrival-card { padding: .85rem; gap: .7rem; }
+  .line-badge { width: 42px; height: 42px; font-size: 1rem; }
+  .arrival-num { font-size: 1.7rem; }
+}
+
+/* ── MOBILE: phones (≤ 640px) ── */
 @media (max-width: 640px) {
   .hamburger { display: flex; }
   .nav-links { display: none; }
   .ed-panel { width: 100%; }
   .login-overlay { padding-left: .5rem; padding-right: .5rem; justify-content: center; }
+  /* Bigger nav buttons on touch */
+  .nav-logo-btn { width: 42px; height: 42px; }
+  /* Search pill full-width on mobile */
+  .search-pill { left: .6rem; right: .6rem; height: 48px; }
+  /* Zoom controls tighter on small screens */
+  .canvas-ctrls { right: .5rem; }
+  .zoom-btn { width: 42px; height: 42px; }
+}
+
+/* ── TABLET (641px – 1024px) ── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root { --sheet-peek: 260px; }
+  /* Sheet is wider but anchored left so map still shows */
+  .sheet { left: auto; right: 0; width: min(420px, 50vw); border-radius: var(--r) 0 0 var(--r); }
+  .canvas-ctrls { bottom: .75rem; }
+  /* Editor panel wider on tablet */
+  .ed-panel { width: 340px; }
+  /* Planner results beside mini-map */
+  .planner-wrap { flex-direction: row; }
+  .mini-canvas-wrap { width: 40%; height: 100%; flex-shrink: 0; }
+  .results-panel { flex: 1; }
+}
+
+/* ── DESKTOP (≥ 1025px) ── */
+@media (min-width: 1025px) {
+  :root { --sheet-peek: 100%; }
+  /* On desktop the sheet becomes a left sidebar */
+  .sheet {
+    top: var(--nav-h); left: 0; right: auto;
+    width: 380px; height: auto; border-radius: 0;
+    box-shadow: 2px 0 12px rgba(0,0,0,.08);
+    max-height: none;
+  }
+  .sheet.expanded { height: auto; }
+  .sheet-handle-wrap { display: none; }
+  .canvas-wrap { left: 380px; }
+  .search-pill { left: calc(380px + .75rem); }
+  .canvas-ctrls { bottom: .75rem; }
+  /* Editor panel wider on desktop */
+  .ed-panel { width: 380px; }
+  /* Login popup */
+  .login-overlay { padding-left: 1rem; }
 }
