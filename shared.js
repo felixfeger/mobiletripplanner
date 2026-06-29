@@ -475,61 +475,77 @@ function roundRectPath(ctx, x, y, w, h, r) {
 // Front-facing metro/light-rail train, white on transparent, centered at 0,0
 // size = diameter of the enclosing circle
 function drawTrainGlyph(ctx, size, color) {
-  const s = size / 30;
+  // Light rail / tram — aerodynamic nose, huge windshield, rectangular headlights
+  const s = size / 32;
   ctx.save();
   ctx.scale(s, s);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
-  // ── Pantograph ──────────────────────────────────────────
-  ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(-6,-17); ctx.lineTo(6,-17); ctx.stroke(); // collector bar
-  ctx.beginPath(); ctx.moveTo(-4,-17); ctx.lineTo(0,-13); ctx.stroke(); // left arm
-  ctx.beginPath(); ctx.moveTo( 4,-17); ctx.lineTo(0,-13); ctx.stroke(); // right arm
-  ctx.beginPath(); ctx.moveTo(0,-13);  ctx.lineTo(0,-11); ctx.stroke(); // centre pole
+  // ── Pantograph ───────────────────────────────────────────
+  ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(-8,-20); ctx.lineTo(8,-20); ctx.stroke(); // collector bar
+  ctx.beginPath(); ctx.moveTo(-6,-20); ctx.lineTo(0,-15); ctx.stroke(); // left arm
+  ctx.beginPath(); ctx.moveTo( 6,-20); ctx.lineTo(0,-15); ctx.stroke(); // right arm
+  ctx.beginPath(); ctx.moveTo(0,-15);  ctx.lineTo(0,-13); ctx.stroke(); // pole
 
-  // ── Body ─────────────────────────────────────────────────
+  // ── Body (wide + low for LRT) ────────────────────────────
   ctx.fillStyle = color;
-  roundRectPath(ctx, -12, -11, 24, 24, 3.5);
+  roundRectPath(ctx, -13, -13, 26, 26, 4);
   ctx.fill();
 
-  // ── Cab windshield (trapezoid, wider at the bottom) ──────
-  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  // ── Destination sign strip on roof edge ──────────────────
+  ctx.fillStyle = 'rgba(255,255,255,.22)';
+  roundRectPath(ctx, -11, -13, 22, 3, 2);
+  ctx.fill();
+
+  // ── Huge trapezoidal windshield (LRT hallmark — nearly full width) ──
+  ctx.fillStyle = 'rgba(200,230,255,.93)';
   ctx.beginPath();
-  ctx.moveTo(-8.5, -9.5);
-  ctx.lineTo( 8.5, -9.5);
-  ctx.lineTo(10,   -1.5);
-  ctx.lineTo(-10,  -1.5);
+  ctx.moveTo(-10, -10);   // top-left
+  ctx.lineTo( 10, -10);   // top-right
+  ctx.lineTo( 12.5, -0.5);// bottom-right (wider)
+  ctx.lineTo(-12.5, -0.5);// bottom-left
   ctx.closePath();
   ctx.fill();
 
-  // ── Side windows ─────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,.55)';
-  roundRectPath(ctx, -12, 1, 6, 5, 1.5); ctx.fill();
-  roundRectPath(ctx,   6, 1, 6, 5, 1.5); ctx.fill();
+  // ── Windshield wiper lines ───────────────────────────────
+  ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = .8;
+  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(-2,-0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(2,-0.5);  ctx.stroke();
 
-  // ── Headlights ───────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,210,.95)';
-  ctx.beginPath(); ctx.arc(-8,  0, 1.7, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 8,  0, 1.7, 0, Math.PI*2); ctx.fill();
+  // ── Side windows (small, below windshield) ───────────────
+  ctx.fillStyle = 'rgba(200,230,255,.55)';
+  roundRectPath(ctx, -13, 1.5, 6, 5, 1.5); ctx.fill();
+  roundRectPath(ctx,   7, 1.5, 6, 5, 1.5); ctx.fill();
 
-  // ── Skirt / lower-body divider ───────────────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.18)';
-  ctx.fillRect(-12, 7.5, 24, 1.5);
+  // ── Rectangular headlights (LRT style, low on front) ─────
+  ctx.fillStyle = 'rgba(255,245,180,.95)';
+  roundRectPath(ctx, -13, -2.5, 5, 2.5, 0.8); ctx.fill(); // left
+  roundRectPath(ctx,   8, -2.5, 5, 2.5, 0.8); ctx.fill(); // right
 
-  // ── Rail bogies (two rectangular truck blocks) ────────────
+  // ── Coupler bump (front bottom centre) ───────────────────
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  roundRectPath(ctx, -3, 12, 6, 3, 1); ctx.fill();
+
+  // ── Skirt separator ──────────────────────────────────────
+  ctx.fillStyle = 'rgba(0,0,0,.15)';
+  ctx.fillRect(-13, 7, 26, 1.5);
+
+  // ── Bogies / trucks ──────────────────────────────────────
   ctx.fillStyle = 'rgba(0,0,0,.45)';
-  roundRectPath(ctx, -12, 9, 10, 5.5, 2); ctx.fill();
-  roundRectPath(ctx,   2, 9, 10, 5.5, 2); ctx.fill();
+  roundRectPath(ctx, -13, 8.5, 11, 5, 2); ctx.fill();
+  roundRectPath(ctx,   2, 8.5, 11, 5, 2); ctx.fill();
 
   // ── Wheel highlights ─────────────────────────────────────
   ctx.fillStyle = 'rgba(255,255,255,.45)';
-  [-8,-3,3,8].forEach(x => {
-    ctx.beginPath(); ctx.arc(x, 11.8, 1.8, 0, Math.PI*2); ctx.fill();
+  [-9, -3, 3, 9].forEach(x => {
+    ctx.beginPath(); ctx.arc(x, 11.2, 1.9, 0, Math.PI*2); ctx.fill();
   });
 
   ctx.restore();
 }
 
-// Front-facing bus, white on transparent, centered at 0,0
+
 function drawBusGlyph(ctx, size, color) {
   const s = size / 28;
   ctx.save();
