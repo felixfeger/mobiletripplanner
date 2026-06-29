@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>City Metro Transit</title>
 <link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#1D4ED8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body>
 
@@ -268,27 +271,39 @@ function fitAll() {
 }
 
 // ── ARRIVALS LIST ───────────────────────────────────────
-// filterLineIds: only show these line IDs ([] = show all)
-// station: if provided, show as the location heading in the sheet
+// filterLineIds: lines at the chosen station ([] = show all lines)
+// station: the single nearest station — ONE card per line, earliest ETA only
 function renderArrivalsList(filterLineIds, station, fallbackTitle) {
   const el = document.getElementById('nearbyContent');
   const lineSet = filterLineIds.length ? new Set(filterLineIds) : null;
 
-  const cards=[];
+  // Build ONE card per line — keep the vehicle with the earliest ETA.
+  // This prevents "A Line at Union Station" + "A Line at Downtown" appearing twice.
+  const byLine = {}; // line_id → {line, eta, headsign, isLive}
   allVehicles.forEach(v => {
     if (lineSet && !lineSet.has(v.line_id)) return;
-    const line=allLines[v.line_id]; if(!line) return;
-    let eta=null;
-    if (v.next_x!=null) eta=etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh);
-    cards.push({line,eta,headsign:v.next_station_name||line.name,isLive:true});
+    const line = allLines[v.line_id]; if (!line) return;
+    let eta = null;
+    if (v.next_x != null)
+      eta = etaMinutesFromSpeed(Math.hypot(v.next_x-v.x, v.next_y-v.y), v.speed_kmh);
+    // Keep this vehicle only if it's the earliest ETA for its line
+    const existing = byLine[v.line_id];
+    if (!existing || (eta != null && (existing.eta == null || eta < existing.eta))) {
+      // Use admin-set headsign (direction) if available, else fall back to next station name
+      const displayHeadsign = v.headsign || v.next_station_name || line.name;
+      byLine[v.line_id] = {line, eta, headsign: displayHeadsign, isLive: true};
+    }
   });
 
+  // Fill in lines with no live vehicle
   const shown = lineSet ? [...lineSet] : Object.keys(allLines);
   shown.forEach(lid => {
-    const line=allLines[lid]; if(!line) return;
-    if (!cards.find(c=>c.line.id===lid))
-      cards.push({line,eta:null,headsign:line.frequency||'See schedule',isLive:false});
+    if (byLine[lid]) return;  // already have a live entry
+    const line = allLines[lid]; if (!line) return;
+    byLine[lid] = {line, eta: null, headsign: line.frequency || 'See schedule', isLive: false};
   });
+
+  const cards = Object.values(byLine);
 
   // Build header: station name if we have one, else a generic label
   let header = '';
@@ -318,8 +333,8 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
     <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?line=${c.line.id}'">
       <div class="line-badge">${c.line.id}</div>
       <div class="arrival-main">
-        <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
-        <div class="arrival-sub">${escapeHtml(c.headsign)}</div>
+        <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem;vertical-align:middle">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
+        <div class="arrival-sub">→ ${escapeHtml(c.headsign)}</div>
       </div>
       <div class="arrival-mins">
         <div class="arrival-num">${c.eta??'—'}</div>
@@ -411,7 +426,7 @@ function showVehiclePopup(v) {
   document.getElementById('vpopupDir').textContent=`${v.line_type==='rail'?'Rail':'Bus'} · ${escapeHtml(v.line_name||v.line_id)}`;
   document.getElementById('vpopupBig').textContent=label;
   document.getElementById('vpopupBig').style.fontSize='1.7rem';
-  document.getElementById('vpopupSub').textContent=`→ ${v.next_station_name||'Unknown stop'}`;
+  document.getElementById('vpopupSub').textContent=`→ ${v.headsign||v.next_station_name||'Unknown stop'}`;
 
   const eta=v.next_x!=null ? etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh) : null;
 
