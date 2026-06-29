@@ -198,9 +198,11 @@ body,html{height:100%;overflow:hidden;}
 
     <div class="ed-sec">
       <div class="ed-lbl">Place / edit vehicle</div>
-      <select class="ed-input" id="vLine" style="margin-bottom:.4rem"><option value="">Select line…</option></select>
+      <select class="ed-input" id="vLine" style="margin-bottom:.4rem" onchange="onVLineChange(this.value)"><option value="">Select line…</option></select>
       <input class="ed-input" id="vLabel" placeholder="Vehicle label (e.g. Bus 42)" style="margin-bottom:.4rem">
-      <select class="ed-input" id="vNextStation" style="margin-bottom:.4rem"><option value="">Next station…</option></select>
+      <div class="ed-lbl" style="margin-top:.35rem">Direction / Headsign</div>
+      <select class="ed-input" id="vHeadsign" style="margin-bottom:.4rem"><option value="">Select direction…</option></select>
+      <select class="ed-input" id="vNextStation" style="margin-bottom:.4rem"><option value="">Next immediate stop…</option></select>
       <div class="ed-row">
         <input class="ed-input" id="vSpeed" type="number" placeholder="Speed mph" value="20">
         <select class="ed-input" id="vStatus">
@@ -791,6 +793,34 @@ function refreshStationList() {
 }
 
 // ── VEHICLES CRUD ─────────────────────────────────────
+// When a line is chosen for a vehicle, populate:
+// - headsign select with the TWO terminal stations (one per direction of travel)
+// - next-station select with ALL stations on that line
+async function onVLineChange(lineId, restoreHeadsign) {
+  const headsignSel = document.getElementById('vHeadsign');
+  const nextSel = document.getElementById('vNextStation');
+  headsignSel.innerHTML = '<option value="">Select direction…</option>';
+  nextSel.innerHTML = '<option value="">Next immediate stop…</option>';
+  if (!lineId) return;
+  try {
+    const data = await apiFetch(`/api/lines/${encodeURIComponent(lineId)}`);
+    // Stations ordered for this line
+    const ordered = data.stations.sort((a,b) => a.stop_order - b.stop_order);
+    // Populate next-stop dropdown (all stations)
+    nextSel.innerHTML = '<option value="">Next immediate stop…</option>' +
+      ordered.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    // Headsign = the two ends of the line (riders board toward one terminal or the other)
+    if (ordered.length >= 2) {
+      const first = ordered[0], last = ordered[ordered.length-1];
+      headsignSel.innerHTML =
+        `<option value="">Select direction…</option>` +
+        `<option value="${escapeHtml(last.name)}">→ ${escapeHtml(last.name)}</option>` +
+        `<option value="${escapeHtml(first.name)}">→ ${escapeHtml(first.name)}</option>`;
+    }
+    if (restoreHeadsign) headsignSel.value = restoreHeadsign;
+  } catch {}
+}
+
 function populateVehicleSelects() {
   document.getElementById('vLine').innerHTML = '<option value="">Select line…</option>' +
     Object.values(allLines).map(l=>`<option value="${l.id}">${l.id} — ${l.name}</option>`).join('');
@@ -806,6 +836,7 @@ async function saveVehicle() {
   const body = {
     line_id, x, y,
     vehicle_label: document.getElementById('vLabel').value,
+    headsign: document.getElementById('vHeadsign').value,
     speed_kmh: parseFloat(document.getElementById('vSpeed').value)||0,
     next_station_id: document.getElementById('vNextStation').value || null,
     status: document.getElementById('vStatus').value
@@ -833,6 +864,8 @@ function selectVehicleForEdit(v) {
   document.getElementById('vSpeed').value=v.speed_kmh||0;
   document.getElementById('vStatus').value=v.status||'in_service';
   document.getElementById('vNextStation').value=v.next_station_id||'';
+  // Populate headsign options for this line, then restore value
+  onVLineChange(v.line_id, v.headsign||'');
   document.getElementById('vX').value=v.x;
   document.getElementById('vY').value=v.y;
   engine.render();
@@ -847,7 +880,11 @@ function refreshVehicleList() {
   document.getElementById('vehicleList').innerHTML = allVehicles.map(v => `
     <div class="line-item" onclick="selectVehicleById(${v.id})">
       <div style="width:26px;height:26px;border-radius:50%;background:${v.color||'#666'};display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:white">${v.line_id}</div>
-      <div><div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div><div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} mph · ${v.status}</div></div>
+      <div>
+        <div style="font-weight:700;font-size:.82rem">${escapeHtml(v.vehicle_label||'Vehicle '+v.id)}</div>
+        ${v.headsign ? `<div style="font-size:.72rem;color:var(--blue);font-weight:700">→ ${escapeHtml(v.headsign)}</div>` : ''}
+        <div style="font-size:.7rem;color:var(--gray)">${v.speed_kmh||0} mph · ${v.status}</div>
+      </div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No vehicles placed.</div>';
 }
 
