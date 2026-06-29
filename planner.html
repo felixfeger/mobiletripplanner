@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Plan a Trip — City Metro</title>
 <link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#1D4ED8">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 body { overflow: hidden; }
 
@@ -627,7 +629,13 @@ function renderRouteList(plans) {
   function getGoInMins(legs) {
     const firstLeg = legs[0];
     const boardStation = firstLeg.stations[0];
-    const liveVehicle = allVehicles.find(v=>v.line_id===firstLeg.line.id && v.next_x!=null);
+    // Find a live vehicle going in the correct direction for this leg
+    // (match headsign if set, so we don't show the opposite-direction train)
+    const targetHeadsign = firstLeg.headsign;
+    const liveVehicle = allVehicles.find(v =>
+      v.line_id === firstLeg.line.id && v.next_x != null &&
+      (!targetHeadsign || !v.headsign || v.headsign === targetHeadsign)
+    );
     if (liveVehicle) {
       const dist = Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y);
       const eta = etaMinutesFromSpeed(dist, liveVehicle.speed_kmh);
@@ -659,7 +667,7 @@ function renderRouteList(plans) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.111 16.404a5.5 5.5 0 0 1 7.778 0M12 20h.01M4.929 7.929a10 10 0 0 1 14.142 0M6.34 10.66a8 8 0 0 1 11.32 0" stroke-linecap="round"/></svg>
         </div>
         <div class="route-total-time">
-          ${legs[0].stations[0]?.name||''} → ${legs[legs.length-1].stations[legs[legs.length-1].stations.length-1]?.name||''}
+          ${legs.map(l => `${l.line.id} → ${escapeHtml(l.headsign || l.stations[l.stations.length-1]?.name || '')}`).join(' · ')}
         </div>
       </div>
       <div class="route-option-right">
@@ -699,7 +707,10 @@ async function showRouteOverview(planIdx) {
   document.getElementById('ropDur').textContent = `${totalMin} min`;
 
   // Departure chips
-  renderDepartureChips(currentLegs[0].line);
+  // Attach the planned headsign to the line object so renderDepartureChips
+  // can filter to only vehicles going in the right direction
+  const lineWithHeadsign = {...currentLegs[0].line, _headsign: currentLegs[0].headsign};
+  renderDepartureChips(lineWithHeadsign);
 
   // Fit map to route
   const routePts = [];
@@ -722,7 +733,11 @@ function renderDepartureChips(line) {
   const m = freq.match(/(\d+)/);
   const freqMin = m ? parseInt(m[1]) : 15;
 
-  const liveVehicle = allVehicles.find(v=>v.line_id===line.id && v.next_x!=null);
+  const targetH = line._headsign;  // set by showRouteOverview
+  const liveVehicle = allVehicles.find(v =>
+    v.line_id === line.id && v.next_x != null &&
+    (!targetH || !v.headsign || v.headsign === targetH)
+  );
   const liveEta = liveVehicle
     ? etaMinutesFromSpeed(Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y), liveVehicle.speed_kmh)
     : null;
@@ -764,7 +779,7 @@ async function buildRopBody(legs, depTimeMs, totalSeconds) {
         <span style="font-size:1.2rem">🔄</span>
         <div>
           <div class="transfer-label">Transfer</div>
-          <div class="transfer-detail">Board <strong>${leg.line.id}</strong> — ${escapeHtml(leg.line.name)} at ${escapeHtml(leg.stations[0].name)}</div>
+          <div class="transfer-detail">Board <strong>${leg.line.id}</strong> → ${escapeHtml(leg.headsign || leg.line.name)} at ${escapeHtml(leg.stations[0].name)}</div>
         </div>
       </div>`;
     }
@@ -774,7 +789,7 @@ async function buildRopBody(legs, depTimeMs, totalSeconds) {
         <div class="rop-leg-badge" style="background:${leg.line.color};color:${leg.line.text_color}">${leg.line.id}</div>
         <div>
           <div class="rop-leg-name">${escapeHtml(leg.line.name)}</div>
-          <div class="rop-leg-toward">→ ${escapeHtml(leg.stations[leg.stations.length-1].name)}</div>
+          <div class="rop-leg-toward">→ ${escapeHtml(leg.headsign || leg.stations[leg.stations.length-1].name)}</div>
         </div>
         <div class="rop-leg-time">
           <div class="rop-leg-time-lbl">Depart</div>
@@ -911,8 +926,8 @@ function renderNavStep() {
     const line = leg.line;
     header.style.background = line.color;
     header.style.color = line.text_color;
-    document.getElementById('navTitle').textContent = `Board ${line.id} — ${escapeHtml(line.name)}`;
-    document.getElementById('navSubtitle').textContent = `→ ${escapeHtml(leg.stations[leg.stations.length-1].name)}`;
+    document.getElementById('navTitle').textContent = `Board ${line.id} → ${escapeHtml(leg.headsign || leg.stations[leg.stations.length-1].name)}`;
+    document.getElementById('navSubtitle').textContent = `→ ${escapeHtml(leg.headsign || leg.stations[leg.stations.length-1].name)}`;
     document.getElementById('stepNext').classList.remove('end');
     document.getElementById('stepNext').textContent = navStepIndex < steps.length-1 ? 'Next →' : 'Arrive ✓';
 
@@ -922,7 +937,7 @@ function renderNavStep() {
         <div class="nav-step-badge">${line.id}</div>
         <div class="nav-step-main">
           <div class="nav-step-title">${escapeHtml(leg.stations[0].name)}</div>
-          <div class="nav-step-sub">→ ${escapeHtml(leg.stations[leg.stations.length-1].name)}</div>
+          <div class="nav-step-sub">→ ${escapeHtml(leg.headsign || leg.stations[leg.stations.length-1].name)}</div>
         </div>
         <div class="nav-step-eta">
           <div class="nav-step-num">${step.eta ?? '—'}</div>
