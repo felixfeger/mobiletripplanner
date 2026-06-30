@@ -200,6 +200,11 @@ body { overflow: hidden; }
 }
 .nav-title { font-size: 1.25rem; font-weight: 900; margin-bottom: .25rem; }
 .nav-subtitle { font-size: .85rem; opacity: .8; }
+.nav-map-wrap {
+  height: 170px; flex-shrink: 0; position: relative;
+  overflow: hidden; background: var(--canvas-bg); touch-action: none;
+}
+#navCanvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .nav-steps { flex: 1; overflow-y: auto; padding-bottom: 2rem; }
 .step-controls {
   flex-shrink: 0; display: flex; align-items: center; gap: .6rem;
@@ -358,6 +363,9 @@ body { overflow: hidden; }
     <div class="nav-title" id="navTitle"></div>
     <div class="nav-subtitle" id="navSubtitle"></div>
   </div>
+  <div class="nav-map-wrap" id="navMapWrap">
+    <canvas id="navCanvas"></canvas>
+  </div>
   <div class="nav-steps" id="navSteps"></div>
   <div class="step-controls">
     <button class="step-btn-back" id="stepBack" onclick="stepPrev()" disabled>← Back</button>
@@ -394,7 +402,7 @@ let pickerTarget = 'to';
 let currentPlanData = null;  // full plan response
 let currentLegs = null;      // legs for selected route option
 let navStepIndex = 0;
-let ropEngine = null, miniEngine = null;
+let ropEngine = null, miniEngine = null, navEngine = null;
 
 // ── MINI-MAP ENGINE ──────────────────────────────────────
 miniEngine = new CanvasEngine('miniWrap','miniCanvas', {
@@ -491,6 +499,90 @@ function drawRop(ctx) {
     drawVehicleMarker(ctx,0,0,v.line_type,14);
     ctx.restore();
   });
+}
+
+// ── NAV (SCREEN 3) MAP ENGINE ─────────────────────────────
+function initNavEngine() {
+  if (navEngine) return;
+  navEngine = new CanvasEngine('navMapWrap','navCanvas', {
+    scale:.4, minScale:.1, maxScale:3,
+    worldW:6000, worldH:6000, gridSize:100,
+    onDraw: drawNav
+  });
+  navEngine.render();
+}
+
+function drawNav(ctx) {
+  if (!currentLegs) return;
+  // All lines faint, for context
+  allSegments.forEach(seg => {
+    const line = allLines[seg.line_id]; if (!line) return;
+    const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+    ctx.strokeStyle = line.color; ctx.lineWidth = line.type==='rail'?4:3;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.2;
+    ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+    pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.stroke(); ctx.globalAlpha=1;
+  });
+
+  // Full journey route highlighted (all legs)
+  currentLegs.forEach(leg => {
+    const segs = allSegments.filter(s => s.line_id === leg.line.id);
+    segs.forEach(seg => {
+      const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+      ctx.strokeStyle = leg.line.color;
+      ctx.lineWidth = leg.line.type==='rail' ? 6 : 4.5;
+      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=.45;
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+      pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.stroke(); ctx.globalAlpha=1;
+    });
+  });
+
+  // Highlight the CURRENT step's leg/segment more boldly, with stations
+  const step = window._navSteps?.[navStepIndex];
+  if (step && !step.isEnd) {
+    const leg = step.leg;
+    const segs = allSegments.filter(s => s.line_id === leg.line.id);
+    segs.forEach(seg => {
+      const pts = JSON.parse(seg.points_json); if (pts.length<2) return;
+      ctx.strokeStyle = leg.line.color;
+      ctx.lineWidth = leg.line.type==='rail' ? 8 : 6;
+      ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+      pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.stroke();
+    });
+    // Every station you'll pass through on this leg
+    leg.stations.forEach((s,i) => {
+      const isEnd = i===0 || i===leg.stations.length-1;
+      ctx.beginPath(); ctx.arc(s.x,s.y, isEnd?9:6, 0, Math.PI*2);
+      ctx.fillStyle = isEnd ? '#111827' : leg.line.color;
+      ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+    });
+  }
+
+  // Live vehicles on the journey's lines
+  const journeyLineIds = new Set(currentLegs.map(l=>l.line.id));
+  allVehicles.forEach(v => {
+    if (!journeyLineIds.has(v.line_id)) return;
+    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/navEngine.scale,1/navEngine.scale);
+    drawVehicleMarker(ctx,0,0,v.line_type,13);
+    ctx.restore();
+  });
+}
+
+// Re-center the nav map on whichever leg/stations the current step covers
+function centerNavMapOnCurrentStep() {
+  if (!navEngine) return;
+  const step = window._navSteps?.[navStepIndex];
+  if (!step || step.isEnd) {
+    // On the final "arrived" step, center on the destination station
+    if (toStation) navEngine.centerOn(toStation.x, toStation.y, 1.2);
+    return;
+  }
+  const pts = step.leg.stations.map(s => [s.x, s.y]);
+  if (pts.length) navEngine.fitToContent(pts, 50);
 }
 
 // ── DATA LOADING ─────────────────────────────────────────
@@ -869,8 +961,10 @@ function closeRouteOverview() {
 function startNavigation() {
   if (!currentLegs) return;
   navStepIndex = 0;
+  initNavEngine();
   buildNavSteps();
   document.getElementById('navPanel').classList.add('open');
+  setTimeout(() => { navEngine.resize(); centerNavMapOnCurrentStep(); navEngine.render(); }, 60);
 }
 
 function buildNavSteps() {
@@ -963,6 +1057,10 @@ function renderNavStep() {
 
   document.getElementById('stepBack').disabled = navStepIndex === 0;
   document.getElementById('stepProgress').textContent = `${navStepIndex+1} / ${steps.length}`;
+
+  // Keep the map in sync with whichever step is showing
+  centerNavMapOnCurrentStep();
+  navEngine?.render();
 }
 
 function stepNext() {
