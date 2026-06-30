@@ -154,6 +154,15 @@ body,html{height:100%;overflow:hidden;}
     </div>
 
     <div class="ed-sec">
+      <div class="ed-lbl">Segments & diagnostics</div>
+      <div style="font-size:.72rem;color:var(--gray);margin-bottom:.5rem;line-height:1.4">
+        If a trip's time feels wrong, it's usually one segment drawn as a straight line instead of following the real streets. This list shows every hop on the selected line — a segment with only 2 points and a short distance for how far apart its stations look is the one to fix.
+      </div>
+      <button class="ed-action outline" onclick="inspectSegments()">🔍 Inspect segments for this line</button>
+      <div id="segmentInspector" style="margin-top:.5rem"></div>
+    </div>
+
+    <div class="ed-sec">
       <div class="ed-lbl">All lines</div>
       <div id="lineList"></div>
     </div>
@@ -363,6 +372,7 @@ function setTool(t) {
   tool = t;
   if (t !== 'line') cancelDrawLine();
   if (t !== 'street') cancelDrawStreet();
+  if (t !== 'segment-edit') cancelSegmentEdit();
   document.querySelectorAll('.ed-toolbar .ed-btn').forEach(b=>b.classList.remove('active'));
   const map = {select:'btnSelect',street:'btnStreet',line:'btnLine',station:'btnStation',vehicle:'btnVehicle'};
   document.getElementById(map[t])?.classList.add('active');
@@ -372,7 +382,8 @@ function setTool(t) {
     street: 'Click to add street points. Click ✓ Finish Street button when done.',
     line: selectedLine ? `Drawing route for ${selectedLine}. Click stations in order, or click empty space to add a curve point, then click the next station.` : 'Select a line in the panel first.',
     station: 'Click the map to place a new station/stop.',
-    vehicle: 'Click the map to place a live vehicle.'
+    vehicle: 'Click the map to place a live vehicle.',
+    'segment-edit': 'Click points along the real path for this one hop, then press Finish.'
   };
   hint(hints[t]);
   engine.wrap.classList.toggle('drawing', t!=='select');
@@ -410,6 +421,11 @@ function handleClick(wx, wy) {
 
   if (tool === 'line') {
     handleLineDrawClick(wx, wy);
+    return;
+  }
+
+  if (tool === 'segment-edit') {
+    handleSegmentEditClick(wx, wy);
     return;
   }
 
@@ -556,14 +572,16 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     if (isDrawingLine) finishDrawLine();
     if (isDrawingStreet) finishDrawStreet();
+    if (isEditingSegment) finishSegmentEdit();
   }
   if (e.key === 'Escape') {
-    cancelDrawLine(); cancelDrawStreet(); setTool('select');
+    cancelDrawLine(); cancelDrawStreet(); cancelSegmentEdit(); setTool('select');
   }
 });
 engine.wrap.addEventListener('dblclick', () => {
   if (isDrawingLine) finishDrawLine();
   if (isDrawingStreet) finishDrawStreet();
+  if (isEditingSegment) finishSegmentEdit();
 });
 
 // ── DRAW (canvas render) ──────────────────────────────
@@ -588,6 +606,25 @@ function draw(ctx) {
     streetPoints.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.stroke(); ctx.setLineDash([]);
     streetPoints.forEach(p => { ctx.beginPath(); ctx.arc(p[0],p[1],5,0,7); ctx.fillStyle='#6B7280'; ctx.fill(); });
+  }
+
+  // In-progress single-segment redraw (isolated diagnostic edit mode)
+  if (isEditingSegment && editingSegmentFrom && editingSegmentTo) {
+    const previewPts = [[editingSegmentFrom.x,editingSegmentFrom.y], ...editingSegmentCurvePoints, [editingSegmentTo.x,editingSegmentTo.y]];
+    ctx.strokeStyle = '#DC2626'; ctx.lineWidth = 5; ctx.setLineDash([10,6]); ctx.globalAlpha=.9;
+    ctx.beginPath(); ctx.moveTo(previewPts[0][0],previewPts[0][1]);
+    previewPts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    // Endpoint markers
+    [editingSegmentFrom, editingSegmentTo].forEach(s => {
+      ctx.beginPath(); ctx.arc(s.x,s.y,10,0,Math.PI*2);
+      ctx.fillStyle='#DC2626'; ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+    });
+    // Curve point markers
+    editingSegmentCurvePoints.forEach(p => {
+      ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2);
+      ctx.fillStyle='#DC2626'; ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
+    });
   }
 
   // Line segments
@@ -736,6 +773,135 @@ function refreshLineList() {
       <div style="width:28px;height:28px;border-radius:6px;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:${l.text_color};flex-shrink:0">${l.id}</div>
       <div><div style="font-weight:700;font-size:.85rem">${l.name}</div><div style="font-size:.7rem;color:var(--gray)">${l.type}</div></div>
     </div>`).join('') || '<div style="font-size:.8rem;color:var(--gray)">No lines yet.</div>';
+}
+
+// ── SEGMENT INSPECTOR (diagnose "direct line" routing bugs) ──
+let _highlightedSegmentId = null;
+
+async function inspectSegments() {
+  if (!selectedLine) { toast('Select a line first'); return; }
+  const el = document.getElementById('segmentInspector');
+  el.innerHTML = '<div class="spinner" style="margin:.5rem auto"></div>';
+  try {
+    const data = await apiFetch(`/api/lines/${encodeURIComponent(selectedLine)}`);
+    const segs = data.segments;
+    if (!segs.length) {
+      el.innerHTML = '<div style="font-size:.8rem;color:var(--gray)">No segments drawn for this line yet.</div>';
+      return;
+    }
+    const stById = {};
+    allStations.forEach(s => stById[s.id] = s);
+
+    el.innerHTML = segs.map(seg => {
+      const from = stById[seg.from_station_id], to = stById[seg.to_station_id];
+      const pts = JSON.parse(seg.points_json);
+      const curvePoints = Math.max(0, pts.length - 2);
+      const miles = (seg.length_px / 50).toFixed(2);
+      // Straight-line distance between the two stations, for comparison
+      const straightPx = from && to ? Math.hypot(to.x-from.x, to.y-from.y) : 0;
+      const straightMiles = (straightPx / 50).toFixed(2);
+      // Flag as suspicious if the drawn length is within 5% of the straight-line
+      // distance AND there are no curve points — i.e. it really is just a direct line.
+      const isSuspicious = curvePoints === 0 && straightPx > 0 && Math.abs(seg.length_px - straightPx) < straightPx * 0.05;
+      const mins = Math.round(seg.travel_seconds / 60 * 10) / 10;
+
+      return `<div style="border:1.5px solid ${isSuspicious?'#FCA5A5':'var(--border)'};background:${isSuspicious?'#FEF2F2':'white'};border-radius:8px;padding:.65rem;margin-bottom:.5rem;cursor:pointer" onclick="highlightSegment(${seg.id})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+          <div style="font-size:.8rem;font-weight:700">${escapeHtml(from?.name||'?')} → ${escapeHtml(to?.name||'?')}</div>
+          ${isSuspicious ? '<span style="font-size:.65rem;font-weight:900;color:#DC2626;flex-shrink:0">⚠ DIRECT</span>' : ''}
+        </div>
+        <div style="font-size:.72rem;color:var(--gray);margin-top:.3rem">
+          ${miles} mi drawn (straight-line would be ${straightMiles} mi) · ${curvePoints} curve point${curvePoints!==1?'s':''} · ${mins} min
+        </div>
+        <button onclick="event.stopPropagation();redrawSegment(${seg.id},${seg.from_station_id},${seg.to_station_id})" style="margin-top:.4rem;background:none;border:1.5px solid var(--black);border-radius:6px;font-size:.7rem;font-weight:700;padding:.25rem .6rem;cursor:pointer">✏️ Redraw this hop</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="font-size:.8rem;color:var(--red)">${e.message}</div>`;
+  }
+}
+
+function highlightSegment(segId) {
+  _highlightedSegmentId = segId;
+  const seg = allSegments.find(s => s.id === segId);
+  if (seg) {
+    const pts = JSON.parse(seg.points_json);
+    engine.fitToContent(pts, 80);
+  }
+  engine.render();
+}
+
+// Jump straight into draw mode for just the one problem hop: start the
+// line-drawing tool pre-loaded with the "from" station already clicked,
+// so the very next click (plus any curve points) completes just this segment.
+// ── ISOLATED SINGLE-SEGMENT EDIT MODE ─────────────────────
+// Redrawing one hop must NEVER touch any other segment on the line, so this
+// uses its own state and the dedicated PUT /api/admin/line-segments/:id
+// endpoint, completely separate from the generic multi-segment draw flow.
+let isEditingSegment = false;
+let editingSegmentId = null;
+let editingSegmentFrom = null;
+let editingSegmentTo = null;
+let editingSegmentCurvePoints = [];
+
+function redrawSegment(segId, fromId, toId) {
+  if (!selectedLine) return;
+  const from = allStations.find(s=>s.id===fromId);
+  const to = allStations.find(s=>s.id===toId);
+  if (!from || !to) { toast('Could not find both stations'); return; }
+
+  isEditingSegment = true;
+  editingSegmentId = segId;
+  editingSegmentFrom = from;
+  editingSegmentTo = to;
+  editingSegmentCurvePoints = [];
+
+  setTool('segment-edit');
+  document.getElementById('drawLineStatus').textContent =
+    `Redrawing ${from.name} → ${to.name}. Click points along the real path, then press Finish.`;
+  toast('Click curve points along the real path, then Finish');
+  engine.fitToContent([[from.x,from.y],[to.x,to.y]], 120);
+}
+
+function handleSegmentEditClick(wx, wy) {
+  editingSegmentCurvePoints.push([Math.round(wx), Math.round(wy)]);
+  status(`Curve point added (${editingSegmentCurvePoints.length} total)`);
+  engine.render();
+}
+
+function undoSegmentEditPoint() {
+  editingSegmentCurvePoints.pop();
+  engine.render();
+}
+
+async function finishSegmentEdit() {
+  if (!isEditingSegment || !editingSegmentId) return;
+  const points = [
+    [editingSegmentFrom.x, editingSegmentFrom.y],
+    ...editingSegmentCurvePoints,
+    [editingSegmentTo.x, editingSegmentTo.y]
+  ];
+  try {
+    await adminFetch(`/api/admin/line-segments/${editingSegmentId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ points })
+    });
+    toast('Hop redrawn ✓ — this segment only, rest of the line untouched');
+    cancelSegmentEdit();
+    await loadAllData();
+    inspectSegments(); // refresh the inspector list with new numbers
+  } catch(e) { toast(e.message); }
+}
+
+function cancelSegmentEdit() {
+  isEditingSegment = false;
+  editingSegmentId = null;
+  editingSegmentFrom = null;
+  editingSegmentTo = null;
+  editingSegmentCurvePoints = [];
+  document.getElementById('drawLineStatus').textContent = '';
+  engine.render();
 }
 
 async function deleteSelectedLine() {
@@ -1014,11 +1180,12 @@ const origDraw = draw;
 
 <!-- FINISH DRAWING BUTTONS -->
 <div id="finishBar" style="position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:1850;display:none;gap:.5rem;">
-  <button onclick="if(isDrawingLine)finishDrawLine();if(isDrawingStreet)finishDrawStreet();" style="background:var(--green);color:white;border:none;padding:.7rem 1.4rem;border-radius:999px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow-md)">✓ Finish</button>
+  <button onclick="if(isDrawingLine)finishDrawLine();if(isDrawingStreet)finishDrawStreet();if(isEditingSegment)finishSegmentEdit();" style="background:var(--green);color:white;border:none;padding:.7rem 1.4rem;border-radius:999px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow-md)">✓ Finish</button>
+  <button onclick="cancelDrawLine();cancelDrawStreet();cancelSegmentEdit();setTool('select');" style="background:white;color:var(--gray-dark);border:1.5px solid var(--border);padding:.7rem 1.2rem;border-radius:999px;font-weight:700;font-size:.9rem;box-shadow:var(--shadow-md)">✕ Cancel</button>
 </div>
 <script>
 setInterval(() => {
-  document.getElementById('finishBar').style.display = (isDrawingLine||isDrawingStreet) ? 'flex' : 'none';
+  document.getElementById('finishBar').style.display = (isDrawingLine||isDrawingStreet||isEditingSegment) ? 'flex' : 'none';
 }, 200);
 </script>
 </body>
