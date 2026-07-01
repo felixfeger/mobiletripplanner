@@ -312,6 +312,15 @@ initLoginForms();
 let tool = 'select';
 let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
 let selectedLine = null, selectedStation = null, selectedVehicle = null;
+// Isolated single-segment redraw state (declared early — draw() and the
+// finish-bar setInterval both reference these before the code further
+// down the file would otherwise define them).
+let isEditingSegment = false;
+let editingSegmentId = null;
+let editingSegmentFrom = null;
+let editingSegmentTo = null;
+let editingSegmentCurvePoints = [];
+let _highlightedSegmentId = null;
 let hitTargets = [];
 
 // Line-drawing state: click stations in order to build a route.
@@ -776,7 +785,6 @@ function refreshLineList() {
 }
 
 // ── SEGMENT INSPECTOR (diagnose "direct line" routing bugs) ──
-let _highlightedSegmentId = null;
 
 async function inspectSegments() {
   if (!selectedLine) { toast('Select a line first'); return; }
@@ -831,18 +839,11 @@ function highlightSegment(segId) {
   engine.render();
 }
 
-// Jump straight into draw mode for just the one problem hop: start the
-// line-drawing tool pre-loaded with the "from" station already clicked,
-// so the very next click (plus any curve points) completes just this segment.
 // ── ISOLATED SINGLE-SEGMENT EDIT MODE ─────────────────────
 // Redrawing one hop must NEVER touch any other segment on the line, so this
-// uses its own state and the dedicated PUT /api/admin/line-segments/:id
-// endpoint, completely separate from the generic multi-segment draw flow.
-let isEditingSegment = false;
-let editingSegmentId = null;
-let editingSegmentFrom = null;
-let editingSegmentTo = null;
-let editingSegmentCurvePoints = [];
+// uses its own state (declared at the top of the script) and the dedicated
+// PUT /api/admin/line-segments/:id endpoint, completely separate from the
+// generic multi-segment draw flow.
 
 function redrawSegment(segId, fromId, toId) {
   if (!selectedLine) return;
