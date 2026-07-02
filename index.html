@@ -284,8 +284,14 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
     if (lineSet && !lineSet.has(v.line_id)) return;
     const line = allLines[v.line_id]; if (!line) return;
     let eta = null;
-    if (v.next_x != null)
+    if (station) {
+      // A specific station is in view — use turnaround-aware ETA so a
+      // vehicle that already passed this stop still shows when it'll be
+      // back around, instead of no time (or the wrong time) at all.
+      eta = computeTurnaroundEtaMinutes(v, station.id, allSegments, allStations);
+    } else if (v.next_x != null) {
       eta = etaMinutesFromSpeed(Math.hypot(v.next_x-v.x, v.next_y-v.y), v.speed_kmh);
+    }
     // Keep this vehicle only if it's the earliest ETA for its line
     const existing = byLine[v.line_id];
     if (!existing || (eta != null && (existing.eta == null || eta < existing.eta))) {
@@ -365,22 +371,27 @@ async function showStationPopup(s) {
   // Lines served chips
   const lineChips=lines.map(l=>`<span class="line-chip" style="background:${l.color};color:${l.text_color}">${l.id}</span>`).join('');
   
-  // Next arrivals (from live vehicles heading here)
-  const incoming=allVehicles.filter(v=>
-    v.next_station_name===s.name ||
-    lineIds.includes(v.line_id)
-  ).map(v=>{
-    const eta=v.next_x!=null ? etaMinutesFromSpeed(Math.hypot(v.next_x-v.x,v.next_y-v.y),v.speed_kmh) : null;
-    return {v,eta};
-  }).filter(x=>x.eta!=null).sort((a,b)=>a.eta-b.eta).slice(0,4);
+  // Next arrivals — every vehicle on a line serving this station, using
+  // turnaround-aware ETA so a vehicle that already passed this stop still
+  // shows a correct time once it finishes the line and heads back.
+  const incoming = allVehicles
+    .filter(v => lineIds.includes(v.line_id))
+    .map(v => ({ v, eta: computeTurnaroundEtaMinutes(v, s.id, allSegments, allStations) }))
+    .filter(x => x.eta != null)
+    .sort((a,b) => a.eta - b.eta)
+    .slice(0, 4);
 
   const arrivalRows = incoming.length
-    ? incoming.map(x=>`
+    ? incoming.map(x=>{
+        const line = allLines[x.v.line_id];
+        const toward = x.v.headsign || line?.name || 'Next stop';
+        return `
       <div class="vpopup-arrival-row">
-        <span class="line-chip" style="background:${allLines[x.v.line_id]?.color||'#666'};color:${allLines[x.v.line_id]?.text_color||'#fff'};font-size:.75rem;padding:.25rem .6rem">${x.v.line_id}</span>
-        <div class="vpopup-arrival-name">${escapeHtml(x.v.next_station_name||'Next stop')}</div>
+        <span class="line-chip" style="background:${line?.color||'#666'};color:${line?.text_color||'#fff'};font-size:.75rem;padding:.25rem .6rem">${x.v.line_id}</span>
+        <div class="vpopup-arrival-name">→ ${escapeHtml(toward)}</div>
         <div class="vpopup-arrival-eta live">${x.eta} min</div>
-      </div>`).join('')
+      </div>`;
+      }).join('')
     : `<div style="font-size:.82rem;color:var(--gray);padding:.5rem 0">No live vehicles detected</div>`;
 
   // Fetch advisories for this station and its lines asynchronously
