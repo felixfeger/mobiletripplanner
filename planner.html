@@ -729,8 +729,10 @@ function renderRouteList(plans) {
       (!targetHeadsign || !v.headsign || v.headsign === targetHeadsign)
     );
     if (liveVehicle) {
-      const dist = Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y);
-      const eta = etaMinutesFromSpeed(dist, liveVehicle.speed_kmh);
+      // Turnaround-aware: if this vehicle already passed the boarding
+      // station, this correctly calculates it finishing the line and
+      // coming back, instead of assuming it's simply not coming.
+      const eta = computeTurnaroundEtaMinutes(liveVehicle, boardStation.id, allSegments, allStations);
       if (eta) return eta;
     }
     // Fallback: parse frequency
@@ -802,7 +804,7 @@ async function showRouteOverview(planIdx) {
   // Attach the planned headsign to the line object so renderDepartureChips
   // can filter to only vehicles going in the right direction
   const lineWithHeadsign = {...currentLegs[0].line, _headsign: currentLegs[0].headsign};
-  renderDepartureChips(lineWithHeadsign);
+  renderDepartureChips(lineWithHeadsign, currentLegs[0].stations[0]);
 
   // Fit map to route
   const routePts = [];
@@ -819,7 +821,7 @@ async function showRouteOverview(planIdx) {
   miniEngine.render();
 }
 
-function renderDepartureChips(line) {
+function renderDepartureChips(line, boardStation) {
   const chips = document.getElementById('ropChips');
   const freq = line.frequency || '';
   const m = freq.match(/(\d+)/);
@@ -830,8 +832,8 @@ function renderDepartureChips(line) {
     v.line_id === line.id && v.next_x != null &&
     (!targetH || !v.headsign || v.headsign === targetH)
   );
-  const liveEta = liveVehicle
-    ? etaMinutesFromSpeed(Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y), liveVehicle.speed_kmh)
+  const liveEta = liveVehicle && boardStation
+    ? computeTurnaroundEtaMinutes(liveVehicle, boardStation.id, allSegments, allStations)
     : null;
 
   const departures = [];
@@ -976,12 +978,14 @@ function buildNavSteps() {
   legs.forEach((leg, li) => {
     const perHopSec = leg.stations.length>1 ? leg.seconds/(leg.stations.length-1) : leg.seconds;
     // Each leg is one step — show as an arrival-style card
-    const liveVehicle = allVehicles.find(v=>v.line_id===leg.line.id && v.next_x!=null);
-    let eta = null;
-    if (liveVehicle) {
-      const dist = Math.hypot(liveVehicle.next_x-liveVehicle.x, liveVehicle.next_y-liveVehicle.y);
-      eta = etaMinutesFromSpeed(dist, liveVehicle.speed_kmh);
-    }
+    const boardStation = leg.stations[0];
+    const liveVehicle = allVehicles.find(v =>
+      v.line_id===leg.line.id && v.next_x!=null &&
+      (!leg.headsign || !v.headsign || v.headsign === leg.headsign)
+    );
+    const eta = liveVehicle
+      ? computeTurnaroundEtaMinutes(liveVehicle, boardStation.id, allSegments, allStations)
+      : null;
     steps.push({
       leg, runningMs,
       eta,
