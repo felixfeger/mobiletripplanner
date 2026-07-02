@@ -535,225 +535,49 @@ function pointAtFraction(points, frac) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LIVE VEHICLE MARKERS — black circle with realistic bus/train icon
+// LIVE VEHICLE MARKERS — black circle with the actual train/bus icon
+// images (not hand-drawn), scaled to fit and drawn via ctx.drawImage().
 // ═══════════════════════════════════════════════════════════════
 
-function roundRectPath(ctx, x, y, w, h, r) {
-  r = Math.min(r, w/2, h/2);
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y,   x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x,   y+h, r);
-  ctx.arcTo(x,   y+h, x,   y,   r);
-  ctx.arcTo(x,   y,   x+w, y,   r);
-  ctx.closePath();
-}
+// Both icons are small white-on-transparent PNGs, inlined as base64 so no
+// extra network request is needed. Loaded once at script-load time; each
+// Image's `.complete` flag guards drawVehicleMarker so nothing is drawn
+// before it's actually ready (loading is effectively instant for a data
+// URI this small, but the guard keeps the very first frame from erroring).
+const _trainIconImg = new Image();
+_trainIconImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAACWCAYAAAAsTf17AAADPUlEQVR4nO2ca5LiMAwGna29/5XZP+OaKYZsXpLVTroPAJI6nx0DoTUREREREZG5WKoL6Lxer1d1Da21tiwLYiblRVCEvFMt6E/lm1OltFZfW8lVUd30USrSMzwxs0lprabmYVfCjEI+MSo9pXuMrDNEzF3S0tq4Xv6OeJMjHFkqtoYU+VqjGZKYPQNavhhRz5X3f9QeU32Y+wmllmFiPjVcnZI11uoaWStuKEeI3GNoIJYy+Y1ioCgGStoaTDsXZJG1j4W/6FOEvBMtKOzFnirknShBIXuMUr6JmsVlMUr5TcRMvCuDckmMaVnn6mxMDBTE9zG0z7QIK0F5YmhSWmPUVC5GPnNaTETcCVfmGhG1XZmRiYHiT2RXqK7NxEApv13uVyZlv6lOSqdcTIcyEAouZVAUA+WUGJed/ZydlYmBohgoioGiGChDzzGUQ+RZRt70lP7afzZG9oB5cGkWsA8ueYY5zpmZuflDUQyUdDF32l86I3oyMVAUA0UxUBQD5ZAYzzDnOTo7EwNFMVBSxdzxDNPJ7s3EQFEMFMVAUQyU3WI8w1znyAxNDBTFQEkTc+czTCezRxMDRTFQFANFMVB2ifEME8feWZoYKIqBkiLmCWeYTlavJgaKYqAoBopioGyK8QwTz56ZmhgoioESLuZJZ5hORs8mBopioCgGimKgKAZKuJgnHkgzek5JzJPkZPWatpQ9QU5mj6l/i/UEOVm4+RexddEqBopioCgGimKgKAaKYqCknmPev0Ca/Vwzsp+hT5QtX2S9ZxZrdU/3RNlWwTPJqeql7Dv/GeRU9uLmDyVUzAwpyCK6dxMDJVTM7LfDV4ju3cRAKRMzQ7oqayz5McYMUjpV/aT9GGOt2JmkdP7XS1Y/m7d4Mw5yBrZur938oSgGimKgKAbKppgnf/6VxZ6Zmhgou8SYmjj2znJ3YpRznSMzPLSUKec8R2d3etB+IrCPsxfz5QQo6DNXV5fQpenpkiKXem+XoSgGimKgKAaKYqCEiXn6HVlrsTMwMVBSn4/5yV0+zhm1MoQkZqvYu0hpbbuXKHEuZVAUA+WymCctY50Ry5mJgaIYKKli7riMde7cm4iIiIgInH/u7jkyiaeTOQAAAABJRU5ErkJggg==';
+const _busIconImg = new Image();
+_busIconImg.src = 'data:image/png;base64,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';
 
-// Front-facing metro/light-rail train, white on transparent, centered at 0,0
-// size = diameter of the enclosing circle
-function drawTrainGlyph(ctx, size, color) {
-  // Light rail / tram — aerodynamic nose, huge windshield, rectangular headlights
-  const s = size / 32;
-  ctx.save();
-  ctx.scale(s, s);
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-
-  // ── Pantograph ───────────────────────────────────────────
-  ctx.strokeStyle = color; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(-8,-20); ctx.lineTo(8,-20); ctx.stroke(); // collector bar
-  ctx.beginPath(); ctx.moveTo(-6,-20); ctx.lineTo(0,-15); ctx.stroke(); // left arm
-  ctx.beginPath(); ctx.moveTo( 6,-20); ctx.lineTo(0,-15); ctx.stroke(); // right arm
-  ctx.beginPath(); ctx.moveTo(0,-15);  ctx.lineTo(0,-13); ctx.stroke(); // pole
-
-  // ── Body (wide + low for LRT) ────────────────────────────
-  ctx.fillStyle = color;
-  roundRectPath(ctx, -13, -13, 26, 26, 4);
-  ctx.fill();
-
-  // ── Destination sign strip on roof edge ──────────────────
-  ctx.fillStyle = 'rgba(255,255,255,.22)';
-  roundRectPath(ctx, -11, -13, 22, 3, 2);
-  ctx.fill();
-
-  // ── Huge trapezoidal windshield (LRT hallmark — nearly full width) ──
-  ctx.fillStyle = 'rgba(200,230,255,.93)';
-  ctx.beginPath();
-  ctx.moveTo(-10, -10);   // top-left
-  ctx.lineTo( 10, -10);   // top-right
-  ctx.lineTo( 12.5, -0.5);// bottom-right (wider)
-  ctx.lineTo(-12.5, -0.5);// bottom-left
-  ctx.closePath();
-  ctx.fill();
-
-  // ── Windshield wiper lines ───────────────────────────────
-  ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = .8;
-  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(-2,-0.5); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(2,-0.5);  ctx.stroke();
-
-  // ── Side windows (small, below windshield) ───────────────
-  ctx.fillStyle = 'rgba(200,230,255,.55)';
-  roundRectPath(ctx, -13, 1.5, 6, 5, 1.5); ctx.fill();
-  roundRectPath(ctx,   7, 1.5, 6, 5, 1.5); ctx.fill();
-
-  // ── Rectangular headlights (LRT style, low on front) ─────
-  ctx.fillStyle = 'rgba(255,245,180,.95)';
-  roundRectPath(ctx, -13, -2.5, 5, 2.5, 0.8); ctx.fill(); // left
-  roundRectPath(ctx,   8, -2.5, 5, 2.5, 0.8); ctx.fill(); // right
-
-  // ── Coupler bump (front bottom centre) ───────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.3)';
-  roundRectPath(ctx, -3, 12, 6, 3, 1); ctx.fill();
-
-  // ── Skirt separator ──────────────────────────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.15)';
-  ctx.fillRect(-13, 7, 26, 1.5);
-
-  // ── Bogies / trucks ──────────────────────────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.45)';
-  roundRectPath(ctx, -13, 8.5, 11, 5, 2); ctx.fill();
-  roundRectPath(ctx,   2, 8.5, 11, 5, 2); ctx.fill();
-
-  // ── Wheel highlights ─────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,.45)';
-  [-9, -3, 3, 9].forEach(x => {
-    ctx.beginPath(); ctx.arc(x, 11.2, 1.9, 0, Math.PI*2); ctx.fill();
-  });
-
-  ctx.restore();
-}
-
-
-function drawBusGlyph(ctx, size, color) {
-  const s = size / 28;
-  ctx.save();
-  ctx.scale(s, s);
-
-  // ── Roof destination board ────────────────────────────────
-  ctx.fillStyle = color;
-  roundRectPath(ctx, -8, -14, 16, 5, 2); ctx.fill();
-
-  // ── Main body ─────────────────────────────────────────────
-  roundRectPath(ctx, -10, -9, 20, 19, 3); ctx.fill();
-
-  // ── Windshield ────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,.92)';
-  roundRectPath(ctx, -8, -7.5, 16, 7, 1.5); ctx.fill();
-
-  // ── Lower-body stripe ─────────────────────────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.14)';
-  ctx.fillRect(-10, 4.5, 20, 4);
-
-  // ── Wheel arches ──────────────────────────────────────────
-  ctx.fillStyle = 'rgba(0,0,0,.38)';
-  ctx.beginPath(); ctx.arc(-5.5, 10.5, 4, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 5.5, 10.5, 4, 0, Math.PI*2); ctx.fill();
-
-  // ── Wheel caps ────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,.55)';
-  ctx.beginPath(); ctx.arc(-5.5, 10.5, 2, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 5.5, 10.5, 2, 0, Math.PI*2); ctx.fill();
-
-  // ── Headlights ────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,210,.95)';
-  ctx.beginPath(); ctx.arc(-7, -2, 1.5, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 7, -2, 1.5, 0, Math.PI*2); ctx.fill();
-
-  ctx.restore();
-}
-
-// Draws a vehicle marker on the canvas: black circle + white glyph.
-// Call after ctx.translate(x,y) + ctx.scale(1/zoom, 1/zoom) so it
-// stays screen-pixel-sized regardless of zoom level.
+// Draws a vehicle marker on the canvas: black circle + the real train/bus
+// icon image, white on the black background. Call after
+// ctx.translate(x,y) [+ ctx.scale(1/zoom,1/zoom) for screen-fixed size]
+// so the marker stays a consistent visual size regardless of map zoom.
 function drawVehicleMarker(ctx, x, y, lineType, radius) {
   radius = radius || 16;
   ctx.save();
   ctx.translate(x, y);
-  ctx.beginPath(); ctx.arc(0,0,radius,0,Math.PI*2);
-  ctx.fillStyle = '#111827'; ctx.fill();
-  ctx.strokeStyle = 'white'; ctx.lineWidth = 2.5; ctx.stroke();
-  const gs = radius * 1.65;
-  if (lineType === 'rail') drawTrainGlyph(ctx, gs, '#fff');
-  else                     drawBusGlyph(ctx,  gs, '#fff');
-  ctx.restore();
-}
 
-function drawTrainGlyph(ctx, size, color) {
-  const s = size / 28;
-  ctx.save();
-  ctx.scale(s, s);
-
-  // Pantograph pole (thin vertical line from roof)
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(0, -19); ctx.stroke();
-
-  // Pantograph collector bar (horizontal T at top)
-  ctx.beginPath(); ctx.moveTo(-5, -19); ctx.lineTo(5, -19); ctx.stroke();
-
-  // Main body — taller, slightly narrower than bus, with curved top
-  ctx.fillStyle = color;
-  roundRectPath(ctx, -9, -14, 18, 22, 4);
-  ctx.fill();
-
-  // Cab windshield — trapezoid shape (wider at bottom)
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  // Black circle background
   ctx.beginPath();
-  ctx.moveTo(-6, -12); ctx.lineTo(6, -12);
-  ctx.lineTo(7, -5);  ctx.lineTo(-7, -5);
-  ctx.closePath(); ctx.fill();
-
-  // Side windows (two small rectangles)
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  roundRectPath(ctx, -8, -3, 5, 5, 1); ctx.fill();
-  roundRectPath(ctx,  3, -3, 5, 5, 1); ctx.fill();
-
-  // Coupler nub at bottom
-  ctx.fillStyle = color;
-  roundRectPath(ctx, -3, 7, 6, 3, 1); ctx.fill();
-
-  // Rail trucks — two dark rectangles at base
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  roundRectPath(ctx, -9, 5, 7, 4, 1); ctx.fill();
-  roundRectPath(ctx,  2, 5, 7, 4, 1); ctx.fill();
-
-  // Wheel axle dots
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.beginPath(); ctx.arc(-5.5, 7, 1.2, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 5.5, 7, 1.2, 0, Math.PI*2); ctx.fill();
-
-  // Headlight strips
-  ctx.fillStyle = 'rgba(255,255,200,0.95)';
-  roundRectPath(ctx, -8, -4.5, 3, 1.5, 0.5); ctx.fill();
-  roundRectPath(ctx,  5, -4.5, 3, 1.5, 0.5); ctx.fill();
-
-  ctx.restore();
-}
-
-function roundRectPath(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
-  ctx.closePath();
-}
-
-function drawVehicleMarker(ctx, x, y, lineType, radius = 15) {
-  ctx.save();
-  ctx.translate(x, y);
-  // Black circle
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI*2);
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
   ctx.fillStyle = '#111827';
   ctx.fill();
   ctx.strokeStyle = 'white';
   ctx.lineWidth = 2.5;
   ctx.stroke();
-  // Glyph
-  const glyphSize = radius * 1.7;
-  if (lineType === 'rail') drawTrainGlyph(ctx, glyphSize, '#fff');
-  else drawBusGlyph(ctx, glyphSize, '#fff');
+
+  // The actual icon image, scaled to fit inside the circle with a little
+  // padding, preserving its original aspect ratio (train and bus have
+  // different width:height ratios, so don't force a square fit).
+  const img = lineType === 'rail' ? _trainIconImg : _busIconImg;
+  if (img.complete && img.naturalWidth > 0) {
+    const maxDim = radius * 1.5; // icon's longer side fits within this
+    const scale = maxDim / Math.max(img.naturalWidth, img.naturalHeight);
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  }
+
   ctx.restore();
 }
