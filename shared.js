@@ -176,6 +176,83 @@ function etaMinutesFromSpeed(distPx, speedMph) {
   return Math.max(1, Math.round(hours * 60));
 }
 
+// Same as above but in seconds, and never returns null — a parked vehicle
+// (speed 0) or a vehicle already at its next stop (distance 0) contributes
+// 0 seconds rather than breaking a larger chained calculation.
+function etaSecondsFromSpeed(distPx, speedMph) {
+  if (!distPx || distPx <= 0 || !speedMph || speedMph <= 0) return 0;
+  const miles = distPx / PX_PER_MILE;
+  const hours = miles / speedMph;
+  return hours * 3600;
+}
+
+// ── TURNAROUND-AWARE ARRIVAL TIME ─────────────────────────────
+// A line's stations sit along one physical path (the "both directions"
+// path drawn in the editor). A vehicle heading toward one end will, on
+// reaching that end, turn around and head back the other way.
+//
+// This figures out, for a given vehicle and a target station, whether
+// the station is still ahead of the vehicle (simple case) or already
+// behind it (the vehicle has to finish the line, turn around, and come
+// back) — and returns the correct total ETA in minutes either way.
+//
+// Returns null if the vehicle isn't usably positioned or the station
+// isn't served by this vehicle's line.
+function computeTurnaroundEtaMinutes(vehicle, targetStationId, allSegments, allStations) {
+  if (!vehicle || vehicle.next_station_id == null) return null;
+
+  // Use the line's single two-way path if it exists (the normal case);
+  // otherwise fall back to whatever segments exist for this line.
+  let segs = allSegments.filter(s => s.line_id === vehicle.line_id && s.direction === 'both');
+  if (!segs.length) segs = allSegments.filter(s => s.line_id === vehicle.line_id);
+  if (!segs.length) return null;
+  segs = segs.slice().sort((a, b) => a.seq_order - b.seq_order);
+
+  // Full station order along the path, from one terminal to the other
+  const orderedIds = [segs[0].from_station_id, ...segs.map(s => s.to_station_id)];
+  const targetIdx = orderedIds.indexOf(targetStationId);
+  const nextIdx = orderedIds.indexOf(vehicle.next_station_id);
+  if (targetIdx === -1 || nextIdx === -1) return null;
+
+  // Which way is the vehicle heading? Compare its set headsign to the name
+  // of the first terminal station — if it matches, it's heading "backward"
+  // (toward the start); otherwise assume it's heading "forward" (the
+  // common case, and the safe default when no headsign is set).
+  const firstStation = allStations.find(s => s.id === orderedIds[0]);
+  let forward = true;
+  if (vehicle.headsign && firstStation && vehicle.headsign === firstStation.name) forward = false;
+
+  // Time left to finish the segment it's currently on. A parked vehicle
+  // (speed 0) contributes 0 here — treated as "about to depart" rather
+  // than stuck forever, so parked vehicles still produce useful ETAs.
+  let secs = 0;
+  if (vehicle.next_x != null) {
+    const distPx = Math.hypot(vehicle.next_x - vehicle.x, vehicle.next_y - vehicle.y);
+    secs = etaSecondsFromSpeed(distPx, vehicle.speed_kmh);
+  }
+
+  if (forward) {
+    if (targetIdx >= nextIdx) {
+      // Station is still ahead — straightforward sum of remaining hops
+      for (let i = nextIdx; i < targetIdx; i++) secs += segs[i].travel_seconds;
+    } else {
+      // Station is behind — finish the line to the far terminal, turn
+      // around, then travel back down to the station
+      for (let i = nextIdx; i < segs.length; i++) secs += segs[i].travel_seconds;
+      for (let i = segs.length - 1; i >= targetIdx; i--) secs += segs[i].travel_seconds;
+    }
+  } else {
+    if (targetIdx <= nextIdx) {
+      for (let i = nextIdx; i > targetIdx; i--) secs += segs[i-1].travel_seconds;
+    } else {
+      for (let i = nextIdx; i > 0; i--) secs += segs[i-1].travel_seconds;
+      for (let i = 0; i < targetIdx; i++) secs += segs[i].travel_seconds;
+    }
+  }
+
+  return Math.max(1, Math.round(secs / 60));
+}
+
 // Walking time in minutes for a pixel distance, at an assumed 3mph walking pace.
 function walkMinutesFromPx(distPx) {
   return etaMinutesFromSpeed(distPx, 3) || 1;
