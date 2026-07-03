@@ -828,20 +828,41 @@ function renderDepartureChips(line, boardStation) {
   const freqMin = m ? parseInt(m[1]) : 15;
 
   const targetH = line._headsign;  // set by showRouteOverview
-  const liveVehicle = allVehicles.find(v =>
-    v.line_id === line.id && v.next_x != null &&
+
+  // Check EVERY live vehicle on this line heading the right direction —
+  // not just the first match. A line can have several vehicles running
+  // at once, and each one gives a real "live" time instead of a guess.
+  const candidates = allVehicles.filter(v =>
+    v.line_id === line.id &&
     (!targetH || !v.headsign || v.headsign === targetH)
   );
-  const liveEta = liveVehicle && boardStation
-    ? computeTurnaroundEtaMinutes(liveVehicle, boardStation.id, allSegments, allStations)
-    : null;
+
+  let liveTimes = boardStation
+    ? candidates
+        .map(v => computeTurnaroundEtaMinutes(v, boardStation.id, allSegments, allStations))
+        .filter(eta => eta != null)
+        .sort((a,b) => a - b)
+    : [];
+
+  // Collapse two vehicles that land on (or within a minute of) the same
+  // time so the chips don't show duplicates
+  const dedupedLive = [];
+  liveTimes.forEach(eta => {
+    if (!dedupedLive.length || eta - dedupedLive[dedupedLive.length-1] >= 1) dedupedLive.push(eta);
+  });
 
   const departures = [];
-  if (liveEta != null) {
-    departures.push({ mins: liveEta, isLive: true });
-    departures.push({ mins: liveEta + freqMin, isLive: false });
-    departures.push({ mins: liveEta + freqMin*2, isLive: false });
+  if (dedupedLive.length) {
+    dedupedLive.slice(0, 3).forEach(mins => departures.push({ mins, isLive: true }));
+    // Fewer than 3 live vehicles — fill remaining slots by continuing on
+    // from the last real time using the line's frequency
+    let last = departures[departures.length-1].mins;
+    while (departures.length < 3) {
+      last += freqMin;
+      departures.push({ mins: last, isLive: false });
+    }
   } else {
+    // No live vehicles at all — fall back to frequency-only estimate
     departures.push({ mins: Math.floor(freqMin/2), isLive: false });
     departures.push({ mins: freqMin, isLive: false });
     departures.push({ mins: freqMin*2, isLive: false });
