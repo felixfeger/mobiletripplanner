@@ -187,6 +187,25 @@ function etaSecondsFromSpeed(distPx, speedMph) {
 }
 
 // ── TURNAROUND-AWARE ARRIVAL TIME ─────────────────────────────
+// Returns a line's full station order along its physical path, from one
+// terminal to the other — plus the two terminal station objects. Shared by
+// computeTurnaroundEtaMinutes and anything that needs to know "which two
+// directions does this line run" (e.g. building a per-direction arrivals
+// view). Returns null if the line has no drawn segments.
+function getLineOrderedStations(lineId, allSegments, allStations) {
+  let segs = allSegments.filter(s => s.line_id === lineId && s.direction === 'both');
+  if (!segs.length) segs = allSegments.filter(s => s.line_id === lineId);
+  if (!segs.length) return null;
+  segs = segs.slice().sort((a, b) => a.seq_order - b.seq_order);
+
+  const orderedIds = [segs[0].from_station_id, ...segs.map(s => s.to_station_id)];
+  const orderedStations = orderedIds.map(id => allStations.find(s => s.id === id)).filter(Boolean);
+  const firstStation = orderedStations[0] || null;
+  const lastStation = orderedStations[orderedStations.length - 1] || null;
+
+  return { segs, orderedIds, orderedStations, firstStation, lastStation };
+}
+
 // A line's stations sit along one physical path (the "both directions"
 // path drawn in the editor). A vehicle heading toward one end will, on
 // reaching that end, turn around and head back the other way.
@@ -201,15 +220,10 @@ function etaSecondsFromSpeed(distPx, speedMph) {
 function computeTurnaroundEtaMinutes(vehicle, targetStationId, allSegments, allStations) {
   if (!vehicle || vehicle.next_station_id == null) return null;
 
-  // Use the line's single two-way path if it exists (the normal case);
-  // otherwise fall back to whatever segments exist for this line.
-  let segs = allSegments.filter(s => s.line_id === vehicle.line_id && s.direction === 'both');
-  if (!segs.length) segs = allSegments.filter(s => s.line_id === vehicle.line_id);
-  if (!segs.length) return null;
-  segs = segs.slice().sort((a, b) => a.seq_order - b.seq_order);
+  const line = getLineOrderedStations(vehicle.line_id, allSegments, allStations);
+  if (!line) return null;
+  const { segs, orderedIds, firstStation } = line;
 
-  // Full station order along the path, from one terminal to the other
-  const orderedIds = [segs[0].from_station_id, ...segs.map(s => s.to_station_id)];
   const targetIdx = orderedIds.indexOf(targetStationId);
   const nextIdx = orderedIds.indexOf(vehicle.next_station_id);
   if (targetIdx === -1 || nextIdx === -1) return null;
@@ -218,7 +232,6 @@ function computeTurnaroundEtaMinutes(vehicle, targetStationId, allSegments, allS
   // of the first terminal station — if it matches, it's heading "backward"
   // (toward the start); otherwise assume it's heading "forward" (the
   // common case, and the safe default when no headsign is set).
-  const firstStation = allStations.find(s => s.id === orderedIds[0]);
   let forward = true;
   if (vehicle.headsign && firstStation && vehicle.headsign === firstStation.name) forward = false;
 
