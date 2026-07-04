@@ -47,7 +47,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .nav-logo-btn:hover { opacity: .7; }
 .nav-logo-btn img { width: 38px; height: 38px; object-fit: contain; border-radius: 50%; }
-.nav-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.025em; color: var(--black); white-space: nowrap; }
+.nav-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.025em; color: var(--black); white-space: nowrap; text-decoration: none; }
 .nav-title span { color: var(--blue); }
 .nav-links { display: flex; gap: .2rem; margin-left: auto; }
 .nav-links a {
@@ -201,20 +201,54 @@ button { cursor: pointer; font-family: inherit; }
 .vpopup-arrival-name { font-size: .9rem; font-weight: 700; flex: 1; }
 .vpopup-arrival-eta { font-size: .9rem; font-weight: 800; color: var(--blue); flex-shrink: 0; }
 .vpopup-arrival-eta.live { color: var(--green); }
+
+/* Swipeable per-direction arrival pages — one page per (line, direction).
+   Native scroll-snap gives the swipe gesture for free, no JS drag code
+   needed; a small script just keeps the dot indicators in sync. */
+.direction-tabs { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem .25rem; }
+.direction-tabs-label { font-size: .7rem; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; }
+.direction-dots { display: flex; gap: 5px; }
+.direction-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: .15s; }
+.direction-dot.active { background: var(--blue); width: 16px; border-radius: 3px; }
+.direction-swiper {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.direction-swiper::-webkit-scrollbar { display: none; }
+.direction-page { flex: 0 0 100%; scroll-snap-align: start; min-width: 100%; }
+.direction-page-head {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .1rem 1rem .5rem;
+}
+.direction-page-headsign { font-size: .85rem; font-weight: 800; color: var(--black); }
+.direction-swipe-hint { font-size: .68rem; color: var(--gray); padding: 0 1rem .5rem; }
+
 .vpopup-action-row { padding: 0 1rem 1.25rem; }
 .vpopup-action-row button { width: 100%; padding: .8rem; border-radius: var(--r-xs); background: var(--black); color: white; font-size: .95rem; font-weight: 700; border: none; font-family: inherit; }
 
 /* ── PLANNER ── */
 .planner-wrap { margin-top: var(--nav-h); display: flex; flex-direction: column; height: calc(100vh - var(--nav-h)); overflow: hidden; }
-.planner-top { background: var(--black); padding: .85rem 1rem 1rem; position: relative; flex-shrink: 0; }
-.planner-row { display: flex; align-items: center; gap: .65rem; background: rgba(255,255,255,.1); border-radius: var(--r-xs); padding: .65rem .9rem; margin-bottom: .5rem; cursor: pointer; transition: background .12s; }
-.planner-row:hover { background: rgba(255,255,255,.15); }
+.planner-top { background: var(--canvas-bg); padding: .85rem 1rem 1rem; position: relative; flex-shrink: 0; border-bottom: 1.5px solid var(--border); }
+.planner-row {
+  display: flex; align-items: center; gap: .65rem;
+  background: var(--white); border-radius: var(--r-xs);
+  box-shadow: var(--shadow), 0 0 0 1.5px var(--border);
+  padding: .7rem .9rem; margin-bottom: .5rem; cursor: pointer;
+  transition: box-shadow .12s;
+}
+.planner-row:hover { box-shadow: var(--shadow), 0 0 0 2px var(--blue); }
 .planner-row:last-of-type { margin-bottom: 0; }
 .planner-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 /* Text inside planner rows */
-.ptxt { flex: 1; font-size: .95rem; color: white; font-weight: 500; }
-.ptxt.placeholder { color: rgba(255,255,255,.4); }
-.swap-btn { position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.12); border: none; color: white; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.ptxt { flex: 1; font-size: .95rem; color: var(--black); font-weight: 500; }
+.ptxt.placeholder { color: var(--gray); }
+.swap-btn {
+  position: absolute; right: 1.35rem; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--white); box-shadow: var(--shadow), 0 0 0 1.5px var(--border);
+  border: none; color: var(--black); font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center; z-index: 1;
+}
 .mini-canvas-wrap { height: 180px; flex-shrink: 0; position: relative; overflow: hidden; background: var(--canvas-bg); touch-action: none; }
 #miniCanvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .results-panel { flex: 1; overflow-y: auto; background: var(--white); }
