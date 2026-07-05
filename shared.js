@@ -594,3 +594,76 @@ function drawVehicleMarker(ctx, x, y, lineType, radius) {
 
   ctx.restore();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// MANUAL SWIPER — drag/swipe between full-width "pages" using raw
+// pointer events, rather than relying on the browser's native
+// touch-scroll + scroll-snap behavior.
+//
+// Native touch-scroll can silently fail in some mobile browser/webview
+// combinations (transformed ancestors, touch-action inheritance quirks,
+// older WebKit versions, etc.) even when the CSS and DOM are otherwise
+// correct. This sidesteps all of that by reading the drag gesture
+// directly and moving the page ourselves — it only depends on Pointer
+// Events, which are uniformly supported across touch, mouse, and pen.
+//
+// Usage: initSwiper(document.getElementById('mySwiper'), (pageIndex) => {...})
+// The container should hold direct children that are each one full page
+// (matching CSS: display:flex; overflow-x:hidden; children flex:0 0 100%).
+// ═══════════════════════════════════════════════════════════════
+function initSwiper(container, onPageChange) {
+  if (!container || container._swiperInit) return; // avoid double-binding
+  container._swiperInit = true;
+
+  let startX = 0, startY = 0, startScroll = 0;
+  let dragging = false, isHorizontal = null;
+
+  const pageCount = () => container.children.length;
+  const pageWidth = () => container.clientWidth;
+  const currentIndex = () => Math.round(container.scrollLeft / Math.max(1, pageWidth()));
+
+  function goToIndex(idx, smooth) {
+    idx = Math.max(0, Math.min(pageCount() - 1, idx));
+    container.scrollTo({ left: idx * pageWidth(), behavior: smooth ? 'smooth' : 'auto' });
+    if (onPageChange) onPageChange(idx);
+  }
+
+  container.addEventListener('pointerdown', e => {
+    dragging = true; isHorizontal = null;
+    startX = e.clientX; startY = e.clientY;
+    startScroll = container.scrollLeft;
+    try { container.setPointerCapture(e.pointerId); } catch {}
+  });
+
+  container.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (isHorizontal === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      isHorizontal = Math.abs(dx) > Math.abs(dy);
+    }
+    if (isHorizontal) {
+      container.scrollLeft = startScroll - dx;
+    }
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    if (isHorizontal) {
+      // Snap to whichever page is now closest, in the direction dragged
+      goToIndex(currentIndex(), true);
+    }
+    isHorizontal = null;
+  }
+  container.addEventListener('pointerup', endDrag);
+  container.addEventListener('pointercancel', endDrag);
+  container.addEventListener('pointerleave', () => { if (dragging) endDrag(); });
+
+  // Let the browser's own vertical scrolling still work (e.g. the popup
+  // scrolling behind this), but stop it from also trying to handle
+  // horizontal panning itself so it doesn't fight with the code above.
+  container.style.touchAction = 'pan-y';
+
+  goToIndex(0, false);
+}
