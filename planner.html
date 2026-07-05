@@ -53,13 +53,17 @@ body { overflow: hidden; }
 }
 
 /* ── Screen 2: Route overview ── */
+/* Slides via `left` rather than `transform: translateX()` — this panel
+   contains the horizontally-scrolling departure chips, and a transformed
+   ancestor is a known cause of broken nested touch-scrolling on iOS
+   Safari, so it must stay transform-free. */
 .route-overview-panel {
-  position: fixed; inset: 0; margin-top: var(--nav-h);
+  position: fixed; top: var(--nav-h); bottom: 0; left: 100%; width: 100%;
   background: var(--white); z-index: 1600;
-  transform: translateX(100%); transition: .3s cubic-bezier(.4,0,.2,1);
+  transition: left .3s cubic-bezier(.4,0,.2,1);
   display: flex; flex-direction: column; overflow: hidden;
 }
-.route-overview-panel.open { transform: translateX(0); }
+.route-overview-panel.open { left: 0; }
 .rop-header { color: white; padding: 1.1rem 1.1rem .85rem; position: relative; flex-shrink: 0; }
 .rop-back {
   width: 34px; height: 34px; border-radius: 50%;
