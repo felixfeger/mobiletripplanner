@@ -215,11 +215,12 @@ button { cursor: pointer; font-family: inherit; }
 .direction-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: .15s; }
 .direction-dot.active { background: var(--blue); width: 16px; border-radius: 3px; }
 .direction-swiper {
-  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  display: flex; overflow-x: hidden;
+  /* touch-action is also set inline by initSwiper(), kept here as a
+     fallback for the instant before JS runs */
+  touch-action: pan-y;
 }
-.direction-swiper::-webkit-scrollbar { display: none; }
-.direction-page { flex: 0 0 100%; scroll-snap-align: start; min-width: 100%; }
+.direction-page { flex: 0 0 100%; min-width: 100%; }
 .direction-page-head {
   display: flex; align-items: center; gap: .5rem;
   padding: .1rem 1rem .5rem;
