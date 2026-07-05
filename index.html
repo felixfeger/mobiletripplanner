@@ -460,17 +460,17 @@ async function showStationPopup(s) {
     ${arrivalsSectionHtml}
     ${advisoryHtml}`;
 
-  // Keep the dot indicators in sync as the person swipes between direction
-  // pages — native scroll-snap handles the actual gesture, this just
-  // watches scroll position and toggles which dot is "active".
+  // Manual swipe handler — reads the drag gesture directly rather than
+  // depending on the browser's native touch-scroll, so this works even
+  // in mobile browser/webview combinations where native touch-scroll
+  // silently fails to register on nested elements.
   const swiper = document.getElementById('directionSwiper');
   if (swiper) {
-    swiper.addEventListener('scroll', () => {
-      const idx = Math.round(swiper.scrollLeft / swiper.clientWidth);
+    initSwiper(swiper, (idx) => {
       document.querySelectorAll('.direction-dot').forEach((dot,i) => {
         dot.classList.toggle('active', i === idx);
       });
-    }, { passive: true });
+    });
   }
 
   // Update the sheet arrivals to show this stop's lines
