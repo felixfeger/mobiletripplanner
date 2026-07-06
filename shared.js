@@ -628,37 +628,67 @@ function initSwiper(container, onPageChange) {
     if (onPageChange) onPageChange(idx);
   }
 
-  container.addEventListener('pointerdown', e => {
+  function startDrag(x, y) {
     dragging = true; isHorizontal = null;
-    startX = e.clientX; startY = e.clientY;
+    startX = x; startY = y;
     startScroll = container.scrollLeft;
-    try { container.setPointerCapture(e.pointerId); } catch {}
-  });
+  }
 
-  container.addEventListener('pointermove', e => {
+  function moveDrag(x, y, evt) {
     if (!dragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    const dx = x - startX;
+    const dy = y - startY;
     if (isHorizontal === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
       isHorizontal = Math.abs(dx) > Math.abs(dy);
     }
     if (isHorizontal) {
       container.scrollLeft = startScroll - dx;
+      // Once we know this is a horizontal swipe, stop the page itself
+      // from also trying to scroll/bounce vertically while dragging —
+      // without this, some mobile browsers fight the gesture partway
+      // through and cut it short.
+      if (evt && evt.cancelable) evt.preventDefault();
     }
-  });
+  }
 
+  // Ending the drag only happens on an explicit release/cancel — NOT on
+  // the pointer/finger appearing to "leave" the element mid-gesture,
+  // which fires very easily on real touchscreens from tiny vertical
+  // finger drift and was cutting swipes short before they could travel
+  // far enough to change pages.
   function endDrag() {
     if (!dragging) return;
     dragging = false;
     if (isHorizontal) {
-      // Snap to whichever page is now closest, in the direction dragged
       goToIndex(currentIndex(), true);
     }
     isHorizontal = null;
   }
-  container.addEventListener('pointerup', endDrag);
-  container.addEventListener('pointercancel', endDrag);
-  container.addEventListener('pointerleave', () => { if (dragging) endDrag(); });
+
+  if (window.PointerEvent) {
+    // Modern browsers: Pointer Events cover mouse, pen, and touch through
+    // one consistent API.
+    container.addEventListener('pointerdown', e => {
+      startDrag(e.clientX, e.clientY);
+      try { container.setPointerCapture(e.pointerId); } catch {}
+    });
+    container.addEventListener('pointermove', e => moveDrag(e.clientX, e.clientY, e));
+    container.addEventListener('pointerup', endDrag);
+    container.addEventListener('pointercancel', endDrag);
+  } else {
+    // Fallback for older/unusual mobile browsers without Pointer Event
+    // support — same gesture, handled through native touch events instead.
+    container.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      startDrag(t.clientX, t.clientY);
+    }, { passive: true });
+    container.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      moveDrag(t.clientX, t.clientY, e);
+    }, { passive: false });
+    container.addEventListener('touchend', endDrag);
+    container.addEventListener('touchcancel', endDrag);
+  }
 
   // Let the browser's own vertical scrolling still work (e.g. the popup
   // scrolling behind this), but stop it from also trying to handle
