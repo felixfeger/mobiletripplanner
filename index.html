@@ -406,7 +406,7 @@ async function showStationPopup(s) {
       <div class="direction-tabs"><span class="direction-tabs-label">Next arrivals</span></div>
       <div style="padding:0 1rem 1rem;font-size:.82rem;color:var(--gray)">No lines assigned to this station yet</div>`;
   } else {
-    const dots = pages.map((_,i) => `<span class="direction-dot${i===0?' active':''}" data-dot="${i}"></span>`).join('');
+    const dots = pages.map((_,i) => `<button class="direction-dot${i===0?' active':''}" data-dot="${i}" aria-label="Direction ${i+1}"></button>`).join('');
     const pagesHtml = pages.map(p => {
       const rows = p.times.length
         ? p.times.map(mins => `
@@ -429,9 +429,13 @@ async function showStationPopup(s) {
     arrivalsSectionHtml = `
       <div class="direction-tabs">
         <span class="direction-tabs-label">Next arrivals</span>
-        ${pages.length > 1 ? `<div class="direction-dots">${dots}</div>` : ''}
+        ${pages.length > 1 ? `
+          <div class="direction-nav">
+            <button class="direction-arrow" id="dirPrevBtn" aria-label="Previous direction">‹</button>
+            <div class="direction-dots">${dots}</div>
+            <button class="direction-arrow" id="dirNextBtn" aria-label="Next direction">›</button>
+          </div>` : ''}
       </div>
-      ${pages.length > 1 ? `<div class="direction-swipe-hint">Swipe for the other direction →</div>` : ''}
       <div class="direction-swiper" id="directionSwiper">${pagesHtml}</div>`;
   }
 
@@ -460,16 +464,22 @@ async function showStationPopup(s) {
     ${arrivalsSectionHtml}
     ${advisoryHtml}`;
 
-  // Manual swipe handler — reads the drag gesture directly rather than
-  // depending on the browser's native touch-scroll, so this works even
-  // in mobile browser/webview combinations where native touch-scroll
-  // silently fails to register on nested elements.
+  // Manual swipe handler for touch/mouse drag, PLUS explicit arrow
+  // buttons and tappable dots — the buttons/dots are guaranteed to work
+  // on every device and on desktop, so switching direction never
+  // depends solely on a gesture being recognized correctly.
   const swiper = document.getElementById('directionSwiper');
   if (swiper) {
-    initSwiper(swiper, (idx) => {
+    const controls = initSwiper(swiper, (idx) => {
       document.querySelectorAll('.direction-dot').forEach((dot,i) => {
         dot.classList.toggle('active', i === idx);
       });
+    });
+
+    document.getElementById('dirPrevBtn')?.addEventListener('click', () => controls.prev());
+    document.getElementById('dirNextBtn')?.addEventListener('click', () => controls.next());
+    document.querySelectorAll('.direction-dot').forEach((dot, i) => {
+      dot.addEventListener('click', () => controls.goTo(i));
     });
   }
 
