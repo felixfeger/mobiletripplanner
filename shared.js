@@ -695,5 +695,29 @@ function initSwiper(container, onPageChange) {
   // horizontal panning itself so it doesn't fight with the code above.
   container.style.touchAction = 'pan-y';
 
+  // Desktop: trackpad two-finger horizontal swipe / shift+scroll-wheel.
+  // deltaX is how far a trackpad or wheel moved horizontally in one tick.
+  let wheelAccum = 0, wheelTimer = null;
+  container.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; // vertical scroll, ignore
+    e.preventDefault();
+    wheelAccum += e.deltaX;
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      goToIndex(currentIndex() + (wheelAccum > 0 ? 1 : -1), true);
+      wheelAccum = 0;
+    }, 80);
+  }, { passive: false });
+
   goToIndex(0, false);
+
+  // Exposed so explicit UI controls (arrow buttons, tappable dots) can
+  // drive the swiper directly — these are guaranteed to work everywhere
+  // regardless of any touch/pointer gesture quirks on a given device.
+  return {
+    next: () => goToIndex(currentIndex() + 1, true),
+    prev: () => goToIndex(currentIndex() - 1, true),
+    goTo: (idx) => goToIndex(idx, true),
+    current: () => currentIndex(),
+  };
 }
