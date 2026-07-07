@@ -406,9 +406,16 @@ async function showStationPopup(s) {
       <div class="direction-tabs"><span class="direction-tabs-label">Next arrivals</span></div>
       <div style="padding:0 1rem 1rem;font-size:.82rem;color:var(--gray)">No lines assigned to this station yet</div>`;
   } else {
-    const dots = pages.map((_,i) => `<button class="direction-dot${i===0?' active':''}" data-dot="${i}" aria-label="Direction ${i+1}"></button>`).join('');
-    const pagesHtml = pages.map(p => {
-      const rows = p.times.length
+    const tabButtons = pages.map((p,i) => `
+      <button class="direction-tab${i===0?' active':''}" data-idx="${i}">
+        <span class="direction-tab-chip" style="background:${p.line.color};color:${p.line.text_color}">${p.line.id}</span>
+        → ${escapeHtml(p.headsign)}
+      </button>`).join('');
+
+    // Store each page's row HTML so switching tabs is just a plain
+    // innerHTML swap — no scrolling or gestures involved at all.
+    window._directionPagesHtml = pages.map(p => {
+      return p.times.length
         ? p.times.map(mins => `
             <div class="vpopup-arrival-row">
               <span class="line-chip" style="background:${p.line.color};color:${p.line.text_color};font-size:.75rem;padding:.25rem .6rem">${p.line.id}</span>
@@ -416,27 +423,12 @@ async function showStationPopup(s) {
               <div class="vpopup-arrival-eta live">${mins} min</div>
             </div>`).join('')
         : `<div style="font-size:.82rem;color:var(--gray);padding:.5rem 0 1rem">No live vehicles this direction</div>`;
-      return `
-        <div class="direction-page">
-          <div class="direction-page-head">
-            <span class="line-chip" style="background:${p.line.color};color:${p.line.text_color}">${p.line.id}</span>
-            <span class="direction-page-headsign">→ ${escapeHtml(p.headsign)}</span>
-          </div>
-          <div class="vpopup-arrivals" style="padding-top:0">${rows}</div>
-        </div>`;
-    }).join('');
+    });
 
     arrivalsSectionHtml = `
-      <div class="direction-tabs">
-        <span class="direction-tabs-label">Next arrivals</span>
-        ${pages.length > 1 ? `
-          <div class="direction-nav">
-            <button class="direction-arrow" id="dirPrevBtn" aria-label="Previous direction">‹</button>
-            <div class="direction-dots">${dots}</div>
-            <button class="direction-arrow" id="dirNextBtn" aria-label="Next direction">›</button>
-          </div>` : ''}
-      </div>
-      <div class="direction-swiper" id="directionSwiper">${pagesHtml}</div>`;
+      <div class="direction-tabs"><span class="direction-tabs-label">Next arrivals</span></div>
+      <div class="direction-tabbar" id="directionTabbar">${tabButtons}</div>
+      <div class="vpopup-arrivals" id="directionContent" style="padding-top:.25rem">${window._directionPagesHtml[0]}</div>`;
   }
 
   // Fetch advisories for this station and its lines asynchronously
@@ -464,24 +456,17 @@ async function showStationPopup(s) {
     ${arrivalsSectionHtml}
     ${advisoryHtml}`;
 
-  // Manual swipe handler for touch/mouse drag, PLUS explicit arrow
-  // buttons and tappable dots — the buttons/dots are guaranteed to work
-  // on every device and on desktop, so switching direction never
-  // depends solely on a gesture being recognized correctly.
-  const swiper = document.getElementById('directionSwiper');
-  if (swiper) {
-    const controls = initSwiper(swiper, (idx) => {
-      document.querySelectorAll('.direction-dot').forEach((dot,i) => {
-        dot.classList.toggle('active', i === idx);
-      });
+  // Switching direction is a plain tab click — swap which page's rows
+  // are shown and mark the clicked tab active. No scrolling, dragging,
+  // or gesture recognition involved at all.
+  document.querySelectorAll('.direction-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const idx = parseInt(tab.dataset.idx, 10);
+      document.getElementById('directionContent').innerHTML = window._directionPagesHtml[idx];
+      document.querySelectorAll('.direction-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
     });
-
-    document.getElementById('dirPrevBtn')?.addEventListener('click', () => controls.prev());
-    document.getElementById('dirNextBtn')?.addEventListener('click', () => controls.next());
-    document.querySelectorAll('.direction-dot').forEach((dot, i) => {
-      dot.addEventListener('click', () => controls.goTo(i));
-    });
-  }
+  });
 
   // Update the sheet arrivals to show this stop's lines
   renderArrivalsList(lineIds, s);
