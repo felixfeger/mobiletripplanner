@@ -259,7 +259,19 @@ body,html{height:100%;overflow:hidden;}
         <option value="">All stations</option>
       </select>
       <input class="ed-input" id="advSource" placeholder="Source (e.g. City Metro Transit)" style="margin-bottom:.4rem">
-      <input class="ed-input" id="advExpires" type="datetime-local" placeholder="Expires (optional)" style="margin-bottom:.4rem">
+      <div class="ed-lbl">Expires</div>
+      <select class="ed-input" id="advExpiresPreset" onchange="onExpiresPresetChange()" style="margin-bottom:.4rem">
+        <option value="">No expiry (stays until deleted)</option>
+        <option value="3600">In 1 hour</option>
+        <option value="21600">In 6 hours</option>
+        <option value="86400">In 1 day</option>
+        <option value="259200">In 3 days</option>
+        <option value="604800">In 1 week</option>
+        <option value="2592000">In 30 days</option>
+        <option value="custom">Pick a date &amp; time…</option>
+      </select>
+      <input class="ed-input hidden" id="advExpires" type="datetime-local" style="margin-bottom:.4rem">
+      <div id="advExpiresHint" style="font-size:.7rem;color:var(--gray);margin-bottom:.4rem">Won't expire — remove it manually when done.</div>
       <button class="ed-action" onclick="saveAdvisory()">Post advisory</button>
     </div>
 
@@ -740,7 +752,7 @@ function openPanel(name) {
   if (name==='stations') refreshStationList();
   if (name==='vehicles') refreshVehicleList();
   if (name==='streets') refreshStreetList();
-  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); }
+  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); onExpiresPresetChange(); }
 }
 function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
@@ -1091,20 +1103,60 @@ function populateAdvSelects() {
     allStations.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 }
 
+// Show/hide the custom date field and explain what the choice means.
+function onExpiresPresetChange() {
+  const preset = document.getElementById('advExpiresPreset').value;
+  const custom = document.getElementById('advExpires');
+  const hint   = document.getElementById('advExpiresHint');
+  custom.classList.toggle('hidden', preset !== 'custom');
+  if (preset === '') {
+    hint.textContent = "Won't expire — remove it manually when done.";
+  } else if (preset === 'custom') {
+    hint.textContent = 'Pick the date and time it should disappear (your local time).';
+  } else {
+    const when = new Date(Date.now() + parseInt(preset,10)*1000);
+    hint.textContent = `Disappears ${when.toLocaleString()}`;
+  }
+}
+
+// Returns the expiry as an absolute UTC timestamp string the DB can compare
+// directly ('YYYY-MM-DD HH:MM:SS'), or null for no expiry. Doing this in the
+// browser means the server never has to guess at timezones — the value it
+// receives is already unambiguous.
+function computeExpiresAtUtc() {
+  const preset = document.getElementById('advExpiresPreset').value;
+  if (!preset) return null;
+  let when;
+  if (preset === 'custom') {
+    const raw = document.getElementById('advExpires').value;
+    if (!raw) return null;
+    when = new Date(raw); // parsed as local time by the browser
+    if (isNaN(when)) return null;
+  } else {
+    when = new Date(Date.now() + parseInt(preset,10)*1000);
+  }
+  return when.toISOString().slice(0,19).replace('T',' '); // UTC
+}
+
 async function saveAdvisory() {
   const title = document.getElementById('advTitle').value.trim();
   const body  = document.getElementById('advBody').value.trim();
   if (!title || !body) { toast('Title and body required'); return; }
+
+  const expiresAt = computeExpiresAtUtc();
+  // Guard against posting something already dead on arrival
+  if (expiresAt && new Date(expiresAt + 'Z') <= new Date()) {
+    toast('That expiry time is already in the past'); return;
+  }
+
   const payload = {
     title, body,
     severity: document.getElementById('advSeverity').value,
     line_id:  document.getElementById('advLine').value || null,
     station_id: document.getElementById('advStation').value ? parseInt(document.getElementById('advStation').value) : null,
     source:   document.getElementById('advSource').value.trim(),
-    expires_at: document.getElementById('advExpires').value || null,
-    // The datetime-local input is local wall-clock time; send the offset so
-    // the worker can store it as UTC and expiry comparisons line up.
-    tz_offset_minutes: new Date().getTimezoneOffset()
+    // Already absolute UTC — the worker stores it verbatim.
+    expires_at_utc: expiresAt
   };
   try {
     await adminFetch('/api/admin/advisories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
@@ -1113,6 +1165,8 @@ async function saveAdvisory() {
     document.getElementById('advBody').value  = '';
     document.getElementById('advSource').value = '';
     document.getElementById('advExpires').value = '';
+    document.getElementById('advExpiresPreset').value = '';
+    onExpiresPresetChange();
     refreshAdvisoryList();
   } catch(e) { toast(e.message); }
 }
