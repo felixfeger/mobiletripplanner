@@ -25,7 +25,6 @@ body,html{height:100%;overflow:hidden;}
   <nav class="nav-links">
     <a href="index.html">Map</a>
     <a href="planner.html">Plan Trip</a>
-    <a href="editor.html">Editor</a>
   </nav>
   <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -34,7 +33,6 @@ body,html{height:100%;overflow:hidden;}
 <div class="nav-drawer" id="navDrawer">
   <a href="index.html">Map</a>
   <a href="planner.html">Plan Trip</a>
-  <a href="editor.html">Editor</a>
 </div>
 
 <div class="login-overlay" id="loginOverlay">
@@ -259,19 +257,18 @@ body,html{height:100%;overflow:hidden;}
         <option value="">All stations</option>
       </select>
       <input class="ed-input" id="advSource" placeholder="Source (e.g. City Metro Transit)" style="margin-bottom:.4rem">
-      <div class="ed-lbl">Expires</div>
-      <select class="ed-input" id="advExpiresPreset" onchange="onExpiresPresetChange()" style="margin-bottom:.4rem">
-        <option value="">No expiry (stays until deleted)</option>
-        <option value="3600">In 1 hour</option>
-        <option value="21600">In 6 hours</option>
-        <option value="86400">In 1 day</option>
-        <option value="259200">In 3 days</option>
-        <option value="604800">In 1 week</option>
-        <option value="2592000">In 30 days</option>
-        <option value="custom">Pick a date &amp; time…</option>
-      </select>
-      <input class="ed-input hidden" id="advExpires" type="datetime-local" style="margin-bottom:.4rem">
-      <div id="advExpiresHint" style="font-size:.7rem;color:var(--gray);margin-bottom:.4rem">Won't expire — remove it manually when done.</div>
+
+      <div class="ed-lbl">Expires (leave blank for no expiry)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem">
+        <button type="button" class="adv-quick" onclick="setExpiryIn(3600)">+1 hr</button>
+        <button type="button" class="adv-quick" onclick="setExpiryIn(86400)">+1 day</button>
+        <button type="button" class="adv-quick" onclick="setExpiryIn(259200)">+3 days</button>
+        <button type="button" class="adv-quick" onclick="setExpiryIn(604800)">+1 week</button>
+        <button type="button" class="adv-quick" onclick="setExpiryIn(2592000)">+30 days</button>
+        <button type="button" class="adv-quick" onclick="clearExpiry()">Clear</button>
+      </div>
+      <input class="ed-input" id="advExpires" type="datetime-local" onchange="updateExpiryHint()" style="margin-bottom:.3rem">
+      <div id="advExpiresHint" style="font-size:.7rem;color:var(--gray);margin-bottom:.4rem"></div>
       <button class="ed-action" onclick="saveAdvisory()">Post advisory</button>
     </div>
 
@@ -752,7 +749,7 @@ function openPanel(name) {
   if (name==='stations') refreshStationList();
   if (name==='vehicles') refreshVehicleList();
   if (name==='streets') refreshStreetList();
-  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); onExpiresPresetChange(); }
+  if (name==='advisories') { populateAdvSelects(); refreshAdvisoryList(); updateExpiryHint(); }
 }
 function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
@@ -1103,19 +1100,34 @@ function populateAdvSelects() {
     allStations.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 }
 
-// Show/hide the custom date field and explain what the choice means.
-function onExpiresPresetChange() {
-  const preset = document.getElementById('advExpiresPreset').value;
-  const custom = document.getElementById('advExpires');
-  const hint   = document.getElementById('advExpiresHint');
-  custom.classList.toggle('hidden', preset !== 'custom');
-  if (preset === '') {
-    hint.textContent = "Won't expire — remove it manually when done.";
-  } else if (preset === 'custom') {
-    hint.textContent = 'Pick the date and time it should disappear (your local time).';
+// Fill the visible date field with "now + N seconds", formatted as local
+// wall-clock time (which is what a datetime-local input expects).
+function setExpiryIn(seconds) {
+  const when = new Date(Date.now() + seconds*1000);
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('advExpires').value =
+    `${when.getFullYear()}-${pad(when.getMonth()+1)}-${pad(when.getDate())}` +
+    `T${pad(when.getHours())}:${pad(when.getMinutes())}`;
+  updateExpiryHint();
+}
+
+function clearExpiry() {
+  document.getElementById('advExpires').value = '';
+  updateExpiryHint();
+}
+
+function updateExpiryHint() {
+  const raw = document.getElementById('advExpires').value;
+  const hint = document.getElementById('advExpiresHint');
+  if (!raw) { hint.textContent = "No expiry — stays up until you delete it."; hint.style.color = 'var(--gray)'; return; }
+  const when = new Date(raw);
+  if (isNaN(when)) { hint.textContent = ''; return; }
+  if (when <= new Date()) {
+    hint.textContent = '⚠️ That time is in the past — it would expire immediately.';
+    hint.style.color = 'var(--red)';
   } else {
-    const when = new Date(Date.now() + parseInt(preset,10)*1000);
     hint.textContent = `Disappears ${when.toLocaleString()}`;
+    hint.style.color = 'var(--gray)';
   }
 }
 
@@ -1124,17 +1136,10 @@ function onExpiresPresetChange() {
 // browser means the server never has to guess at timezones — the value it
 // receives is already unambiguous.
 function computeExpiresAtUtc() {
-  const preset = document.getElementById('advExpiresPreset').value;
-  if (!preset) return null;
-  let when;
-  if (preset === 'custom') {
-    const raw = document.getElementById('advExpires').value;
-    if (!raw) return null;
-    when = new Date(raw); // parsed as local time by the browser
-    if (isNaN(when)) return null;
-  } else {
-    when = new Date(Date.now() + parseInt(preset,10)*1000);
-  }
+  const raw = document.getElementById('advExpires').value;
+  if (!raw) return null;
+  const when = new Date(raw); // parsed as local time by the browser
+  if (isNaN(when)) return null;
   return when.toISOString().slice(0,19).replace('T',' '); // UTC
 }
 
@@ -1164,9 +1169,7 @@ async function saveAdvisory() {
     document.getElementById('advTitle').value = '';
     document.getElementById('advBody').value  = '';
     document.getElementById('advSource').value = '';
-    document.getElementById('advExpires').value = '';
-    document.getElementById('advExpiresPreset').value = '';
-    onExpiresPresetChange();
+    clearExpiry();
     refreshAdvisoryList();
   } catch(e) { toast(e.message); }
 }
