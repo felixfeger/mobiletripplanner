@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>City Metro Trip-Planner</title>
+<title>City Metro Transit</title>
 <link rel="stylesheet" href="style.css">
 <meta name="theme-color" content="#1D4ED8">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,7 +19,6 @@
   <nav class="nav-links">
     <a href="index.html">Map</a>
     <a href="planner.html">Plan Trip</a>
-    <a href="editor.html">Editor</a>
   </nav>
   <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -28,7 +27,6 @@
 <div class="nav-drawer" id="navDrawer">
   <a href="index.html">Map</a>
   <a href="planner.html">Plan Trip</a>
-  <a href="editor.html">Editor</a>
 </div>
 
 <div class="login-overlay" id="loginOverlay">
@@ -311,6 +309,16 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
 
   const cards = Object.values(byLine);
 
+  // Resolve each card's headsign to a real station id (its line's terminal
+  // in that direction), so tapping the card can hand the planner an actual
+  // destination instead of just a line hint.
+  cards.forEach(c => {
+    const ordered = getLineOrderedStations(c.line.id, allSegments, allStations);
+    if (!ordered) return;
+    if (ordered.lastStation && ordered.lastStation.name === c.headsign) c.destStationId = ordered.lastStation.id;
+    else if (ordered.firstStation && ordered.firstStation.name === c.headsign) c.destStationId = ordered.firstStation.id;
+  });
+
   // Build header: station name if we have one, else a generic label
   let header = '';
   if (station) {
@@ -335,8 +343,18 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
   }
   cards.sort((a,b)=>(a.eta??999)-(b.eta??999));
 
-  el.innerHTML = header + cards.slice(0,10).map(c => `
-    <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?line=${c.line.id}'">
+  // The origin to carry into the planner: whichever station this list is
+  // currently centered on (the tapped station, or the nearest one to a
+  // dropped pin) — falls back to just the line if neither is known.
+  const originId = station?.id ?? nearestStation?.id ?? null;
+
+  el.innerHTML = header + cards.slice(0,10).map(c => {
+    const params = new URLSearchParams();
+    if (originId != null) params.set('from', originId);
+    if (c.destStationId != null) params.set('to', c.destStationId);
+    params.set('line', c.line.id);
+    return `
+    <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?${params.toString()}'">
       <div class="line-badge">${c.line.id}</div>
       <div class="arrival-main">
         <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem;vertical-align:middle">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
@@ -346,7 +364,8 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
         <div class="arrival-num">${c.eta??'—'}</div>
         <div class="arrival-unit">${c.eta!=null?(c.eta===1?'min':'mins'):''}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderNearby() {
@@ -387,8 +406,8 @@ async function showStationPopup(s) {
     // computeTurnaroundEtaMinutes, so a vehicle with no headsign set
     // lands on the forward page by default rather than being dropped.
     [
-      { headsignName: lastStation.name, matches: v => !v.headsign || v.headsign === lastStation.name },
-      { headsignName: firstStation.name, matches: v => v.headsign === firstStation.name },
+      { headsignName: lastStation.name, destId: lastStation.id, matches: v => !v.headsign || v.headsign === lastStation.name },
+      { headsignName: firstStation.name, destId: firstStation.id, matches: v => v.headsign === firstStation.name },
     ].forEach(dir => {
       const times = allVehicles
         .filter(v => v.line_id === lid && dir.matches(v))
@@ -396,7 +415,7 @@ async function showStationPopup(s) {
         .filter(eta => eta != null)
         .sort((a,b) => a-b)
         .slice(0, 4);
-      pages.push({ line, headsign: dir.headsignName, times });
+      pages.push({ line, headsign: dir.headsignName, destStationId: dir.destId, times });
     });
   });
 
@@ -415,9 +434,14 @@ async function showStationPopup(s) {
     // Store each page's row HTML so switching tabs is just a plain
     // innerHTML swap — no scrolling or gestures involved at all.
     window._directionPagesHtml = pages.map(p => {
+      const params = new URLSearchParams();
+      params.set('from', s.id);
+      if (p.destStationId != null) params.set('to', p.destStationId);
+      params.set('line', p.line.id);
+      const href = `planner.html?${params.toString()}`;
       return p.times.length
         ? p.times.map(mins => `
-            <div class="vpopup-arrival-row">
+            <div class="vpopup-arrival-row" style="cursor:pointer" onclick="window.location.href='${href}'">
               <span class="line-chip" style="background:${p.line.color};color:${p.line.text_color};font-size:.75rem;padding:.25rem .6rem">${p.line.id}</span>
               <div class="vpopup-arrival-name">→ ${escapeHtml(p.headsign)}</div>
               <div class="vpopup-arrival-eta live">${mins} min</div>
@@ -514,10 +538,7 @@ function closeVpopup() { document.getElementById('vpopup').classList.remove('ope
 
 function planFromPopup() {
   const s = _popupStationId ? allStations.find(x=>x.id===_popupStationId) : null;
-  if (s) {
-    sessionStorage.setItem('plannerFrom', JSON.stringify({id:s.id,name:s.name,x:s.x,y:s.y}));
-  }
-  window.location.href='planner.html';
+  window.location.href = s ? `planner.html?from=${s.id}` : 'planner.html';
 }
 
 // ── SHEET DRAG ───────────────────────────────────────────
