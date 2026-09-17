@@ -121,6 +121,11 @@ initLoginForms();
 
 let allLines = {}, allStations = [], allSegments = [], allStreets = [], allVehicles = [];
 let stationScreenPos = [];
+// Vehicle markers are hidden on the overview map for now — the plan is for
+// each line to eventually get its own page showing just that line's live
+// vehicles, so the main map stays uncluttered. Flip this back on (or wire
+// it to a per-line page) when that's built.
+const SHOW_VEHICLES_ON_MAP = false;
 let _popupStationId = null;
 let locationPin = null;    // {x,y} world coords of the blue location pin
 let nearestStation = null; // station closest to the pin
@@ -186,14 +191,18 @@ function draw(ctx) {
     stationScreenPos.push({x:s.x,y:s.y,r:(r+5)/engine.scale,data:s});
   });
 
-  // Live vehicles
-  allVehicles.forEach(v => {
-    const sr=17;
-    ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/engine.scale,1/engine.scale);
-    drawVehicleMarker(ctx,0,0,v.line_type,sr);
-    ctx.restore();
-    stationScreenPos.push({x:v.x,y:v.y,r:(sr+6)/engine.scale,data:v,isVehicle:true});
-  });
+  // Live vehicles — hidden on the overview map for now (see
+  // SHOW_VEHICLES_ON_MAP above); each line will get its own page with just
+  // its own vehicles eventually.
+  if (SHOW_VEHICLES_ON_MAP) {
+    allVehicles.forEach(v => {
+      const sr=17;
+      ctx.save(); ctx.translate(v.x,v.y); ctx.scale(1/engine.scale,1/engine.scale);
+      drawVehicleMarker(ctx,0,0,v.line_type,sr);
+      ctx.restore();
+      stationScreenPos.push({x:v.x,y:v.y,r:(sr+6)/engine.scale,data:v,isVehicle:true});
+    });
+  }
 
   // Location pin — blue pulsing dot showing where the user last tapped
   if (locationPin) {
@@ -270,54 +279,70 @@ function fitAll() {
 
 // ── ARRIVALS LIST ───────────────────────────────────────
 // filterLineIds: lines at the chosen station ([] = show all lines)
-// station: the single nearest station — ONE card per line, earliest ETA only
+// station: the reference station (tapped station, or nearest to a dropped
+//   pin) — when known, BOTH directions of each line are shown as separate
+//   cards (not just whichever has the soonest arrival), so there's always
+//   a way to see the other direction without needing a tap/swipe first.
 function renderArrivalsList(filterLineIds, station, fallbackTitle) {
   const el = document.getElementById('nearbyContent');
   const lineSet = filterLineIds.length ? new Set(filterLineIds) : null;
+  const linesToShow = lineSet ? [...lineSet] : Object.keys(allLines);
 
-  // Build ONE card per line — keep the vehicle with the earliest ETA.
-  // This prevents "A Line at Union Station" + "A Line at Downtown" appearing twice.
-  const byLine = {}; // line_id → {line, eta, headsign, isLive}
-  allVehicles.forEach(v => {
-    if (lineSet && !lineSet.has(v.line_id)) return;
-    const line = allLines[v.line_id]; if (!line) return;
-    let eta = null;
-    if (station) {
-      // A specific station is in view — use turnaround-aware ETA so a
-      // vehicle that already passed this stop still shows when it'll be
-      // back around, instead of no time (or the wrong time) at all.
-      eta = computeTurnaroundEtaMinutes(v, station.id, allSegments, allStations);
-    } else if (v.next_x != null) {
-      eta = etaMinutesFromSpeed(Math.hypot(v.next_x-v.x, v.next_y-v.y), v.speed_kmh);
-    }
-    // Keep this vehicle only if it's the earliest ETA for its line
-    const existing = byLine[v.line_id];
-    if (!existing || (eta != null && (existing.eta == null || eta < existing.eta))) {
-      // Use admin-set headsign (direction) if available, else fall back to next station name
-      const displayHeadsign = v.headsign || v.next_station_name || line.name;
-      byLine[v.line_id] = {line, eta, headsign: displayHeadsign, isLive: true};
-    }
-  });
+  let cards = [];
 
-  // Fill in lines with no live vehicle
-  const shown = lineSet ? [...lineSet] : Object.keys(allLines);
-  shown.forEach(lid => {
-    if (byLine[lid]) return;  // already have a live entry
-    const line = allLines[lid]; if (!line) return;
-    byLine[lid] = {line, eta: null, headsign: line.frequency || 'See schedule', isLive: false};
-  });
+  if (station) {
+    // Build up to two cards per line — one per direction — using the same
+    // terminal-resolution logic as the station popup, so both directions
+    // are always visible side by side rather than one hiding the other.
+    linesToShow.forEach(lid => {
+      const line = allLines[lid]; if (!line) return;
+      const ordered = getLineOrderedStations(lid, allSegments, allStations);
+      if (!ordered || !ordered.firstStation || !ordered.lastStation) return;
+      const { firstStation, lastStation } = ordered;
 
-  const cards = Object.values(byLine);
-
-  // Resolve each card's headsign to a real station id (its line's terminal
-  // in that direction), so tapping the card can hand the planner an actual
-  // destination instead of just a line hint.
-  cards.forEach(c => {
-    const ordered = getLineOrderedStations(c.line.id, allSegments, allStations);
-    if (!ordered) return;
-    if (ordered.lastStation && ordered.lastStation.name === c.headsign) c.destStationId = ordered.lastStation.id;
-    else if (ordered.firstStation && ordered.firstStation.name === c.headsign) c.destStationId = ordered.firstStation.id;
-  });
+      [
+        { headsign: lastStation.name, destId: lastStation.id, matches: v => !v.headsign || v.headsign === lastStation.name },
+        { headsign: firstStation.name, destId: firstStation.id, matches: v => v.headsign === firstStation.name },
+      ].forEach(dir => {
+        const matching = allVehicles.filter(v => v.line_id === lid && dir.matches(v));
+        let best = null;
+        matching.forEach(v => {
+          const eta = computeTurnaroundEtaMinutes(v, station.id, allSegments, allStations);
+          if (eta != null && (best == null || eta < best)) best = eta;
+        });
+        cards.push({
+          line, eta: best, headsign: dir.headsign, destStationId: dir.destId,
+          isLive: best != null
+        });
+      });
+    });
+  } else {
+    // No specific station in view (general fallback) — direction isn't
+    // meaningful without a reference point, so collapse to one card per
+    // line as before.
+    const byLine = {};
+    allVehicles.forEach(v => {
+      if (lineSet && !lineSet.has(v.line_id)) return;
+      const line = allLines[v.line_id]; if (!line) return;
+      let eta = v.next_x != null ? etaMinutesFromSpeed(Math.hypot(v.next_x-v.x, v.next_y-v.y), v.speed_kmh) : null;
+      const existing = byLine[v.line_id];
+      if (!existing || (eta != null && (existing.eta == null || eta < existing.eta))) {
+        byLine[v.line_id] = {line, eta, headsign: v.headsign || v.next_station_name || line.name, isLive: true};
+      }
+    });
+    linesToShow.forEach(lid => {
+      if (byLine[lid]) return;
+      const line = allLines[lid]; if (!line) return;
+      byLine[lid] = {line, eta: null, headsign: line.frequency || 'See schedule', isLive: false};
+    });
+    cards = Object.values(byLine);
+    cards.forEach(c => {
+      const ordered = getLineOrderedStations(c.line.id, allSegments, allStations);
+      if (!ordered) return;
+      if (ordered.lastStation && ordered.lastStation.name === c.headsign) c.destStationId = ordered.lastStation.id;
+      else if (ordered.firstStation && ordered.firstStation.name === c.headsign) c.destStationId = ordered.firstStation.id;
+    });
+  }
 
   // Build header: station name if we have one, else a generic label
   let header = '';
@@ -348,7 +373,7 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
   // dropped pin) — falls back to just the line if neither is known.
   const originId = station?.id ?? nearestStation?.id ?? null;
 
-  el.innerHTML = header + cards.slice(0,10).map(c => {
+  el.innerHTML = header + cards.slice(0,12).map(c => {
     const params = new URLSearchParams();
     if (originId != null) params.set('from', originId);
     if (c.destStationId != null) params.set('to', c.destStationId);
@@ -480,17 +505,35 @@ async function showStationPopup(s) {
     ${arrivalsSectionHtml}
     ${advisoryHtml}`;
 
-  // Switching direction is a plain tab click — swap which page's rows
-  // are shown and mark the clicked tab active. No scrolling, dragging,
-  // or gesture recognition involved at all.
-  document.querySelectorAll('.direction-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const idx = parseInt(tab.dataset.idx, 10);
-      document.getElementById('directionContent').innerHTML = window._directionPagesHtml[idx];
-      document.querySelectorAll('.direction-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-    });
+  // Switching direction: tap a tab (works everywhere, always visible —
+  // this is the guaranteed path, including on desktop), OR swipe left/right
+  // over the arrivals list on a touchscreen as a bonus shortcut. The swipe
+  // just measures where a touch started and ended — no scroll-position
+  // tracking or CSS scroll-snap involved, so there's nothing for a
+  // transformed ancestor or touch-action quirk to interfere with.
+  const tabEls = [...document.querySelectorAll('.direction-tab')];
+  function activateDirectionTab(idx) {
+    idx = Math.max(0, Math.min(tabEls.length - 1, idx));
+    document.getElementById('directionContent').innerHTML = window._directionPagesHtml[idx];
+    tabEls.forEach((t,i) => t.classList.toggle('active', i === idx));
+  }
+  tabEls.forEach(tab => {
+    tab.addEventListener('click', () => activateDirectionTab(parseInt(tab.dataset.idx, 10)));
   });
+
+  const contentEl = document.getElementById('directionContent');
+  if (contentEl && tabEls.length > 1) {
+    let touchStartX = null;
+    contentEl.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    contentEl.addEventListener('touchend', e => {
+      if (touchStartX == null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(dx) < 40) return; // too small to count as an intentional swipe
+      const current = tabEls.findIndex(t => t.classList.contains('active'));
+      activateDirectionTab(dx < 0 ? current + 1 : current - 1);
+    }, { passive: true });
+  }
 
   // Update the sheet arrivals to show this stop's lines
   renderArrivalsList(lineIds, s);
