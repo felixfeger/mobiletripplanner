@@ -1101,7 +1101,10 @@ async function saveAdvisory() {
     line_id:  document.getElementById('advLine').value || null,
     station_id: document.getElementById('advStation').value ? parseInt(document.getElementById('advStation').value) : null,
     source:   document.getElementById('advSource').value.trim(),
-    expires_at: document.getElementById('advExpires').value || null
+    expires_at: document.getElementById('advExpires').value || null,
+    // The datetime-local input is local wall-clock time; send the offset so
+    // the worker can store it as UTC and expiry comparisons line up.
+    tz_offset_minutes: new Date().getTimezoneOffset()
   };
   try {
     await adminFetch('/api/admin/advisories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
@@ -1118,20 +1121,24 @@ async function refreshAdvisoryList() {
   const el = document.getElementById('advisoryList');
   el.innerHTML = '<div class="spinner" style="margin:.5rem auto"></div>';
   try {
-    const advisories = await apiFetch('/api/advisories');
-    if (!advisories.length) { el.innerHTML = '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No active advisories.</div>'; return; }
+    // include_expired=1 — the editor shows expired ones too (greyed out with
+    // a badge) so they can still be seen and deleted. Public pages hide them.
+    const advisories = await apiFetch('/api/advisories?include_expired=1');
+    if (!advisories.length) { el.innerHTML = '<div style="font-size:.8rem;color:var(--gray);padding:.5rem 0">No advisories yet.</div>'; return; }
     const icons = { info:'ℹ️', warning:'⚠️', alert:'🔴' };
     const bgs   = { info:'#EFF6FF', warning:'#FFFBEB', alert:'#FEF2F2' };
     el.innerHTML = advisories.map(a => `
-      <div style="background:${bgs[a.severity]||'#F9FAFB'};border-radius:8px;padding:.75rem;margin-bottom:.5rem;position:relative">
+      <div style="background:${a.is_expired ? '#F3F4F6' : (bgs[a.severity]||'#F9FAFB')};border-radius:8px;padding:.75rem;margin-bottom:.5rem;position:relative;${a.is_expired ? 'opacity:.65' : ''}">
         <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin-bottom:.25rem">
           ${icons[a.severity]||'ℹ️'} ${escapeHtml(a.title)}
+          ${a.is_expired ? '<span style="background:#DC2626;color:white;padding:1px 6px;border-radius:4px;font-size:.6rem;margin-left:4px">EXPIRED</span>' : ''}
         </div>
         <div style="font-size:.8rem;color:#374151;margin-bottom:.3rem">${escapeHtml(a.body)}</div>
         ${a.line_name ? `<div style="font-size:.7rem;color:var(--gray)">Line: ${escapeHtml(a.line_name)}</div>` : ''}
         ${a.station_name ? `<div style="font-size:.7rem;color:var(--gray)">Station: ${escapeHtml(a.station_name)}</div>` : ''}
         ${a.source ? `<div style="font-size:.7rem;color:var(--gray)">Source: ${escapeHtml(a.source)}</div>` : ''}
-        <div style="font-size:.68rem;color:var(--gray);margin-top:.25rem">Posted ${new Date(a.posted_at).toLocaleString()}</div>
+        <div style="font-size:.68rem;color:var(--gray);margin-top:.25rem">Posted ${new Date(a.posted_at.replace(' ','T')+'Z').toLocaleString()}</div>
+        ${a.expires_at ? `<div style="font-size:.68rem;color:${a.is_expired?'#DC2626':'var(--gray)'}">Expires ${new Date(a.expires_at.replace(' ','T')+'Z').toLocaleString()}</div>` : '<div style="font-size:.68rem;color:var(--gray)">No expiry</div>'}
         <button onclick="deleteAdvisory(${a.id})" title="Delete" style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;color:var(--red);font-size:.9rem;cursor:pointer">🗑</button>
       </div>`).join('');
   } catch(e) { el.innerHTML = `<div style="font-size:.8rem;color:var(--red)">${e.message}</div>`; }
