@@ -190,7 +190,7 @@ button { cursor: pointer; font-family: inherit; }
    transformed ancestor is a known cause of broken nested horizontal
    scroll-snap swiping on iOS Safari, and this popup contains exactly
    that (the swipeable direction pages), so it must stay transform-free. */
-.vpopup { position: fixed; bottom: -110%; left: 0; right: 0; z-index: 1700; background: var(--white); border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -4px 28px rgba(0,0,0,.2); transition: bottom .3s cubic-bezier(.4,0,.2,1); }
+.vpopup { position: fixed; bottom: -110%; left: 0; right: 0; z-index: 1700; background: var(--white); border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -4px 28px rgba(0,0,0,.2); transition: bottom .3s cubic-bezier(.4,0,.2,1); max-height: 85vh; overflow-y: auto; }
 .vpopup.open { bottom: 0; }
 .vpopup-head { border-radius: var(--r) var(--r) 0 0; padding: 1.25rem 1.25rem 1rem; position: relative; }
 .vpopup-direction { font-size: .85rem; font-weight: 800; opacity: .82; display: flex; align-items: center; gap: .4rem; margin-bottom: .35rem; }
@@ -216,9 +216,19 @@ button { cursor: pointer; font-family: inherit; }
    device and input type (touch, mouse, keyboard). */
 .direction-tabbar {
   display: flex; gap: .5rem; padding: .5rem 1rem .75rem;
-  overflow-x: auto; scrollbar-width: none;
+  overflow-x: auto;
 }
-.direction-tabbar::-webkit-scrollbar { display: none; }
+/* Touch devices can swipe, so hide the scrollbar there for a cleaner
+   look. Desktop (mouse/trackpad, hover-capable) keeps a visible thin
+   scrollbar — without it there's no way to tell more tabs exist or
+   reach them when a station has more lines than fit on screen. */
+@media (hover: hover) and (pointer: fine) {
+  .direction-tabbar { scrollbar-width: thin; padding-bottom: .5rem; }
+}
+@media not all and (hover: hover) and (pointer: fine) {
+  .direction-tabbar { scrollbar-width: none; }
+  .direction-tabbar::-webkit-scrollbar { display: none; }
+}
 .direction-tab {
   display: flex; align-items: center; gap: .4rem; flex-shrink: 0;
   padding: .5rem .8rem; border-radius: 999px;
@@ -244,7 +254,7 @@ button { cursor: pointer; font-family: inherit; }
    background as the map's search pill, so it reads as the same
    component instead of a separate form. */
 .planner-group {
-  background: var(--white); border-radius: var(--r);
+  background: var(--white); border-radius: 999px;
   box-shadow: var(--shadow-md), 0 0 0 1.5px var(--border);
   overflow: hidden;
 }
