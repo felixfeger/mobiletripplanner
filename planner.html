@@ -273,7 +273,6 @@ body { overflow: hidden; }
   <nav class="nav-links">
     <a href="index.html">Map</a>
     <a href="planner.html">Plan Trip</a>
-    <a href="editor.html">Editor</a>
   </nav>
   <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -282,7 +281,6 @@ body { overflow: hidden; }
 <div class="nav-drawer" id="navDrawer">
   <a href="index.html">Map</a>
   <a href="planner.html">Plan Trip</a>
-  <a href="editor.html">Editor</a>
 </div>
 
 <div class="login-overlay" id="loginOverlay">
@@ -327,18 +325,24 @@ body { overflow: hidden; }
 <!-- ── SCREEN 1: Route selection ─────────────────────── -->
 <div class="planner-wrap">
   <div class="planner-top">
-    <div class="planner-row" onclick="openPicker('from')">
-      <div class="planner-dot" style="background:#34D399"></div>
-      <span class="ptxt placeholder" id="fromLabel">Choose origin station</span>
-    </div>
-    <div class="planner-row" onclick="openPicker('to')">
-      <div class="planner-dot" style="background:white;border:2px solid rgba(255,255,255,.4)"></div>
-      <span class="ptxt placeholder" id="toLabel">Where to?</span>
+    <div class="planner-group">
+      <div class="planner-row" onclick="openPicker('from')">
+        <div class="planner-dot" style="background:#34D399"></div>
+        <span class="ptxt placeholder" id="fromLabel">Choose origin station</span>
+      </div>
+      <div class="planner-row" onclick="openPicker('to')">
+        <div class="planner-dot" style="background:white;border:2px solid rgba(255,255,255,.4)"></div>
+        <span class="ptxt placeholder" id="toLabel">Where to?</span>
+      </div>
     </div>
     <button class="swap-btn" onclick="swapStations()">⇅</button>
   </div>
   <div class="mini-canvas-wrap" id="miniWrap">
     <canvas id="miniCanvas"></canvas>
+    <div class="mini-zoom-ctrls">
+      <button class="zoom-btn" onclick="miniEngine.zoomBy(1.3)" aria-label="Zoom in">+</button>
+      <button class="zoom-btn" onclick="miniEngine.zoomBy(0.77)" aria-label="Zoom out">−</button>
+    </div>
   </div>
   <div class="results-panel" id="resultsPanel">
     <div class="no-routes">Choose an origin and destination to see route options</div>
@@ -607,25 +611,36 @@ async function loadData() {
     allSegments.forEach(seg=>{ try{JSON.parse(seg.points_json).forEach(p=>pts.push(p));}catch{} });
     if (pts.length) miniEngine.fitToContent(pts);
 
-    // Handle pending journey from saved journeys
+    // Handle pending journey from saved journeys (account dropdown, any page)
     const pending = sessionStorage.getItem('pendingJourney');
     if (pending) {
       sessionStorage.removeItem('pendingJourney');
       const j = JSON.parse(pending);
       applyJourney(j.from_station_id, j.to_station_id);
     }
-    // Handle plan-from-popup
-    const plannerFrom = sessionStorage.getItem('plannerFrom');
-    if (plannerFrom) {
-      sessionStorage.removeItem('plannerFrom');
-      const s = JSON.parse(plannerFrom);
-      const found = allStations.find(x=>x.id===s.id);
-      if (found) {
-        fromStation=found;
-        document.getElementById('fromLabel').textContent=found.name;
+
+    // Carry a trip over from the map page: tapping an arrival there links
+    // here with ?from=<id>&to=<id> (both real station ids), so the exact
+    // trip you were just looking at picks up right where you left off.
+    const qs = new URLSearchParams(window.location.search);
+    const qFrom = qs.get('from'), qTo = qs.get('to');
+    if (qFrom) {
+      const f = allStations.find(x => String(x.id) === qFrom);
+      if (f) {
+        fromStation = f;
+        document.getElementById('fromLabel').textContent = f.name;
         document.getElementById('fromLabel').classList.remove('placeholder');
       }
     }
+    if (qTo) {
+      const t = allStations.find(x => String(x.id) === qTo);
+      if (t) {
+        toStation = t;
+        document.getElementById('toLabel').textContent = t.name;
+        document.getElementById('toLabel').classList.remove('placeholder');
+      }
+    }
+    if (fromStation && toStation) { miniEngine.render(); planTrip(); }
   } catch(e) { console.error(e); }
 }
 window.addEventListener('loadJourney', e => applyJourney(e.detail.from_station_id, e.detail.to_station_id));
