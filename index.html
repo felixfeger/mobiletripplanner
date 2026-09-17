@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>City Metro Transit</title>
+<title>City Metro Trip-Planner</title>
 <link rel="stylesheet" href="style.css">
 <meta name="theme-color" content="#1D4ED8">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -434,7 +434,7 @@ async function showStationPopup(s) {
   // Fetch advisories for this station and its lines asynchronously
   let advisoryHtml = '';
   try {
-    const qp = lineIds.length ? `?station_id=${s.id}&line_id=${lineIds[0]}` : `?station_id=${s.id}`;
+    const qp = lineIds.length ? `?station_id=${s.id}&line_id=${lineIds.join(',')}` : `?station_id=${s.id}`;
     const advisories = await apiFetch('/api/advisories' + qp);
     if (advisories.length) {
       advisoryHtml = advisories.map(a => {
