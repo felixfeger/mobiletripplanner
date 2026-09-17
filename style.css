@@ -324,6 +324,14 @@ button { cursor: pointer; font-family: inherit; }
 .line-item:hover { background: var(--gray-light); }
 .line-item.sel { background: var(--blue-l); }
 .ed-action { width: 100%; padding: .6rem; border-radius: var(--r-xs); font-size: .85rem; font-weight: 700; border: none; background: var(--black); color: white; margin-top: .45rem; font-family: inherit; }
+/* Small shortcut chips that pre-fill the advisory expiry date field */
+.adv-quick {
+  padding: .3rem .6rem; border-radius: 999px;
+  border: 1.5px solid var(--border); background: var(--white);
+  font-size: .72rem; font-weight: 700; color: var(--gray-dark);
+  cursor: pointer; font-family: inherit; transition: .12s;
+}
+.adv-quick:hover { border-color: var(--black); color: var(--black); }
 .ed-action:hover { opacity: .82; }
 .ed-action.danger { background: var(--red); }
 .ed-action.outline { background: none; border: 2px solid var(--black); color: var(--black); }
