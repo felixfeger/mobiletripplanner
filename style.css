@@ -239,16 +239,22 @@ button { cursor: pointer; font-family: inherit; }
 
 /* ── PLANNER ── */
 .planner-wrap { margin-top: var(--nav-h); display: flex; flex-direction: column; height: calc(100vh - var(--nav-h)); overflow: hidden; }
-.planner-top { background: var(--canvas-bg); padding: .85rem 1rem 1rem; position: relative; flex-shrink: 0; border-bottom: 1.5px solid var(--border); }
+.planner-top { background: var(--white); padding: .85rem 1rem 1rem; position: relative; flex-shrink: 0; }
+/* One cohesive floating search card — same shadow depth and white
+   background as the map's search pill, so it reads as the same
+   component instead of a separate form. */
+.planner-group {
+  background: var(--white); border-radius: var(--r);
+  box-shadow: var(--shadow-md), 0 0 0 1.5px var(--border);
+  overflow: hidden;
+}
 .planner-row {
   display: flex; align-items: center; gap: .65rem;
-  background: var(--white); border-radius: var(--r-xs);
-  box-shadow: var(--shadow), 0 0 0 1.5px var(--border);
-  padding: .7rem .9rem; margin-bottom: .5rem; cursor: pointer;
-  transition: box-shadow .12s;
+  padding: .8rem .9rem; cursor: pointer;
+  transition: background .12s;
 }
-.planner-row:hover { box-shadow: var(--shadow), 0 0 0 2px var(--blue); }
-.planner-row:last-of-type { margin-bottom: 0; }
+.planner-row:hover { background: var(--gray-light); }
+.planner-row + .planner-row { border-top: 1.5px solid var(--gray-light); }
 .planner-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 /* Text inside planner rows */
 .ptxt { flex: 1; font-size: .95rem; color: var(--black); font-weight: 500; }
@@ -261,6 +267,8 @@ button { cursor: pointer; font-family: inherit; }
   display: flex; align-items: center; justify-content: center; z-index: 1;
 }
 .mini-canvas-wrap { height: 180px; flex-shrink: 0; position: relative; overflow: hidden; background: var(--canvas-bg); touch-action: none; }
+.mini-zoom-ctrls { position: absolute; right: .5rem; bottom: .5rem; z-index: 5; display: flex; flex-direction: column; gap: .3rem; }
+.mini-zoom-ctrls .zoom-btn { width: 34px; height: 34px; font-size: .95rem; }
 #miniCanvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .results-panel { flex: 1; overflow-y: auto; background: var(--white); }
 
