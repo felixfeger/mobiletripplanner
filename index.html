@@ -401,6 +401,12 @@ function renderNearby() {
 // ── STATION POPUP ────────────────────────────────────────
 async function showStationPopup(s) {
   _popupStationId = s.id;
+  // Keep the address bar as a real, shareable link to this station —
+  // doesn't reload or add a history entry, just updates what's visible/copyable.
+  const shareUrl = new URL(window.location.href);
+  shareUrl.search = `?station=${s.id}`;
+  history.replaceState(null, '', shareUrl);
+
   const lineIds=(s.line_ids||'').split(',').filter(Boolean);
   const lines=lineIds.map(id=>allLines[id]).filter(Boolean);
   const primary=lines[0]||{color:'#111827',text_color:'#fff'};
@@ -577,7 +583,14 @@ function showVehiclePopup(v) {
   document.getElementById('vpopup').classList.add('open');
 }
 
-function closeVpopup() { document.getElementById('vpopup').classList.remove('open'); }
+function closeVpopup() {
+  document.getElementById('vpopup').classList.remove('open');
+  if (new URLSearchParams(window.location.search).has('station')) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    history.replaceState(null, '', url);
+  }
+}
 
 function planFromPopup() {
   const s = _popupStationId ? allStations.find(x=>x.id===_popupStationId) : null;
@@ -621,18 +634,37 @@ async function loadAll() {
     }
     engine.render();
 
-    // Center on Union Station if it exists, else fit all
-    const union=allStations.find(s=>s.name.toLowerCase().includes('union'));
-    if (union) {
-      engine.centerOn(union.x, union.y, 1.3);
-      // Place pin at Union Station and show its services by default
-      locationPin = {x: union.x, y: union.y};
-      nearestStation = union;
-      const unionLineIds = (union.line_ids||'').split(',').filter(Boolean);
-      renderArrivalsList(unionLineIds, union);
-    } else {
+    // Deep link: ?station=<id> centers on and opens that specific station,
+    // same as tapping it manually. Takes priority over the default view.
+    const qs = new URLSearchParams(window.location.search);
+    const qStation = qs.get('station');
+    const linked = qStation ? allStations.find(s => String(s.id) === qStation) : null;
+
+    if (linked) {
+      engine.centerOn(linked.x, linked.y, 1.3);
+      locationPin = {x: linked.x, y: linked.y};
+      nearestStation = linked;
+      await showStationPopup(linked);
+    } else if (qStation) {
+      // Bad/unknown id in the URL — fall back gracefully instead of
+      // silently showing nothing
+      toast("Couldn't find that station");
       fitAll();
       renderNearby();
+    } else {
+      // Center on Union Station if it exists, else fit all
+      const union=allStations.find(s=>s.name.toLowerCase().includes('union'));
+      if (union) {
+        engine.centerOn(union.x, union.y, 1.3);
+        // Place pin at Union Station and show its services by default
+        locationPin = {x: union.x, y: union.y};
+        nearestStation = union;
+        const unionLineIds = (union.line_ids||'').split(',').filter(Boolean);
+        renderArrivalsList(unionLineIds, union);
+      } else {
+        fitAll();
+        renderNearby();
+      }
     }
   } catch(e) {
     document.getElementById('nearbyContent').innerHTML='<div class="empty">⚠️ Could not load network.<br><small>Check that the Worker is deployed and the DB binding is set.</small></div>';
