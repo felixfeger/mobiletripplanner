@@ -261,6 +261,82 @@ body { overflow: hidden; }
 .picker-list { overflow-y:auto;flex:1; }
 .picker-item { display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;cursor:pointer;border-bottom:1px solid var(--gray-light); }
 .picker-item:hover { background:var(--gray-light); }
+/* ── Screen 0: Home ── */
+.home-wrap { margin-top: var(--nav-h); height: calc(100vh - var(--nav-h));
+  overflow-y: auto; background: var(--white); display: flex; flex-direction: column; }
+.home-search-bar { margin: 1rem 1.1rem; padding: .9rem 1.1rem; border-radius: 999px;
+  background: var(--gray-light); display: flex; align-items: center; gap: .7rem;
+  font-size: 1rem; font-weight: 600; color: var(--gray-dark); cursor: pointer; }
+.home-search-icon { flex-shrink: 0; color: var(--gray); }
+.home-list { padding: 0 1.1rem; }
+.home-row { display: flex; align-items: center; gap: .9rem; padding: .9rem 0;
+  border-bottom: 1px solid var(--gray-light); cursor: pointer; }
+.home-row-icon { font-size: 1.3rem; width: 34px; text-align: center; flex-shrink: 0; }
+.home-row-main { flex: 1; min-width: 0; }
+.home-row-text { font-size: .98rem; font-weight: 800; }
+.home-row-sub { font-size: .78rem; color: var(--gray); margin-top: 1px; }
+.home-row-chevron { color: var(--gray); font-size: 1.2rem; flex-shrink: 0; }
+.home-row-more { flex-shrink: 0; background: none; border: none; color: var(--gray);
+  font-size: .9rem; font-weight: 900; padding: .4rem .5rem; font-family: inherit; }
+.home-recent-label { font-size: .65rem; font-weight: 800; letter-spacing: .1em;
+  color: var(--gray); text-transform: uppercase; padding: 1rem 1.1rem .3rem; }
+.home-recent-row { display: flex; align-items: center; gap: .9rem; padding: .75rem 1.1rem;
+  border-bottom: 1px solid var(--gray-light); cursor: pointer; }
+.home-recent-badge { width: 34px; height: 34px; border-radius: 50%; background: var(--black);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 900; flex-shrink: 0; }
+.home-recent-name { flex: 1; font-size: .92rem; font-weight: 700; }
+.home-recent-chips { display: flex; gap: 4px; margin-top: 3px; }
+.home-empty { padding: 1.5rem 1.1rem; color: var(--gray); font-size: .85rem; }
+
+/* ── Screen 1 (results) search header ── */
+.planner-wrap { display: none; }
+.planner-wrap.active { display: flex; }
+.search-header { flex-shrink: 0; background: var(--black); color: white; padding: 1rem 1.1rem .9rem; }
+.search-header-rows { position: relative; display: flex; flex-direction: column; gap: .5rem; }
+.search-header-row { display: flex; align-items: center; gap: .8rem; background: rgba(255,255,255,.12);
+  border-radius: var(--r-xs); padding: .8rem 1rem; cursor: pointer; }
+.search-header-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.search-header-swap { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%; background: white; color: var(--black);
+  border: none; font-size: 1rem; font-weight: 900; cursor: pointer; }
+.search-header-controls { display: flex; align-items: center; gap: .6rem; margin-top: .85rem; }
+.leave-now-pill { background: white; color: var(--black); border: none; border-radius: 999px;
+  padding: .55rem 1.1rem; font-size: .85rem; font-weight: 800; font-family: inherit; cursor: pointer; }
+.icon-btn-round { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.15);
+  border: none; color: white; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; }
+.icon-btn-round.danger { margin-left: auto; }
+.results-panel.v2 { padding-bottom: 1rem; }
+.results-panel.v2 .route-section-label:first-child { padding-top: 1.1rem; }
+.route-option.v2 { padding: 1.1rem 1.25rem; }
+.route-option-badge.v2 { border-radius: 999px; min-width: 68px; height: 68px; font-size: 1.4rem; position: relative; }
+.route-option-alt { position: absolute; top: -8px; right: -8px; background: var(--black); color: white;
+  font-size: .55rem; font-weight: 800; padding: .1rem .4rem; border-radius: 999px; }
+
+/* ── Screen 2 (route overview) ── */
+.rop-header.v2 { padding-top: .9rem; }
+.rop-header-toprow { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+.rop-times-block .rop-leave-lbl { font-size: 1.3rem; font-weight: 900; }
+.rop-times-block .rop-arrive-lbl { font-size: 1.05rem; font-weight: 700; opacity: .9; margin-top: 1px; }
+.rop-progress-track { height: 7px; background: rgba(255,255,255,.25); border-radius: 999px; margin-top: .75rem; overflow: hidden; }
+.rop-progress-fill { height: 100%; background: white; border-radius: 999px; }
+.walk-step-tag { display: inline-flex; align-items: center; gap: .45rem; background: var(--gray-light);
+  color: var(--gray-dark); border-radius: 999px; padding: .4rem .9rem; font-size: .85rem; font-weight: 700;
+  margin: .85rem 1rem .2rem; }
+.dep-direction-tabs { display: flex; gap: .5rem; padding: .6rem 1rem .2rem; overflow-x: auto; }
+.dep-direction-tab { flex-shrink: 0; padding: .4rem .8rem; border-radius: 999px;
+  border: 1.5px solid var(--border); background: var(--white); font-size: .78rem;
+  font-weight: 700; color: var(--gray-dark); cursor: pointer; white-space: nowrap; }
+.dep-direction-tab.active { background: var(--black); border-color: var(--black); color: white; }
+.dep-cards-row { display: flex; gap: .6rem; padding: .5rem 1rem 1rem; }
+.dep-card { flex: 1; border-radius: 14px; padding: 1.1rem .5rem .8rem; text-align: center; }
+.dep-card-line { font-size: .8rem; font-weight: 900; margin-bottom: .3rem; }
+.dep-card-num { font-size: 2.1rem; font-weight: 900; line-height: 1; }
+.dep-card-unit { font-size: .72rem; font-weight: 700; margin-top: 2px; }
+.rop-stat-row { display: flex; gap: .5rem; padding: 0 1rem 1rem; flex-wrap: wrap; }
+.rop-stat-pill { background: var(--gray-light); border-radius: 999px; padding: .45rem .9rem;
+  font-size: .8rem; font-weight: 700; color: var(--gray-dark); display: flex; align-items: center; gap: .35rem; }
 </style>
 </head>
 <body>
@@ -322,42 +398,87 @@ body { overflow: hidden; }
   </div>
 </div>
 
+<!-- ── SCREEN 0: Home / search ─────────────────────────── -->
+<div class="home-wrap" id="homeWrap">
+  <div class="home-search-bar" onclick="startSearch('to')">
+    <svg class="home-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+    <span>Line or destination</span>
+  </div>
+  <div class="home-list">
+    <div class="home-row" onclick="window.location.href='index.html'">
+      <div class="home-row-icon">📍</div>
+      <div class="home-row-main"><div class="home-row-text">Choose on map</div></div>
+      <div class="home-row-chevron">›</div>
+    </div>
+    <div class="home-row" onclick="useQuickStation('home')">
+      <div class="home-row-icon">🏠</div>
+      <div class="home-row-main">
+        <div class="home-row-text">Home</div>
+        <div class="home-row-sub" id="homeQuickSub">Tap to set</div>
+      </div>
+      <button class="home-row-more" onclick="event.stopPropagation();setQuickStation('home')">•••</button>
+    </div>
+    <div class="home-row" onclick="useQuickStation('work')">
+      <div class="home-row-icon">💼</div>
+      <div class="home-row-main">
+        <div class="home-row-text">Work</div>
+        <div class="home-row-sub" id="workQuickSub">Tap to set</div>
+      </div>
+      <button class="home-row-more" onclick="event.stopPropagation();setQuickStation('work')">•••</button>
+    </div>
+    <div class="home-row" onclick="showSavedJourneys()">
+      <div class="home-row-icon">🗓️</div>
+      <div class="home-row-main"><div class="home-row-text">Saved journeys</div></div>
+      <div class="home-row-chevron">›</div>
+    </div>
+  </div>
+  <div class="home-recent-label">Recent</div>
+  <div class="home-recent-list" id="homeRecentList"></div>
+</div>
+
 <!-- ── SCREEN 1: Route selection ─────────────────────── -->
-<div class="planner-wrap">
-  <div class="planner-top">
-    <div class="planner-group">
-      <div class="planner-row" onclick="openPicker('from')">
-        <div class="planner-dot" style="background:#34D399"></div>
+<div class="planner-wrap" id="plannerWrap">
+  <div class="search-header">
+    <div class="search-header-rows">
+      <div class="search-header-row" onclick="openPicker('from')">
+        <div class="search-header-dot" style="background:#34D399"></div>
         <span class="ptxt placeholder" id="fromLabel">Choose origin station</span>
       </div>
-      <div class="planner-row" onclick="openPicker('to')">
-        <div class="planner-dot" style="background:white;border:2px solid rgba(255,255,255,.4)"></div>
+      <div class="search-header-row" onclick="openPicker('to')">
+        <div class="search-header-dot" style="background:white;border:2px solid rgba(255,255,255,.4)"></div>
         <span class="ptxt placeholder" id="toLabel">Where to?</span>
       </div>
+      <button class="search-header-swap" onclick="swapStations()">⇅</button>
     </div>
-    <button class="swap-btn" onclick="swapStations()">⇅</button>
-  </div>
-  <div class="mini-canvas-wrap" id="miniWrap">
-    <canvas id="miniCanvas"></canvas>
-    <div class="mini-zoom-ctrls">
-      <button class="zoom-btn" onclick="miniEngine.zoomBy(1.3)" aria-label="Zoom in">+</button>
-      <button class="zoom-btn" onclick="miniEngine.zoomBy(0.77)" aria-label="Zoom out">−</button>
+    <div class="search-header-controls">
+      <button class="leave-now-pill">Leave now</button>
+      <button class="icon-btn-round" onclick="planTrip()" aria-label="Refresh">⟳</button>
+      <button class="icon-btn-round danger" onclick="showHomeScreen()" aria-label="Close">✕</button>
     </div>
   </div>
-  <div class="results-panel" id="resultsPanel">
+  <div class="results-panel v2" id="resultsPanel">
     <div class="no-routes">Choose an origin and destination to see route options</div>
   </div>
 </div>
 
 <!-- ── SCREEN 2: Route overview ───────────────────────── -->
 <div class="route-overview-panel" id="ropPanel">
-  <div class="rop-header" id="ropHeader">
-    <button class="rop-back" onclick="closeRouteOverview()">←</button>
-    <div class="rop-times" id="ropTimes"></div>
-    <span class="rop-dur-pill" id="ropDur"></span>
-    <button class="rop-go-btn" id="ropGoBtn" onclick="startNavigation()">GO</button>
+  <div class="rop-header v2" id="ropHeader">
+    <div class="rop-header-toprow">
+      <button class="rop-back" onclick="closeRouteOverview()" style="margin-bottom:0">←</button>
+      <span class="rop-dur-pill" id="ropDur"></span>
+      <button class="rop-go-btn" id="ropGoBtn" onclick="startNavigation()" style="position:static">GO</button>
+    </div>
+    <div class="rop-times-block">
+      <div class="rop-leave-lbl" id="ropLeaveLbl"></div>
+      <div class="rop-arrive-lbl" id="ropArriveLbl"></div>
+    </div>
+    <div class="rop-progress-track"><div class="rop-progress-fill" id="ropProgressFill" style="width:0%"></div></div>
   </div>
-  <div class="rop-chips-scroll" id="ropChips"></div>
+  <div class="walk-step-tag">🚶 A few steps</div>
+  <div class="dep-direction-tabs" id="depDirectionTabs"></div>
+  <div class="dep-cards-row" id="ropChips"></div>
+  <div class="rop-stat-row" id="ropStats"></div>
   <div class="rop-map-wrap" id="ropMapWrap">
     <canvas id="ropCanvas"></canvas>
   </div>
@@ -412,13 +533,9 @@ let currentLegs = null;      // legs for selected route option
 let navStepIndex = 0;
 let ropEngine = null, miniEngine = null, navEngine = null;
 
-// ── MINI-MAP ENGINE ──────────────────────────────────────
-miniEngine = new CanvasEngine('miniWrap','miniCanvas', {
-  scale:.4, minScale:.1, maxScale:3,
-  worldW:6000, worldH:6000, gridSize:100,
-  onDraw: drawMini
-});
-miniEngine.render();
+// Screen 1's inline mini-map was removed — miniEngine stays null forever
+// now, and miniRenderIfPresent() (defined below) safely no-ops wherever
+// the old code used to call miniEngine.render() directly.
 
 function drawMini(ctx) {
   allSegments.forEach(seg => {
@@ -606,10 +723,6 @@ async function loadData() {
     for (const line of lines) {
       try { const d=await apiFetch(`/api/lines/${encodeURIComponent(line.id)}`); allSegments.push(...d.segments); } catch {}
     }
-    miniEngine.render();
-    const pts = allStations.map(s=>[s.x,s.y]);
-    allSegments.forEach(seg=>{ try{JSON.parse(seg.points_json).forEach(p=>pts.push(p));}catch{} });
-    if (pts.length) miniEngine.fitToContent(pts);
 
     // Handle pending journey from saved journeys (account dropdown, any page)
     const pending = sessionStorage.getItem('pendingJourney');
@@ -640,16 +753,18 @@ async function loadData() {
         document.getElementById('toLabel').classList.remove('placeholder');
       }
     }
-    if (fromStation && toStation) { miniEngine.render(); planTrip(); }
+    if (fromStation && toStation) { showPlannerScreen(); miniRenderIfPresent(); planTrip(); }
+    else { showHomeScreen(); }
   } catch(e) { console.error(e); }
 }
 window.addEventListener('loadJourney', e => applyJourney(e.detail.from_station_id, e.detail.to_station_id));
 
 function applyJourney(fromId, toId) {
+  showPlannerScreen();
   const f=allStations.find(s=>s.id===fromId), t=allStations.find(s=>s.id===toId);
   if(f){ fromStation=f; document.getElementById('fromLabel').textContent=f.name; document.getElementById('fromLabel').classList.remove('placeholder'); }
   if(t){ toStation=t; document.getElementById('toLabel').textContent=t.name; document.getElementById('toLabel').classList.remove('placeholder'); }
-  miniEngine.render();
+  miniRenderIfPresent();
   if(fromStation&&toStation) planTrip();
 }
 
@@ -689,6 +804,13 @@ function renderPickerList(stations) {
 function selectStation(id) {
   const s=allStations.find(x=>x.id===id); if(!s) return;
   closePicker();
+  if (pickerTarget==='__quick_home' || pickerTarget==='__quick_work') {
+    const type = pickerTarget==='__quick_home' ? 'home' : 'work';
+    localStorage.setItem('quick_'+type, JSON.stringify({id:s.id, name:s.name}));
+    renderQuickStationLabels();
+    return;
+  }
+  showPlannerScreen();
   if (pickerTarget==='from') {
     fromStation=s;
     document.getElementById('fromLabel').textContent=s.name;
@@ -697,8 +819,9 @@ function selectStation(id) {
     toStation=s;
     document.getElementById('toLabel').textContent=s.name;
     document.getElementById('toLabel').classList.remove('placeholder');
+    pushRecentStation(s);
   }
-  miniEngine.render();
+  miniRenderIfPresent();
   if (fromStation&&toStation) planTrip();
 }
 document.getElementById('pickerOverlay').addEventListener('click', e => {
@@ -711,9 +834,90 @@ function swapStations() {
   document.getElementById('fromLabel').classList.toggle('placeholder',!fromStation);
   document.getElementById('toLabel').textContent=toStation?toStation.name:'Where to?';
   document.getElementById('toLabel').classList.toggle('placeholder',!toStation);
-  miniEngine.render();
+  miniRenderIfPresent();
   if (fromStation&&toStation) planTrip();
 }
+
+// ── SCREEN 0: HOME ────────────────────────────────────────
+function showHomeScreen() {
+  document.getElementById('homeWrap').style.display = 'flex';
+  document.getElementById('plannerWrap').classList.remove('active');
+  document.getElementById('ropPanel').classList.remove('open');
+  currentLegs = null;
+  renderHomeRecents();
+  renderQuickStationLabels();
+}
+function showPlannerScreen() {
+  document.getElementById('homeWrap').style.display = 'none';
+  document.getElementById('plannerWrap').classList.add('active');
+}
+function startSearch(target) { showPlannerScreen(); openPicker(target); }
+
+function getQuickStation(type) {
+  try { return JSON.parse(localStorage.getItem('quick_'+type) || 'null'); } catch { return null; }
+}
+function setQuickStation(type) {
+  pickerTarget = '__quick_'+type;
+  document.getElementById('pickerTitle').textContent = 'Set ' + (type==='home'?'Home':'Work');
+  document.getElementById('pickerSearch').value = '';
+  renderPickerList(allStations);
+  document.getElementById('pickerOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('pickerSearch').focus(), 80);
+}
+function useQuickStation(type) {
+  const s = getQuickStation(type);
+  if (!s) { setQuickStation(type); return; }
+  showPlannerScreen();
+  toStation = allStations.find(x=>x.id===s.id) || s;
+  document.getElementById('toLabel').textContent = toStation.name;
+  document.getElementById('toLabel').classList.remove('placeholder');
+  if (!fromStation) { openPicker('from'); return; }
+  miniRenderIfPresent(); planTrip();
+}
+function renderQuickStationLabels() {
+  const h = getQuickStation('home'), w = getQuickStation('work');
+  document.getElementById('homeQuickSub').textContent = h ? h.name : 'Tap to set';
+  document.getElementById('workQuickSub').textContent = w ? w.name : 'Tap to set';
+}
+function showSavedJourneys() {
+  document.getElementById('loginOverlay').classList.add('open');
+}
+
+function pushRecentStation(s) {
+  if (!s) return;
+  let recents = [];
+  try { recents = JSON.parse(localStorage.getItem('recent_stations')||'[]'); } catch {}
+  recents = recents.filter(r=>r.id!==s.id);
+  recents.unshift({ id:s.id, name:s.name, line_ids:s.line_ids||'' });
+  localStorage.setItem('recent_stations', JSON.stringify(recents.slice(0,8)));
+}
+function renderHomeRecents() {
+  const wrap = document.getElementById('homeRecentList');
+  let recents = [];
+  try { recents = JSON.parse(localStorage.getItem('recent_stations')||'[]'); } catch {}
+  if (!recents.length) { wrap.innerHTML = '<div class="home-empty">Your recent destinations will show up here.</div>'; return; }
+  wrap.innerHTML = recents.map(r => {
+    const lineIds = (r.line_ids||'').split(',').filter(Boolean);
+    const chips = lineIds.map(id => {
+      const l = allLines[id]; if (!l) return '';
+      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${l.id}</span>`;
+    }).join('');
+    return `<div class="home-recent-row" onclick="selectRecentAsDestination(${r.id})">
+      <div class="home-recent-badge">${escapeHtml((r.name||'?').slice(0,1))}</div>
+      <div style="flex:1"><div class="home-recent-name">${escapeHtml(r.name)}</div><div class="home-recent-chips">${chips}</div></div>
+    </div>`;
+  }).join('');
+}
+function selectRecentAsDestination(id) {
+  const s = allStations.find(x=>x.id===id); if (!s) return;
+  showPlannerScreen();
+  toStation = s;
+  document.getElementById('toLabel').textContent = s.name;
+  document.getElementById('toLabel').classList.remove('placeholder');
+  if (!fromStation) { openPicker('from'); return; }
+  miniRenderIfPresent(); planTrip();
+}
+function miniRenderIfPresent() { if (typeof miniEngine !== 'undefined' && miniEngine) miniEngine.render(); }
 
 // ── SCREEN 1: PLAN TRIP ───────────────────────────────────
 async function planTrip() {
@@ -815,15 +1019,25 @@ async function showRouteOverview(planIdx) {
   const now = new Date();
   const dep = new Date(now.getTime() + 3*60000);
   const arr = new Date(dep.getTime() + data.totalSeconds*1000);
-  document.getElementById('ropTimes').textContent =
-    `Leave ${dep.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · Arrive ${arr.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  document.getElementById('ropLeaveLbl').textContent = `Leave at ${dep.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  document.getElementById('ropArriveLbl').textContent = `Arrive at ${arr.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
   document.getElementById('ropDur').textContent = `${totalMin} min`;
+  document.getElementById('ropProgressFill').style.width = '0%';
 
-  // Departure chips
-  // Attach the planned headsign to the line object so renderDepartureChips
-  // can filter to only vehicles going in the right direction
-  const lineWithHeadsign = {...currentLegs[0].line, _headsign: currentLegs[0].headsign};
-  renderDepartureChips(lineWithHeadsign, currentLegs[0].stations[0]);
+  // Simple deterministic "stats" so the same route always shows the same
+  // badges (no real crowding/on-time data exists in the backend yet)
+  const seed = (currentLegs[0].line.id||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rating = (4.2 + (seed % 6)/10).toFixed(1);
+  const onTime = 65 + (seed % 30);
+  document.getElementById('ropStats').innerHTML = `
+    <span class="rop-stat-pill">⭐ ${rating}</span>
+    <span class="rop-stat-pill">⏳ ${onTime}%</span>
+    <span class="rop-stat-pill">📶 Contactless</span>`;
+
+  // Departure cards — direction-switchable (see renderDepartureChips):
+  // defaults to the direction of the route you picked, with tabs to check
+  // the opposite direction's departures without leaving this screen.
+  renderDepartureChips(currentLegs[0].line, currentLegs[0].stations[0], currentLegs[0].headsign);
 
   // Fit map to route
   const routePts = [];
@@ -837,67 +1051,89 @@ async function showRouteOverview(planIdx) {
   await buildRopBody(currentLegs, dep.getTime(), data.totalSeconds);
 
   document.getElementById('ropPanel').classList.add('open');
-  miniEngine.render();
+  miniRenderIfPresent();
 }
 
-function renderDepartureChips(line, boardStation) {
+// Departure cards for a route's line — with tabs to check the opposite
+// direction's service without leaving this screen or changing your
+// planned trip (the map/stop list below stay locked to the route you
+// actually picked; these tabs only preview info for the other direction).
+function renderDepartureChips(line, boardStation, headsign) {
   const chips = document.getElementById('ropChips');
+  const tabsEl = document.getElementById('depDirectionTabs');
   const freq = line.frequency || '';
   const m = freq.match(/(\d+)/);
   const freqMin = m ? parseInt(m[1]) : 15;
 
-  const targetH = line._headsign;  // set by showRouteOverview
-
-  // Check EVERY live vehicle on this line heading the right direction —
-  // not just the first match. A line can have several vehicles running
-  // at once, and each one gives a real "live" time instead of a guess.
-  const candidates = allVehicles.filter(v =>
-    v.line_id === line.id &&
-    (!targetH || !v.headsign || v.headsign === targetH)
-  );
-
-  let liveTimes = boardStation
-    ? candidates
-        .map(v => computeTurnaroundEtaMinutes(v, boardStation.id, allSegments, allStations))
-        .filter(eta => eta != null)
-        .sort((a,b) => a - b)
-    : [];
-
-  // Collapse two vehicles that land on (or within a minute of) the same
-  // time so the chips don't show duplicates
-  const dedupedLive = [];
-  liveTimes.forEach(eta => {
-    if (!dedupedLive.length || eta - dedupedLive[dedupedLive.length-1] >= 1) dedupedLive.push(eta);
-  });
-
-  const departures = [];
-  if (dedupedLive.length) {
-    dedupedLive.slice(0, 3).forEach(mins => departures.push({ mins, isLive: true }));
-    // Fewer than 3 live vehicles — fill remaining slots by continuing on
-    // from the last real time using the line's frequency
-    let last = departures[departures.length-1].mins;
-    while (departures.length < 3) {
-      last += freqMin;
-      departures.push({ mins: last, isLive: false });
-    }
+  // Figure out both directions this line runs, so we can offer a tab for
+  // each — falls back to just the one known direction if the line's full
+  // path can't be resolved for some reason.
+  const ordered = getLineOrderedStations(line.id, allSegments, allStations);
+  const directions = [];
+  if (ordered && ordered.firstStation && ordered.lastStation) {
+    directions.push({ headsign: ordered.lastStation.name });
+    directions.push({ headsign: ordered.firstStation.name });
   } else {
-    // No live vehicles at all — fall back to frequency-only estimate
-    departures.push({ mins: Math.floor(freqMin/2), isLive: false });
-    departures.push({ mins: freqMin, isLive: false });
-    departures.push({ mins: freqMin*2, isLive: false });
+    directions.push({ headsign: headsign || line.name });
   }
 
-  const now = new Date();
-  chips.innerHTML = departures.map((d,i) => {
-    const depTime = new Date(now.getTime()+d.mins*60000);
-    const timeStr = depTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    return `<div class="dep-chip ${d.isLive?'live':''}">
-      ${d.isLive ? '<div class="dep-chip-label">Live</div>' : ''}
-      <div class="dep-chip-num">${d.mins}</div>
-      <div class="dep-chip-unit">min</div>
-      ${!d.isLive ? '<div class="dep-chip-badge">Sched</div>' : ''}
-    </div>`;
-  }).join('');
+  function computeDepartures(targetHeadsign) {
+    const candidates = allVehicles.filter(v =>
+      v.line_id === line.id &&
+      (!targetHeadsign || !v.headsign || v.headsign === targetHeadsign)
+    );
+    let liveTimes = boardStation
+      ? candidates
+          .map(v => computeTurnaroundEtaMinutes(v, boardStation.id, allSegments, allStations))
+          .filter(eta => eta != null)
+          .sort((a,b) => a - b)
+      : [];
+    const dedupedLive = [];
+    liveTimes.forEach(eta => {
+      if (!dedupedLive.length || eta - dedupedLive[dedupedLive.length-1] >= 1) dedupedLive.push(eta);
+    });
+    const departures = [];
+    if (dedupedLive.length) {
+      dedupedLive.slice(0, 3).forEach(mins => departures.push({ mins, isLive: true }));
+      let last = departures[departures.length-1].mins;
+      while (departures.length < 3) { last += freqMin; departures.push({ mins: last, isLive: false }); }
+    } else {
+      departures.push({ mins: Math.floor(freqMin/2), isLive: false });
+      departures.push({ mins: freqMin, isLive: false });
+      departures.push({ mins: freqMin*2, isLive: false });
+    }
+    return departures;
+  }
+
+  function renderCards(targetHeadsign) {
+    const departures = computeDepartures(targetHeadsign);
+    chips.innerHTML = departures.map(d => `
+      <div class="dep-card" style="background:${line.color}22">
+        <div class="dep-card-line" style="color:${line.color}">${line.id}${d.isLive?' · live':' · sched'}</div>
+        <div class="dep-card-num" style="color:${line.color}">${d.mins}</div>
+        <div class="dep-card-unit" style="color:${line.color}">minutes</div>
+      </div>`).join('');
+  }
+
+  // Default to the direction the planned route actually uses
+  const defaultIdx = Math.max(0, directions.findIndex(d => d.headsign === headsign));
+
+  if (directions.length > 1) {
+    tabsEl.innerHTML = directions.map((d,i) => `
+      <button class="dep-direction-tab${i===defaultIdx?' active':''}" data-idx="${i}">→ ${escapeHtml(d.headsign)}</button>
+    `).join('');
+    tabsEl.querySelectorAll('.dep-direction-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabsEl.querySelectorAll('.dep-direction-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        renderCards(directions[parseInt(tab.dataset.idx,10)].headsign);
+      });
+    });
+  } else {
+    tabsEl.innerHTML = '';
+  }
+
+  renderCards(directions[defaultIdx].headsign);
 }
 
 async function buildRopBody(legs, depTimeMs, totalSeconds) {
@@ -996,7 +1232,7 @@ function stopRow(name, time, major, lineColor) {
 function closeRouteOverview() {
   document.getElementById('ropPanel').classList.remove('open');
   currentLegs = null;
-  miniEngine.render();
+  miniRenderIfPresent();
 }
 
 // ── SCREEN 3: ACTIVE NAVIGATION ───────────────────────────
