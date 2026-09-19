@@ -30,6 +30,23 @@ function escapeHtml(str) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// Inner content for a line badge: the plain line-id letter(s), with an
+// optional image layered on top if the line has one set. The image covers
+// itself with onerror, so a broken/removed URL just falls back to the
+// letter automatically — no separate error-state handling needed anywhere
+// this gets used. Callers keep their own outer badge element/sizing; this
+// only returns what goes inside it, so it works for line-badge, line-chip,
+// chip-sm, route-option-badge, etc. without duplicating logic everywhere.
+// The outer element needs position:relative + overflow:hidden for the
+// image overlay to sit correctly.
+function lineBadgeInner(line) {
+  const letter = escapeHtml(line?.id ?? '');
+  if (!line?.image_url) return letter;
+  return `${letter}<img src="${escapeHtml(line.image_url)}" alt=""
+    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit"
+    onerror="this.remove()">`;
+}
+
 function toast(msg, duration = 2500) {
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id='toast'; el.className='toast'; document.body.appendChild(el); }
