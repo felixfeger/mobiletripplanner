@@ -14,7 +14,9 @@ body { overflow: hidden; }
 .planner-wrap {
   margin-top: var(--nav-h);
   display: flex; flex-direction: column;
-  height: calc(100vh - var(--nav-h)); overflow: hidden;
+  height: calc(100vh - var(--nav-h));
+  height: calc(100dvh - var(--nav-h)); /* accounts for mobile toolbar showing/hiding */
+  overflow: hidden;
 }
 .mini-canvas-wrap {
   height: 190px; flex-shrink: 0; position: relative;
@@ -119,10 +121,17 @@ body { overflow: hidden; }
   height: 180px; flex-shrink: 0; position: relative;
   overflow: hidden; background: var(--canvas-bg); touch-action: none;
 }
+/* Everything below the header (walk tag, departure cards, map, stop list)
+   scrolls together as one unit. On a shorter phone or with the mobile
+   browser's toolbar expanded, this means the map naturally scrolls out
+   of the way as you scroll down — it never permanently squeezes the
+   stop list into a sliver or off-screen the way a rigid fixed-height
+   stack would. */
+.rop-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 #ropCanvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
 /* Stop list inside overview */
-.rop-body { flex: 1; overflow-y: auto; }
+.rop-body { }
 .rop-leg { border-bottom: 4px solid var(--gray-light); }
 .rop-leg-header {
   display: flex; align-items: center; gap: .85rem; padding: .95rem 1rem .75rem;
@@ -263,7 +272,7 @@ body { overflow: hidden; }
 .picker-item { display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;cursor:pointer;border-bottom:1px solid var(--gray-light); }
 .picker-item:hover { background:var(--gray-light); }
 /* ── Screen 0: Home ── */
-.home-wrap { margin-top: var(--nav-h); height: calc(100vh - var(--nav-h));
+.home-wrap { margin-top: var(--nav-h); height: calc(100vh - var(--nav-h)); height: calc(100dvh - var(--nav-h));
   overflow-y: auto; background: var(--white); display: flex; flex-direction: column; }
 .home-search-bar { margin: 1rem 1.1rem; padding: .9rem 1.1rem; border-radius: 999px;
   background: var(--gray-light); display: flex; align-items: center; gap: .7rem;
@@ -338,6 +347,14 @@ body { overflow: hidden; }
 .rop-stat-row { display: flex; gap: .5rem; padding: 0 1rem 1rem; flex-wrap: wrap; }
 .rop-stat-pill { background: var(--gray-light); border-radius: 999px; padding: .45rem .9rem;
   font-size: .8rem; font-weight: 700; color: var(--gray-dark); display: flex; align-items: center; gap: .35rem; }
+/* Shorter phones (or a mobile browser with its toolbar expanded, which
+   is the common case) get a shorter map so more of the stop list is
+   visible without scrolling first. */
+@media (max-height: 700px) {
+  .rop-map-wrap { height: 130px; }
+  .dep-card { padding: .8rem .5rem .6rem; }
+  .dep-card-num { font-size: 1.7rem; }
+}
 </style>
 </head>
 <body>
