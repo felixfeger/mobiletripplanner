@@ -40,6 +40,7 @@ body { overflow: hidden; }
   border-radius: 12px; min-width: 110px; height: 52px;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.25rem; font-weight: 900; flex-shrink: 0;
+  position: relative; overflow: hidden;
 }
 .route-option-info { flex: 1; }
 .route-go-time { font-size: 1rem; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: .4rem; }
@@ -292,19 +293,19 @@ body { overflow: hidden; }
 /* ── Screen 1 (results) search header ── */
 .planner-wrap { display: none; }
 .planner-wrap.active { display: flex; }
-.search-header { flex-shrink: 0; background: var(--black); color: white; padding: 1rem 1.1rem .9rem; }
+.search-header { flex-shrink: 0; background: var(--white); color: var(--black); padding: 1rem 1.1rem .9rem; border-bottom: 1.5px solid var(--border); }
 .search-header-rows { position: relative; display: flex; flex-direction: column; gap: .5rem; }
-.search-header-row { display: flex; align-items: center; gap: .8rem; background: rgba(255,255,255,.12);
+.search-header-row { display: flex; align-items: center; gap: .8rem; background: var(--gray-light);
   border-radius: var(--r-xs); padding: .8rem 1rem; cursor: pointer; }
 .search-header-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .search-header-swap { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
-  width: 34px; height: 34px; border-radius: 50%; background: white; color: var(--black);
+  width: 34px; height: 34px; border-radius: 50%; background: var(--black); color: white;
   border: none; font-size: 1rem; font-weight: 900; cursor: pointer; }
 .search-header-controls { display: flex; align-items: center; gap: .6rem; margin-top: .85rem; }
-.leave-now-pill { background: white; color: var(--black); border: none; border-radius: 999px;
+.leave-now-pill { background: var(--black); color: white; border: none; border-radius: 999px;
   padding: .55rem 1.1rem; font-size: .85rem; font-weight: 800; font-family: inherit; cursor: pointer; }
-.icon-btn-round { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.15);
-  border: none; color: white; display: flex; align-items: center; justify-content: center;
+.icon-btn-round { width: 38px; height: 38px; border-radius: 50%; background: var(--gray-light);
+  border: 1.5px solid var(--border); color: var(--black); display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 1rem; }
 .icon-btn-round.danger { margin-left: auto; }
 .results-panel.v2 { padding-bottom: 1rem; }
@@ -475,14 +476,16 @@ body { overflow: hidden; }
     </div>
     <div class="rop-progress-track"><div class="rop-progress-fill" id="ropProgressFill" style="width:0%"></div></div>
   </div>
-  <div class="walk-step-tag">🚶 A few steps</div>
-  <div class="dep-direction-tabs" id="depDirectionTabs"></div>
-  <div class="dep-cards-row" id="ropChips"></div>
-  <div class="rop-stat-row" id="ropStats"></div>
-  <div class="rop-map-wrap" id="ropMapWrap">
-    <canvas id="ropCanvas"></canvas>
+  <div class="rop-scroll">
+    <div class="walk-step-tag">🚶 A few steps</div>
+    <div class="dep-direction-tabs" id="depDirectionTabs"></div>
+    <div class="dep-cards-row" id="ropChips"></div>
+    <div class="rop-stat-row" id="ropStats"></div>
+    <div class="rop-map-wrap" id="ropMapWrap">
+      <canvas id="ropCanvas"></canvas>
+    </div>
+    <div class="rop-body" id="ropBody"></div>
   </div>
-  <div class="rop-body" id="ropBody"></div>
 </div>
 
 <!-- ── SCREEN 3: Active navigation ────────────────────── -->
