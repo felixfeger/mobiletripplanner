@@ -173,6 +173,7 @@ button { cursor: pointer; font-family: inherit; }
   background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem; font-weight: 900; flex-shrink: 0;
+  position: relative; overflow: hidden;
 }
 .arrival-main { flex: 1; min-width: 0; }
 .arrival-title { font-size: 1rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -182,8 +183,8 @@ button { cursor: pointer; font-family: inherit; }
 .arrival-unit { font-size: .65rem; opacity: .75; font-weight: 600; }
 
 /* ── LINE CHIPS ── */
-.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 7px; font-size: .9rem; font-weight: 900; }
-.chip-sm { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 5px; font-size: .72rem; font-weight: 900; }
+.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 7px; font-size: .9rem; font-weight: 900; position: relative; overflow: hidden; }
+.chip-sm { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 5px; font-size: .72rem; font-weight: 900; position: relative; overflow: hidden; }
 
 /* ── STATION / VEHICLE POPUP ── */
 /* Slides via `bottom` rather than `transform: translateY()` — a
@@ -198,7 +199,7 @@ button { cursor: pointer; font-family: inherit; }
 .vpopup-sub { font-size: .9rem; opacity: .78; }
 .vpopup-close { position: absolute; top: 1rem; right: 1rem; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.25); border: none; font-size: 1.1rem; color: white; display: flex; align-items: center; justify-content: center; }
 .vpopup-lines { padding: 1rem; display: flex; flex-wrap: wrap; gap: .5rem; border-bottom: 1px solid var(--gray-light); }
-.line-chip { display: inline-flex; align-items: center; justify-content: center; padding: .35rem .85rem; border-radius: 8px; font-size: .9rem; font-weight: 900; }
+.line-chip { display: inline-flex; align-items: center; justify-content: center; padding: .35rem .85rem; border-radius: 8px; font-size: .9rem; font-weight: 900; position: relative; overflow: hidden; }
 .vpopup-arrivals { padding: .75rem 1rem 1.25rem; }
 .vpopup-arrival-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 0; border-bottom: 1px solid var(--gray-light); }
 .vpopup-arrival-row:last-child { border-bottom: none; }
