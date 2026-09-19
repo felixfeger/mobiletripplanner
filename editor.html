@@ -127,6 +127,9 @@ body,html{height:100%;overflow:hidden;}
         <input type="color" class="ed-clr" id="lineTextColor" value="#FFFFFF" title="Text color">
       </div>
       <input class="ed-input" id="lineFreq" placeholder="Frequency (e.g. Every 10 min)" style="margin-top:.4rem">
+      <div class="ed-lbl" style="margin-top:.5rem">Line image (optional)</div>
+      <input class="ed-input" id="lineImageUrl" placeholder="https://upload.wikimedia.org/..." oninput="updateLineImagePreview()">
+      <img id="lineImagePreview" class="hidden" style="width:100%;max-height:90px;object-fit:contain;margin-top:.4rem;border-radius:6px;background:var(--gray-light)">
       <div class="chk-row"><input type="checkbox" id="lineLoop"><label for="lineLoop">Loop line (path forms a closed circuit back to start)</label></div>
       <button class="ed-action" onclick="saveLine()">Save line</button>
     </div>
@@ -763,7 +766,8 @@ async function saveLine() {
     color: document.getElementById('lineColor').value,
     text_color: document.getElementById('lineTextColor').value,
     is_loop: document.getElementById('lineLoop').checked,
-    frequency: document.getElementById('lineFreq').value
+    frequency: document.getElementById('lineFreq').value,
+    image_url: document.getElementById('lineImageUrl').value.trim()
   };
   try {
     await adminFetch('/api/admin/lines',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -781,8 +785,23 @@ function selectLine(id) {
   document.getElementById('lineTextColor').value=l.text_color||'#FFFFFF';
   document.getElementById('lineLoop').checked=!!l.is_loop;
   document.getElementById('lineFreq').value=l.frequency||'';
+  document.getElementById('lineImageUrl').value=l.image_url||'';
+  updateLineImagePreview();
   refreshLineList();
   engine.render();
+}
+
+function updateLineImagePreview() {
+  const url = document.getElementById('lineImageUrl').value.trim();
+  const img = document.getElementById('lineImagePreview');
+  if (url) {
+    img.src = url;
+    img.classList.remove('hidden');
+    img.onerror = () => { img.classList.add('hidden'); };
+  } else {
+    img.classList.add('hidden');
+    img.src = '';
+  }
 }
 
 function refreshLineList() {
