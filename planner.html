@@ -140,6 +140,7 @@ body { overflow: hidden; }
   width: 44px; height: 44px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem; font-weight: 900; flex-shrink: 0;
+  position: relative; overflow: hidden;
 }
 .rop-leg-name { font-size: .95rem; font-weight: 800; }
 .rop-leg-toward { font-size: .75rem; color: var(--gray); margin-top: 2px; }
@@ -810,7 +811,7 @@ function renderPickerList(stations) {
     const lineIds = (s.line_ids||'').split(',').filter(Boolean);
     const chips = lineIds.map(id => {
       const l=allLines[id]; if(!l) return '';
-      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${l.id}</span>`;
+      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${lineBadgeInner(l)}</span>`;
     }).join('');
     return `<div class="picker-item" onclick="selectStation(${s.id})">
       <span style="font-size:1.1rem">${s.type==='hub'?'🔀':s.type==='station'?'🚆':'📍'}</span>
@@ -920,7 +921,7 @@ function renderHomeRecents() {
     const lineIds = (r.line_ids||'').split(',').filter(Boolean);
     const chips = lineIds.map(id => {
       const l = allLines[id]; if (!l) return '';
-      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${l.id}</span>`;
+      return `<span class="chip-sm" style="background:${l.color};color:${l.text_color}">${lineBadgeInner(l)}</span>`;
     }).join('');
     return `<div class="home-recent-row" onclick="selectRecentAsDestination(${r.id})">
       <div class="home-recent-badge">${escapeHtml((r.name||'?').slice(0,1))}</div>
@@ -996,7 +997,7 @@ function renderRouteList(plans) {
 
     return `<div class="route-option" onclick="showRouteOverview(${idx})">
       <div class="route-option-badge" style="background:${firstLine.color};color:${firstLine.text_color}">
-        ${legs.length===1 ? legs[0].line.id : legs.map(l=>`<span style="margin:0 2px">${l.line.id}</span>`).join('→')}
+        ${legs.length===1 ? lineBadgeInner(legs[0].line) : legs.map(l=>`<span style="margin:0 2px">${l.line.id}</span>`).join('→')}
       </div>
       <div class="route-option-info">
         <div class="route-go-time">
@@ -1176,7 +1177,7 @@ async function buildRopBody(legs, depTimeMs, totalSeconds) {
 
     html += `<div class="rop-leg">
       <div class="rop-leg-header">
-        <div class="rop-leg-badge" style="background:${leg.line.color};color:${leg.line.text_color}">${leg.line.id}</div>
+        <div class="rop-leg-badge" style="background:${leg.line.color};color:${leg.line.text_color}">${lineBadgeInner(leg.line)}</div>
         <div>
           <div class="rop-leg-name">${escapeHtml(leg.line.name)}</div>
           <div class="rop-leg-toward">→ ${escapeHtml(leg.headsign || leg.stations[leg.stations.length-1].name)}</div>
