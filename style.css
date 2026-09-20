@@ -157,17 +157,31 @@ button { cursor: pointer; font-family: inherit; }
 
 /* ── ARRIVAL CARDS ── */
 .arrival-section-title { font-size: .68rem; font-weight: 800; letter-spacing: .08em; color: var(--gray); text-transform: uppercase; padding: .75rem 1rem .4rem; }
+.arrival-card-wrap { border-bottom: 1.5px solid rgba(255,255,255,.12); }
+.arrival-card-wrap:last-child { border-bottom: none; }
 .arrival-card {
   display: flex; align-items: center;
   /* min 64px tall — comfortable mobile tap target */
   min-height: 64px; padding: 1rem;
   gap: .85rem; cursor: pointer;
   transition: filter .12s;
-  border-bottom: 1.5px solid rgba(255,255,255,.12);
   -webkit-tap-highlight-color: transparent;
 }
-.arrival-card:last-child { border-bottom: none; }
 .arrival-card:active { filter: brightness(.9); }
+/* Inline direction toggle on a line's own card — lets you flip between
+   inbound/outbound without the two directions ever being split apart
+   into separate, far-away rows in the list. */
+.arrival-dir-tabs {
+  display: flex; gap: .4rem; padding: 0 1rem .75rem;
+  background: inherit; filter: brightness(.93);
+}
+.arrival-dir-tab {
+  flex: 1; padding: .4rem .5rem; border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12);
+  color: inherit; font-size: .74rem; font-weight: 700; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.arrival-dir-tab.active { background: rgba(255,255,255,.9); color: #111827; border-color: transparent; }
 .line-badge {
   width: 48px; height: 48px; border-radius: 12px;
   background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
@@ -243,6 +257,7 @@ button { cursor: pointer; font-family: inherit; }
   display: inline-flex; align-items: center; justify-content: center;
   width: 20px; height: 20px; border-radius: 5px;
   font-size: .68rem; font-weight: 900; flex-shrink: 0;
+  position: relative; overflow: hidden;
 }
 
 .vpopup-action-row { padding: 0 1rem 1.25rem; }
