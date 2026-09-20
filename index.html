@@ -288,38 +288,40 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
   const lineSet = filterLineIds.length ? new Set(filterLineIds) : null;
   const linesToShow = lineSet ? [...lineSet] : Object.keys(allLines);
 
-  let cards = [];
+  // One entry per LINE (not per direction) — each entry can carry up to
+  // two direction options. This keeps a line's inbound/outbound together
+  // as a single row with an explicit toggle, instead of two separate
+  // cards that could end up far apart in the list once sorted by ETA —
+  // which made it look like only one direction ever existed.
+  let lineEntries = [];
 
   if (station) {
-    // Build up to two cards per line — one per direction — using the same
-    // terminal-resolution logic as the station popup, so both directions
-    // are always visible side by side rather than one hiding the other.
     linesToShow.forEach(lid => {
       const line = allLines[lid]; if (!line) return;
       const ordered = getLineOrderedStations(lid, allSegments, allStations);
       if (!ordered || !ordered.firstStation || !ordered.lastStation) return;
       const { firstStation, lastStation } = ordered;
 
-      [
+      const dirDefs = [
         { headsign: lastStation.name, destId: lastStation.id, matches: v => !v.headsign || v.headsign === lastStation.name },
         { headsign: firstStation.name, destId: firstStation.id, matches: v => v.headsign === firstStation.name },
-      ].forEach(dir => {
+      ];
+      const directions = dirDefs.map(dir => {
         const matching = allVehicles.filter(v => v.line_id === lid && dir.matches(v));
         let best = null;
         matching.forEach(v => {
           const eta = computeTurnaroundEtaMinutes(v, station.id, allSegments, allStations);
           if (eta != null && (best == null || eta < best)) best = eta;
         });
-        cards.push({
-          line, eta: best, headsign: dir.headsign, destStationId: dir.destId,
-          isLive: best != null
-        });
+        return { headsign: dir.headsign, destStationId: dir.destId, eta: best, isLive: best != null };
       });
+      // Default to whichever direction has the soonest arrival
+      directions.sort((a,b) => (a.eta??999) - (b.eta??999));
+      lineEntries.push({ line, directions, sortEta: directions[0].eta });
     });
   } else {
-    // No specific station in view (general fallback) — direction isn't
-    // meaningful without a reference point, so collapse to one card per
-    // line as before.
+    // No specific station in view — direction isn't meaningful without a
+    // reference point, so just one entry per line with no toggle.
     const byLine = {};
     allVehicles.forEach(v => {
       if (lineSet && !lineSet.has(v.line_id)) return;
@@ -335,12 +337,14 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
       const line = allLines[lid]; if (!line) return;
       byLine[lid] = {line, eta: null, headsign: line.frequency || 'See schedule', isLive: false};
     });
-    cards = Object.values(byLine);
-    cards.forEach(c => {
+    lineEntries = Object.values(byLine).map(c => {
       const ordered = getLineOrderedStations(c.line.id, allSegments, allStations);
-      if (!ordered) return;
-      if (ordered.lastStation && ordered.lastStation.name === c.headsign) c.destStationId = ordered.lastStation.id;
-      else if (ordered.firstStation && ordered.firstStation.name === c.headsign) c.destStationId = ordered.firstStation.id;
+      let destStationId = null;
+      if (ordered) {
+        if (ordered.lastStation && ordered.lastStation.name === c.headsign) destStationId = ordered.lastStation.id;
+        else if (ordered.firstStation && ordered.firstStation.name === c.headsign) destStationId = ordered.firstStation.id;
+      }
+      return { line: c.line, directions: [{ headsign: c.headsign, destStationId, eta: c.eta, isLive: c.isLive }], sortEta: c.eta };
     });
   }
 
@@ -362,35 +366,73 @@ function renderArrivalsList(filterLineIds, station, fallbackTitle) {
     header = `<div class="arrival-section-title">${fallbackTitle||'All services'}</div>`;
   }
 
-  if (!cards.length) {
+  if (!lineEntries.length) {
     el.innerHTML = header + '<div class="empty" style="padding:1.5rem">No services at this stop</div>';
     return;
   }
-  cards.sort((a,b)=>(a.eta??999)-(b.eta??999));
+  lineEntries.sort((a,b)=>(a.sortEta??999)-(b.sortEta??999));
 
   // The origin to carry into the planner: whichever station this list is
   // currently centered on (the tapped station, or the nearest one to a
   // dropped pin) — falls back to just the line if neither is known.
   const originId = station?.id ?? nearestStation?.id ?? null;
 
-  el.innerHTML = header + cards.slice(0,12).map(c => {
-    const params = new URLSearchParams();
-    if (originId != null) params.set('from', originId);
-    if (c.destStationId != null) params.set('to', c.destStationId);
-    params.set('line', c.line.id);
-    return `
-    <div class="arrival-card" style="background:${c.line.color};color:${c.line.text_color}" onclick="window.location.href='planner.html?${params.toString()}'">
-      <div class="line-badge">${c.line.id}</div>
-      <div class="arrival-main">
-        <div class="arrival-title">${c.isLive?'<span style="font-size:.6rem;vertical-align:middle">🔴</span> ':''}${escapeHtml(c.line.name)}</div>
-        <div class="arrival-sub">→ ${escapeHtml(c.headsign)}</div>
+  // Stash direction data where the toggle handler can reach it, keyed by
+  // a stable id per line-entry (rebuilt fresh every render).
+  window._arrivalLineEntries = {};
+
+  el.innerHTML = header + lineEntries.slice(0,10).map((entry, i) => {
+    const cardId = `arr-${i}`;
+    window._arrivalLineEntries[cardId] = entry;
+    const hasTwoDirections = entry.directions.length > 1;
+    const tabs = hasTwoDirections ? `
+      <div class="arrival-dir-tabs" onclick="event.stopPropagation()">
+        ${entry.directions.map((d,di) => `<button class="arrival-dir-tab${di===0?' active':''}" onclick="switchArrivalDirection('${cardId}',${di})">→ ${escapeHtml(d.headsign)}</button>`).join('')}
+      </div>` : '';
+    return `<div class="arrival-card-wrap">
+      <div class="arrival-card" id="${cardId}" style="background:${entry.line.color};color:${entry.line.text_color}" onclick="goToPlannerFromArrival('${cardId}')">
+        <div class="line-badge">${lineBadgeInner(entry.line)}</div>
+        <div class="arrival-main">
+          <div class="arrival-title">${entry.directions[0].isLive?'<span style="font-size:.6rem;vertical-align:middle">🔴</span> ':''}${escapeHtml(entry.line.name)}</div>
+          <div class="arrival-sub" id="${cardId}-sub">→ ${escapeHtml(entry.directions[0].headsign)}</div>
+        </div>
+        <div class="arrival-mins" id="${cardId}-mins">
+          <div class="arrival-num">${entry.directions[0].eta??'—'}</div>
+          <div class="arrival-unit">${entry.directions[0].eta!=null?(entry.directions[0].eta===1?'min':'mins'):''}</div>
+        </div>
       </div>
-      <div class="arrival-mins">
-        <div class="arrival-num">${c.eta??'—'}</div>
-        <div class="arrival-unit">${c.eta!=null?(c.eta===1?'min':'mins'):''}</div>
-      </div>
+      ${tabs}
     </div>`;
   }).join('');
+
+  window._arrivalOriginId = originId;
+}
+
+// Swaps which direction's ETA/headsign is showing on an arrival card,
+// without touching anything else on the page — this is the "sliding
+// tabs" toggle for the general nearby list, same idea as the station
+// popup's direction tabs but inline on each line's own card.
+function switchArrivalDirection(cardId, idx) {
+  const entry = window._arrivalLineEntries?.[cardId];
+  if (!entry) return;
+  const d = entry.directions[idx];
+  document.getElementById(cardId+'-sub').textContent = `→ ${d.headsign}`;
+  document.getElementById(cardId+'-mins').innerHTML =
+    `<div class="arrival-num">${d.eta??'—'}</div><div class="arrival-unit">${d.eta!=null?(d.eta===1?'min':'mins'):''}</div>`;
+  entry.activeIdx = idx;
+  const card = document.getElementById(cardId);
+  card.parentElement.querySelectorAll('.arrival-dir-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+}
+
+function goToPlannerFromArrival(cardId) {
+  const entry = window._arrivalLineEntries?.[cardId];
+  if (!entry) return;
+  const d = entry.directions[entry.activeIdx ?? 0];
+  const params = new URLSearchParams();
+  if (window._arrivalOriginId != null) params.set('from', window._arrivalOriginId);
+  if (d.destStationId != null) params.set('to', d.destStationId);
+  params.set('line', entry.line.id);
+  window.location.href = 'planner.html?' + params.toString();
 }
 
 function renderNearby() {
@@ -419,7 +461,7 @@ async function showStationPopup(s) {
   document.getElementById('vpopupSub').textContent=s.street||'';
 
   // Lines served chips
-  const lineChips=lines.map(l=>`<span class="line-chip" style="background:${l.color};color:${l.text_color}">${l.id}</span>`).join('');
+  const lineChips=lines.map(l=>`<span class="line-chip" style="background:${l.color};color:${l.text_color}">${lineBadgeInner(l)}</span>`).join('');
 
   // Build one swipeable "page" per direction, per line serving this
   // station — e.g. a station on the A Line gets a page for trains headed
@@ -458,7 +500,7 @@ async function showStationPopup(s) {
   } else {
     const tabButtons = pages.map((p,i) => `
       <button class="direction-tab${i===0?' active':''}" data-idx="${i}">
-        <span class="direction-tab-chip" style="background:${p.line.color};color:${p.line.text_color}">${p.line.id}</span>
+        <span class="direction-tab-chip" style="background:${p.line.color};color:${p.line.text_color}">${lineBadgeInner(p.line)}</span>
         → ${escapeHtml(p.headsign)}
       </button>`).join('');
 
@@ -473,7 +515,7 @@ async function showStationPopup(s) {
       return p.times.length
         ? p.times.map(mins => `
             <div class="vpopup-arrival-row" style="cursor:pointer" onclick="window.location.href='${href}'">
-              <span class="line-chip" style="background:${p.line.color};color:${p.line.text_color};font-size:.75rem;padding:.25rem .6rem">${p.line.id}</span>
+              <span class="line-chip" style="background:${p.line.color};color:${p.line.text_color};font-size:.75rem;padding:.25rem .6rem">${lineBadgeInner(p.line)}</span>
               <div class="vpopup-arrival-name">→ ${escapeHtml(p.headsign)}</div>
               <div class="vpopup-arrival-eta live">${mins} min</div>
             </div>`).join('')
