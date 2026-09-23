@@ -113,7 +113,10 @@ body,html{height:100%;overflow:hidden;}
     <div class="ed-head"><span>Lines</span><button onclick="closePanel()" style="margin-left:auto;background:none;border:none;font-size:1.1rem;cursor:pointer">✕</button></div>
 
     <div class="ed-sec">
-      <div class="ed-lbl">Create / edit line</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+        <div class="ed-lbl" style="margin-bottom:0" id="lineFormLbl">Create new line</div>
+        <button onclick="newLineForm()" style="background:none;border:1.5px solid var(--border);border-radius:6px;font-size:.72rem;font-weight:700;padding:.25rem .6rem;cursor:pointer">+ New line</button>
+      </div>
       <div class="ed-row">
         <input class="ed-input" id="lineId" placeholder="ID (A, 38…)" style="width:80px">
         <input class="ed-input" id="lineName" placeholder="Full name" style="flex:1">
@@ -130,6 +133,7 @@ body,html{height:100%;overflow:hidden;}
       <div class="ed-lbl" style="margin-top:.5rem">Line image (optional)</div>
       <input class="ed-input" id="lineImageUrl" placeholder="https://upload.wikimedia.org/..." oninput="updateLineImagePreview()">
       <img id="lineImagePreview" class="hidden" style="width:100%;max-height:90px;object-fit:contain;margin-top:.4rem;border-radius:6px;background:var(--gray-light)">
+      <div id="lineImageHint" style="font-size:.72rem;margin-top:.3rem;line-height:1.4"></div>
       <div class="chk-row"><input type="checkbox" id="lineLoop"><label for="lineLoop">Loop line (path forms a closed circuit back to start)</label></div>
       <button class="ed-action" onclick="saveLine()">Save line</button>
     </div>
@@ -757,10 +761,24 @@ function openPanel(name) {
 function closePanel() { document.getElementById('edPanel').classList.remove('open'); }
 
 // ── LINES CRUD ────────────────────────────────────────
+let _editingLineOriginalId = null; // null = creating new; otherwise the id we loaded for editing
+
 async function saveLine() {
   const id = document.getElementById('lineId').value.trim();
   const name = document.getElementById('lineName').value.trim();
   if (!id||!name) { toast('ID and name required'); return; }
+
+  // Safety net: if we're editing an existing line, the ID field is
+  // read-only so this should never trip — but if it somehow doesn't
+  // match what we loaded, refuse rather than risk silently creating an
+  // orphaned duplicate that leaves the original line's route and
+  // vehicles invisible (still in the database, just no longer linked to
+  // anything the app shows).
+  if (_editingLineOriginalId && id !== _editingLineOriginalId) {
+    toast(`Can't change a line's ID while editing — use "+ New line" instead`);
+    return;
+  }
+
   const body = {
     id, name, type: document.getElementById('lineType').value,
     color: document.getElementById('lineColor').value,
@@ -778,7 +796,11 @@ async function saveLine() {
 function selectLine(id) {
   selectedLine = id;
   const l = allLines[id]; if (!l) return;
+  _editingLineOriginalId = id;
+  document.getElementById('lineFormLbl').textContent = `Editing ${l.id} — ${l.name}`;
   document.getElementById('lineId').value=l.id;
+  document.getElementById('lineId').readOnly = true;
+  document.getElementById('lineId').style.background = 'var(--gray-light)';
   document.getElementById('lineName').value=l.name;
   document.getElementById('lineType').value=l.type;
   document.getElementById('lineColor').value=l.color;
@@ -791,17 +813,58 @@ function selectLine(id) {
   engine.render();
 }
 
+// Explicit "start fresh" action — the only way the ID field becomes
+// editable again, so a new line can never accidentally overwrite (and
+// orphan the route/vehicles of) an existing one.
+function newLineForm() {
+  selectedLine = null;
+  _editingLineOriginalId = null;
+  document.getElementById('lineFormLbl').textContent = 'Create new line';
+  document.getElementById('lineId').value = '';
+  document.getElementById('lineId').readOnly = false;
+  document.getElementById('lineId').style.background = '';
+  document.getElementById('lineName').value = '';
+  document.getElementById('lineType').value = 'rail';
+  document.getElementById('lineColor').value = '#2563EB';
+  document.getElementById('lineTextColor').value = '#FFFFFF';
+  document.getElementById('lineLoop').checked = false;
+  document.getElementById('lineFreq').value = '';
+  document.getElementById('lineImageUrl').value = '';
+  updateLineImagePreview();
+  refreshLineList();
+}
+
 function updateLineImagePreview() {
   const url = document.getElementById('lineImageUrl').value.trim();
   const img = document.getElementById('lineImagePreview');
-  if (url) {
-    img.src = url;
-    img.classList.remove('hidden');
-    img.onerror = () => { img.classList.add('hidden'); };
-  } else {
-    img.classList.add('hidden');
-    img.src = '';
+  const hint = document.getElementById('lineImageHint');
+  if (!url) {
+    img.classList.add('hidden'); img.src = '';
+    hint.textContent = ''; hint.className = '';
+    return;
   }
+
+  // A link to a Wikipedia ARTICLE page (en.wikipedia.org/wiki/...) is an
+  // HTML page, not an image file — <img> can't load it. Catch this
+  // specific, common mix-up before even trying, since the failure
+  // otherwise looks identical to "the feature doesn't work at all".
+  if (/wikipedia\.org\/wiki\//i.test(url) && !/\.(png|jpe?g|svg|gif|webp)(\?|$)/i.test(url)) {
+    img.classList.add('hidden'); img.src = '';
+    hint.textContent = "That's a Wikipedia article link, not an image file — it won't load. Open the image on that page, right-click it, and copy the image address (usually starts with upload.wikimedia.org).";
+    hint.className = 'ed-warn';
+    return;
+  }
+
+  img.src = url;
+  img.classList.remove('hidden');
+  hint.textContent = 'Loading preview…';
+  hint.className = '';
+  img.onload = () => { hint.textContent = '✓ Image loads correctly'; hint.className = 'ed-ok'; };
+  img.onerror = () => {
+    img.classList.add('hidden');
+    hint.textContent = "Couldn't load that URL as an image — double check it's a direct link to the image file itself (not a webpage), and that the site allows it to be embedded elsewhere.";
+    hint.className = 'ed-warn';
+  };
 }
 
 function refreshLineList() {
