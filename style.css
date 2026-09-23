@@ -368,6 +368,8 @@ button { cursor: pointer; font-family: inherit; }
 .adv-quick:hover { border-color: var(--black); color: var(--black); }
 .ed-action:hover { opacity: .82; }
 .ed-action.danger { background: var(--red); }
+.ed-warn { color: var(--red); }
+.ed-ok { color: var(--green); }
 .ed-action.outline { background: none; border: 2px solid var(--black); color: var(--black); }
 .chk-row { display: flex; gap: .45rem; align-items: center; margin-top: .35rem; }
 .chk-row input[type=checkbox] { accent-color: var(--black); width: 15px; height: 15px; }
